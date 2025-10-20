@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>✨ Sweet Digital Spaces ✨</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Quicksand:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background: linear-gradient(135deg, #ffeef8 0%, #fff5f7 50%, #f8e8ff 100%);
+            min-height: 100vh;
+            padding: 2rem;
+            color: #5a4458;
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><text y="20" font-size="20">✨</text></svg>'), auto;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            animation: fadeInDown 1s ease-out;
+        }
+
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 3rem;
+            color: #d67ba6;
+            margin-bottom: 0.5rem;
+            text-shadow: 2px 2px 4px rgba(255, 182, 193, 0.3);
+        }
+
+        .bow {
+            font-size: 2rem;
+            display: inline-block;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .subtitle {
+            font-style: italic;
+            color: #b088b5;
+            font-size: 1.1rem;
+            letter-spacing: 1px;
+        }
+
+        /* Tab Navigation */
+        .tab-navigation {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .tab-button {
+            padding: 0.8rem 2rem;
+            background: rgba(255, 255, 255, 0.6);
+            border: 2px solid #ffc8dd;
+            border-radius: 50px;
+            color: #d67ba6;
+            font-family: 'Quicksand', sans-serif;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(214, 123, 166, 0.2);
+        }
+
+        .tab-button:hover {
+            background: rgba(255, 200, 221, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(214, 123, 166, 0.3);
+        }
+
+        .tab-button.active {
+            background: linear-gradient(135deg, #ffc8dd 0%, #d8b5e8 100%);
+            color: white;
+            border-color: #d67ba6;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeInUp 0.5s ease-out;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 25px;
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 32px rgba(214, 123, 166, 0.15);
+            border: 2px solid rgba(255, 182, 193, 0.3);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(214, 123, 166, 0.25);
+        }
+
+        /* Profile Picture Section */
+        .profile-section {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .profile-picture-container {
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .profile-picture {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            border: 4px solid #ffc8dd;
+            box-shadow: 0 8px 32px rgba(214, 123, 166, 0.3);
+            object-fit: cover;
+            animation: float 4s ease-in-out infinite;
+        }
+
+        .profile-bow {
+            position: absolute;
+            top: -10px;
+            right: 10px;
+            font-size: 3rem;
+            filter: drop-shadow(2px 2px 4px rgba(255, 182, 193, 0.5));
+            animation: float 3s ease-in-out infinite 0.5s;
+        }
+
+        .profile-info {
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px dashed #ffc8dd;
+        }
+
+        .card-icon {
+            font-size: 2.5rem;
+            margin-right: 1rem;
+        }
+
+        h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            color: #d67ba6;
+            margin: 0;
+        }
+
+        h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem;
+            color: #d67ba6;
+            margin: 1.5rem 0 1rem 0;
+        }
+
+        .card-content {
+            line-height: 1.8;
+            color: #6b5668;
+        }
+
+        .card-content p {
+            margin-bottom: 1rem;
+        }
+
+        .website-link {
+            display: inline-block;
+            margin-top: 1rem;
+            padding: 0.8rem 2rem;
+            background: linear-gradient(135deg, #ffc8dd 0%, #d8b5e8 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(214, 123, 166, 0.3);
+            border: none;
+            cursor: pointer;
+            font-family: 'Quicksand', sans-serif;
+            font-size: 1rem;
+        }
+
+        .website-link:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(214, 123, 166, 0.4);
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .feature-item {
+            background: rgba(255, 200, 221, 0.2);
+            padding: 1rem;
+            border-radius: 15px;
+            text-align: center;
+            border: 1px solid rgba(255, 182, 193, 0.3);
+        }
+
+        .feature-emoji {
+            font-size: 1.8rem;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .decorative-hearts {
+            text-align: center;
+            font-size: 1.5rem;
+            margin: 2rem 0;
+            opacity: 0.6;
+            letter-spacing: 0.5rem;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .info-card {
+            background: rgba(255, 240, 248, 0.5);
+            padding: 1.5rem;
+            border-radius: 20px;
+            border: 2px solid rgba(255, 200, 221, 0.4);
+        }
+
+        .info-card h4 {
+            color: #d67ba6;
+            font-family: 'Playfair Display', serif;
+            font-size: 1.2rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .info-card ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .info-card li {
+            padding: 0.3rem 0;
+            color: #6b5668;
+        }
+
+        .info-card li:before {
+            content: "✨ ";
+            margin-right: 0.5rem;
+        }
+
+        /* Mouse follower sparkles */
+        .sparkle-cursor {
+            position: fixed;
+            pointer-events: none;
+            font-size: 20px;
+            z-index: 9999;
+            animation: sparkleFloat 1s ease-out forwards;
+        }
+
+        @keyframes sparkleFloat {
+            0% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-30px) scale(0.5);
+            }
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 3rem;
+            color: #b088b5;
+            font-size: 0.9rem;
+            animation: fadeIn 2s ease-out;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0px);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        .sparkles {
+            display: inline-block;
+            animation: sparkle 2s ease-in-out infinite;
+        }
+
+        @keyframes sparkle {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .card {
+                padding: 1.5rem;
+            }
+            
+            body {
+                padding: 1rem;
+            }
+
+            .profile-section {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .profile-picture {
+                width: 150px;
+                height: 150px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="bow">🎀</div>
+            <h1>Sweet Digital Spaces</h1>
+            <p class="subtitle">A curated collection of delightful websites</p>
+        </header>
+
+        <!-- Tab Navigation -->
+        <div class="tab-navigation">
+            <button class="tab-button active" onclick="switchTab('overview')">✨ Overview</button>
+            <button class="tab-button" onclick="switchTab('andrew')">🌸 Andrew Theiss</button>
+            <button class="tab-button" onclick="switchTab('chocolate')">🍫 Chocolate Party</button>
+            <button class="tab-button" onclick="switchTab('about')">💖 About</button>
+        </div>
+
+        <!-- Overview Tab -->
+        <div id="overview" class="tab-content active">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-icon">🎀</span>
+                    <h2>Welcome to Sweet Digital Spaces</h2>
+                </div>
+                <div class="card-content">
+                    <p>
+                        Discover two enchanting corners of the internet where creativity, design, and joy come together 
+                        in the most delightful ways. This carefully curated collection features websites that embody 
+                        aesthetic excellence and playful spirit.
+                    </p>
+                    
+                    <h3>Featured Destinations</h3>
+                    <div class="info-grid">
+                        <div class="info-card">
+                            <h4>🌸 andrewtheiss.com</h4>
+                            <p>A portfolio of elegant design and creative development. Andrew Theiss brings artistry to code, 
+                            creating beautiful web experiences that inspire.</p>
+                            <button onclick="switchTab('andrew')" class="website-link">Explore More →</button>
+                        </div>
+                        <div class="info-card">
+                            <h4>🍫 chocolate.party</h4>
+                            <p>A whimsical celebration of all things chocolate! Join the sweetest party on the internet 
+                            where confectionery dreams come true.</p>
+                            <button onclick="switchTab('chocolate')" class="website-link">Explore More →</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Andrew Theiss Tab -->
+        <div id="andrew" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-icon">🌸</span>
+                    <h2>andrewtheiss.com</h2>
+                </div>
+                <div class="card-content">
+                    <div class="profile-section">
+                        <div class="profile-picture-container">
+                            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop" 
+                                 alt="Profile" class="profile-picture">
+                            <div class="profile-bow">🎀</div>
+                        </div>
+                        <div class="profile-info">
+                            <h3>Creative Developer & Designer</h3>
+                            <p>
+                                <strong>Andrew Theiss</strong> is a talented creative who brings together the worlds of 
+                                development and design to craft truly beautiful digital experiences. With an eye for detail 
+                                and a passion for elegant solutions, Andrew creates websites that are both functional and stunning.
+                            </p>
+                        </div>
+                    </div>
+
+                    <h3>What Makes It Special</h3>
+                    <div class="info-grid">
+                        <div class="info-card">
+                            <h4>💻 Web Development</h4>
+                            <ul>
+                                <li>Clean, efficient code</li>
+                                <li>Modern frameworks</li>
+                                <li>Performance optimized</li>
+                                <li>Responsive design</li>
+                            </ul>
+                        </div>
+                        <div class="info-card">
+                            <h4>🎨 Design Excellence</h4>
+                            <ul>
+                                <li>Beautiful aesthetics</li>
+                                <li>Thoughtful UX</li>
+                                <li>Smooth animations</li>
+                                <li>Visual storytelling</li>
+                            </ul>
+                        </div>
+                        <div class="info-card">
+                            <h4>✨ Creative Vision</h4>
+                            <ul>
+                                <li>Innovative projects</li>
+                                <li>Artistic approach</li>
+                                <li>Attention to detail</li>
+                                <li>Unique experiences</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 2rem;">
+                        <a href="https://andrewtheiss.com" target="_blank" class="website-link">Visit andrewtheiss.com →</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chocolate Party Tab -->
+        <div id="chocolate" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-icon">🍫</span>
+                    <h2>chocolate.party</h2>
+                </div>
+                <div class="card-content">
+                    <p>
+                        <strong>chocolate.party</strong> is where the sweetest dreams come true! This delightful digital 
+                        destination celebrates everything chocolate with style, whimsy, and a whole lot of fun. It's not 
+                        just a website—it's an experience that brings joy to chocolate lovers everywhere.
+                    </p>
+
+                    <h3>Why We Love It</h3>
+                    <div class="info-grid">
+                        <div class="info-card">
+                            <h4>🎉 Always Celebrating</h4>
+                            <p>Every visit feels like a special occasion. The party never stops, and there's always 
+                            something sweet to discover.</p>
+                        </div>
+                        <div class="info-card">
+                            <h4>🍬 Sweet Community</h4>
+                            <p>Join fellow chocolate enthusiasts in a space dedicated to sharing the love of all things 
+                            cocoa and confectionery.</p>
+                        </div>
+                        <div class="info-card">
+                            <h4>💖 Playful Design</h4>
+                            <p>Vibrant colors, fun interactions, and a design that's as delightful as chocolate itself.</p>
+                        </div>
+                    </div>
+
+                    <h3>Features</h3>
+                    <div class="features">
+                        <div class="feature-item">
+                            <span class="feature-emoji">🎨</span>
+                            <strong>Beautiful Design</strong>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-emoji">🌈</span>
+                            <strong>Vibrant Colors</strong>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-emoji">🎪</span>
+                            <strong>Fun Interactions</strong>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-emoji">💝</span>
+                            <strong>Sweet Vibes</strong>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 2rem;">
+                        <a href="https://chocolate.party" target="_blank" class="website-link">Visit chocolate.party →</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- About Tab -->
+        <div id="about" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-icon">💖</span>
+                    <h2>About This Collection</h2>
+                </div>
+                <div class="card-content">
+                    <p>
+                        Welcome to a carefully curated showcase of digital excellence! This collection celebrates 
+                        websites that go beyond the ordinary, bringing together artistry, innovation, and pure joy.
+                    </p>
+
+                    <h3>Why These Sites?</h3>
+                    <p>
+                        Both andrewtheiss.com and chocolate.party represent the best of what the web can be—beautiful, 
+                        functional, and delightfully memorable. They inspire us to think differently about digital 
+                        experiences and remind us that the internet can be a truly magical place.
+                    </p>
+
+                    <h3>The Coquette Aesthetic</h3>
+                    <div class="info-grid">
+                        <div class="info-card">
+                            <h4>🎀 Soft & Romantic</h4>
+                            <p>Pastel colors, delicate fonts, and gentle animations create a dreamy atmosphere.</p>
+                        </div>
+                        <div class="info-card">
+                            <h4>✨ Playful & Sweet</h4>
+                            <p>Every element sparkles with charm and whimsy, from bows to hearts to ribbons.</p>
+                        </div>
+                        <div class="info-card">
+                            <h4>💝 Elegant & Refined</h4>
+                            <p>Sophisticated design choices balanced with youthful, joyful energy.</p>
+                        </div>
+                    </div>
+
+                    <div class="decorative-hearts">
+                        <span class="sparkles">✨</span> ♡ <span class="sparkles">✨</span> ♡ <span class="sparkles">✨</span>
+                    </div>
+
+                    <p style="text-align: center; font-style: italic; color: #b088b5;">
+                        "Design is not just what it looks like and feels like. Design is how it works." <br>
+                        - Steve Jobs
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>✨ Made with love and ribbons ✨</p>
+            <p style="margin-top: 0.5rem;">🎀 ~ Sweet dreams and pixel beams ~ 🎀</p>
+        </footer>
+    </div>
+
+    <!-- Audio for sparkle sound effect -->
+    <audio id="sparkleSound" preload="auto">
+        <source src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=" type="audio/wav">
+    </audio>
+
+    <script>
+        // Tab switching functionality
+        function switchTab(tabName) {
+            // Play sparkle sound
+            playSparkleSound();
+
+            // Hide all tabs
+            const tabs = document.querySelectorAll('.tab-content');
+            tabs.forEach(tab => tab.classList.remove('active'));
+
+            // Remove active class from all buttons
+            const buttons = document.querySelectorAll('.tab-button');
+            buttons.forEach(button => button.classList.remove('active'));
+
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+
+            // Add active class to clicked button
+            event.target.classList.add('active');
+        }
+
+        // Sparkle sound effect
+        function playSparkleSound() {
+            // Create a simple beep sound using Web Audio API
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            // Create a pleasant chime-like sound
+            oscillator.frequency.value = 800 + Math.random() * 400;
+            oscillator.type = 'sine';
+
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.3);
+        }
+
+        // Mouse follower sparkles
+        let lastSparkleTime = 0;
+        const sparkleDelay = 50; // milliseconds between sparkles
+
+        document.addEventListener('mousemove', function(e) {
+            const currentTime = Date.now();
+            
+            if (currentTime - lastSparkleTime > sparkleDelay) {
+                createSparkle(e.pageX, e.pageY);
+                lastSparkleTime = currentTime;
+            }
+        });
+
+        function createSparkle(x, y) {
+            const sparkle = document.createElement('div');
+            sparkle.className = 'sparkle-cursor';
+            
+            // Random sparkle emoji
+            const sparkles = ['✨', '💫', '⭐', '🌟', '💖', '🎀'];
+            sparkle.textContent = sparkles[Math.floor(Math.random() * sparkles.length)];
+            
+            // Position sparkle
+            sparkle.style.left = (x - 10) + 'px';
+            sparkle.style.top = (y - 10) + 'px';
+            
+            document.body.appendChild(sparkle);
+            
+            // Remove sparkle after animation
+            setTimeout(() => {
+                sparkle.remove();
+            }, 1000);
+        }
+
+        // Add sparkle sound to all clickable links
+        document.addEventListener('DOMContentLoaded', function() {
+            const links = document.querySelectorAll('.website-link');
+            links.forEach(link => {
+                link.addEventListener('click', function() {
+                    playSparkleSound();
+                });
+            });
+        });
+    </script>
+</body>
+</html>
+
