@@ -4,21 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>✨ Sweet Digital Spaces ✨</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Quicksand:wght@300;400;500;600&display=swap" rel="stylesheet">
     <script>
-        // Apply dark mode immediately to prevent flash
+        // Apply dark mode immediately based on system preference
         (function() {
-            try {
-                const stored = localStorage.getItem('darkModePreference');
-                let shouldBeDark = false;
-                
-                if (stored !== null) {
-                    shouldBeDark = stored === 'true';
-                } else if (window.matchMedia) {
-                    shouldBeDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                }
+            if (window.matchMedia) {
+                const shouldBeDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
                 
                 if (shouldBeDark) {
                     // Add to html element immediately
@@ -33,8 +27,6 @@
                         });
                     }
                 }
-            } catch (e) {
-                // Silently fail if localStorage is not available
             }
         })();
     </script>
@@ -127,6 +119,10 @@
             color: #e8d5e8;
         }
 
+        body.dark-mode .info-card p {
+            color: #e8d5e8;
+        }
+
         body.dark-mode .feature-item {
             background: rgba(184, 141, 184, 0.2);
             border-color: rgba(184, 141, 184, 0.3);
@@ -149,48 +145,26 @@
             opacity: 0.8;
         }
 
-        /* Dark Mode Toggle Button */
-        .dark-mode-toggle {
-            position: fixed;
-            top: 1.5rem;
-            right: 1.5rem;
-            background: rgba(255, 255, 255, 0.6);
-            border: 2px solid #ffc8dd;
-            border-radius: 50px;
-            padding: 0.6rem 1.2rem;
-            cursor: pointer;
-            font-size: 1.2rem;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(214, 123, 166, 0.2);
-            z-index: 1000;
-            font-family: 'Quicksand', sans-serif;
-            color: #d67ba6;
-            font-weight: 600;
+        body.dark-mode .card-content p {
+            color: #e8d5e8;
         }
 
-        .dark-mode-toggle:hover {
-            background: rgba(255, 200, 221, 0.4);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(214, 123, 166, 0.3);
-        }
-
-        body.dark-mode .dark-mode-toggle {
-            background: rgba(45, 27, 46, 0.6);
-            border-color: #b88db8;
+        body.dark-mode .card-content strong {
             color: #d8a5d8;
         }
 
-        body.dark-mode .dark-mode-toggle:hover {
-            background: rgba(184, 141, 184, 0.4);
+        body.dark-mode .tab-button.admin-tab {
+            background: linear-gradient(135deg, #ff6b9d 0%, #c44569 100%);
+            border-color: #ff6b9d;
         }
 
-        @media (max-width: 768px) {
-            .dark-mode-toggle {
-                top: 1rem;
-                right: 1rem;
-                padding: 0.5rem 1rem;
-                font-size: 1rem;
-            }
+        body.dark-mode .admin-secret-message {
+            background: linear-gradient(135deg, rgba(255, 107, 157, 0.2) 0%, rgba(196, 69, 105, 0.2) 100%);
+            border-color: #ff6b9d;
+        }
+
+        body.dark-mode .funny-picture {
+            border-color: #ff6b9d;
         }
 
         .container {
@@ -258,6 +232,91 @@
             background: linear-gradient(135deg, #ffc8dd 0%, #d8b5e8 100%);
             color: white;
             border-color: #d67ba6;
+        }
+
+        /* Admin Tab Styles */
+        .tab-button.admin-tab {
+            background: linear-gradient(135deg, #ff6b9d 0%, #c44569 100%);
+            color: white;
+            border-color: #ff6b9d;
+            box-shadow: 0 4px 20px rgba(255, 107, 157, 0.4);
+            animation: adminGlow 2s ease-in-out infinite;
+        }
+
+        .tab-button.admin-tab:hover {
+            background: linear-gradient(135deg, #ff8fb3 0%, #d6597d 100%);
+            box-shadow: 0 6px 25px rgba(255, 107, 157, 0.6);
+            transform: translateY(-2px) scale(1.05);
+        }
+
+        .tab-button.admin-tab.active {
+            background: linear-gradient(135deg, #ff6b9d 0%, #c44569 100%);
+            box-shadow: 0 8px 30px rgba(255, 107, 157, 0.7);
+            animation: adminGlow 2s ease-in-out infinite;
+        }
+
+        @keyframes adminGlow {
+            0%, 100% {
+                box-shadow: 0 4px 20px rgba(255, 107, 157, 0.4);
+            }
+            50% {
+                box-shadow: 0 6px 30px rgba(255, 107, 157, 0.7);
+            }
+        }
+
+        .admin-tab-content {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .admin-secret-message {
+            font-size: 1.5rem;
+            text-align: center;
+            margin: 2rem 0;
+            padding: 2rem;
+            background: linear-gradient(135deg, rgba(255, 107, 157, 0.1) 0%, rgba(196, 69, 105, 0.1) 100%);
+            border-radius: 20px;
+            border: 3px dashed #ff6b9d;
+            animation: pulse 3s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.02);
+            }
+        }
+
+        .funny-pictures-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .funny-picture {
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 8px 25px rgba(214, 123, 166, 0.3);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 3px solid #ffc8dd;
+        }
+
+        .funny-picture:hover {
+            transform: scale(1.05) rotate(2deg);
+            box-shadow: 0 12px 35px rgba(214, 123, 166, 0.5);
+        }
+
+        .funny-picture img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .admin-hidden {
+            display: none !important;
         }
 
         .tab-content {
@@ -554,11 +613,6 @@
     </style>
 </head>
 <body>
-    <!-- Dark Mode Toggle Button -->
-    <button class="dark-mode-toggle" id="darkModeToggle" aria-label="Toggle dark mode">
-        <span id="darkModeIcon">🌙</span>
-    </button>
-
     <div class="container">
         <header>
             <div class="bow">🎀</div>
@@ -572,6 +626,7 @@
             <button class="tab-button" onclick="switchTab('andrew')">🌸 Andrew Theiss</button>
             <button class="tab-button" onclick="switchTab('chocolate')">🍫 Chocolate Party</button>
             <button class="tab-button" onclick="switchTab('about')">💖 About</button>
+            <button class="tab-button admin-tab admin-hidden" id="adminTabButton" onclick="switchTab('admin')">🔐 Admin Zone</button>
         </div>
 
         <!-- Overview Tab -->
@@ -776,6 +831,68 @@
             </div>
         </div>
 
+        <!-- Admin Tab (Hidden by default, shown only for admins) -->
+        <div id="admin" class="tab-content admin-tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-icon">🔐</span>
+                    <h2>🔐 SECRET ADMIN ZONE 🔐</h2>
+                </div>
+                <div class="card-content">
+                    <div class="admin-secret-message">
+                        <h3 style="font-size: 2rem; color: #ff6b9d; margin-bottom: 1rem;">🎉 CONGRATULATIONS! 🎉</h3>
+                        <p style="font-size: 1.3rem; font-weight: bold; color: #c44569;">
+                            You've discovered the ultra-secret admin zone! 🎊
+                        </p>
+                        <p style="margin-top: 1rem; font-size: 1.1rem;">
+                            You're clearly one of the chosen ones... or maybe you just got really lucky! Either way, 
+                            welcome to the VIP section where we keep all the cool stuff! 🚀✨
+                        </p>
+                        <p style="margin-top: 1rem; font-size: 1.1rem; font-style: italic;">
+                            Enjoy these funny pictures as a reward for your admin privileges! 🎁
+                        </p>
+                    </div>
+
+                    <h3 style="text-align: center; margin: 2rem 0;">🎨 Funny Pictures Gallery 🎨</h3>
+                    
+                    <div class="funny-pictures-grid">
+                        <div class="funny-picture">
+                            <img src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=400&fit=crop" alt="Funny cat">
+                        </div>
+                        <div class="funny-picture">
+                            <img src="https://images.unsplash.com/photo-1561037404-61cd46aa615b?w=400&h=400&fit=crop" alt="Funny dog">
+                        </div>
+                        <div class="funny-picture">
+                            <img src="https://images.unsplash.com/photo-1541781774459-bb2af2f05b55?w=400&h=400&fit=crop" alt="Funny animal">
+                        </div>
+                        <div class="funny-picture">
+                            <img src="https://images.unsplash.com/photo-1596854407944-bf87f6fdd49e?w=400&h=400&fit=crop" alt="Funny cat">
+                        </div>
+                        <div class="funny-picture">
+                            <img src="https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=400&h=400&fit=crop" alt="Funny dog">
+                        </div>
+                        <div class="funny-picture">
+                            <img src="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=400&h=400&fit=crop" alt="Funny cat">
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 2rem; text-align: center; padding: 2rem; background: rgba(255, 107, 157, 0.1); border-radius: 20px;">
+                        <h3 style="color: #ff6b9d; margin-bottom: 1rem;">🌟 Admin Perks 🌟</h3>
+                        <p style="font-size: 1.1rem; margin-bottom: 0.5rem;">✨ You get to see this secret tab!</p>
+                        <p style="font-size: 1.1rem; margin-bottom: 0.5rem;">✨ You have access to funny animal pictures!</p>
+                        <p style="font-size: 1.1rem; margin-bottom: 0.5rem;">✨ You're part of an exclusive club!</p>
+                        <p style="font-size: 1.1rem; margin-top: 1rem; font-style: italic; color: #c44569;">
+                            Remember: With great power comes great responsibility... and lots of cute animal photos! 🐾
+                        </p>
+                    </div>
+
+                    <div class="decorative-hearts" style="margin-top: 2rem;">
+                        <span class="sparkles">🔐</span> ✨ <span class="sparkles">👑</span> ✨ <span class="sparkles">🎀</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <footer>
             <p>✨ Made with love and ribbons ✨</p>
             <p style="margin-top: 0.5rem;">🎀 ~ Sweet dreams and pixel beams ~ 🎀</p>
@@ -872,125 +989,213 @@
             });
         });
 
-        // Dark Mode Functionality
+        // Dark Mode Functionality - Follows system preference only
         (function() {
-            const STORAGE_KEY = 'darkModePreference';
-            
-            function initDarkModeScript() {
-                const darkModeToggle = document.getElementById('darkModeToggle');
-                const darkModeIcon = document.getElementById('darkModeIcon');
-                const body = document.body;
+            const body = document.body;
 
-                // Check if elements exist
-                if (!darkModeToggle || !darkModeIcon) {
-                    // Retry after a short delay if elements aren't ready
-                    setTimeout(initDarkModeScript, 100);
-                    return;
+            // Check system preference
+            function getSystemPreference() {
+                if (window.matchMedia) {
+                    return window.matchMedia('(prefers-color-scheme: dark)').matches;
                 }
+                return false;
+            }
 
-                // Check if dark mode preference is stored in localStorage
-                function getStoredPreference() {
-                    try {
-                        const stored = localStorage.getItem(STORAGE_KEY);
-                        if (stored !== null) {
-                            return stored === 'true';
-                        }
-                    } catch (e) {
-                        console.error('Error accessing localStorage:', e);
-                    }
-                    return null; // No preference stored
+            // Apply dark mode based on system preference
+            function applyDarkMode(isDark) {
+                if (isDark) {
+                    body.classList.add('dark-mode');
+                } else {
+                    body.classList.remove('dark-mode');
                 }
+            }
 
-                // Check system preference
-                function getSystemPreference() {
-                    if (window.matchMedia) {
-                        return window.matchMedia('(prefers-color-scheme: dark)').matches;
-                    }
-                    return false;
+            // Initialize dark mode on page load
+            function initDarkMode() {
+                const systemPrefersDark = getSystemPreference();
+                applyDarkMode(systemPrefersDark);
+            }
+
+            // Listen for system preference changes
+            if (window.matchMedia) {
+                const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+                
+                // Function to handle system preference changes
+                function handleSystemPreferenceChange(e) {
+                    applyDarkMode(e.matches);
                 }
-
-                // Apply dark mode
-                function applyDarkMode(isDark) {
-                    if (isDark) {
-                        body.classList.add('dark-mode');
-                        if (darkModeIcon) darkModeIcon.textContent = '☀️';
-                    } else {
-                        body.classList.remove('dark-mode');
-                        if (darkModeIcon) darkModeIcon.textContent = '🌙';
-                    }
+                
+                // Use addEventListener for modern browsers
+                if (mediaQuery.addEventListener) {
+                    mediaQuery.addEventListener('change', handleSystemPreferenceChange);
+                } 
+                // Fallback for older browsers
+                else if (mediaQuery.addListener) {
+                    mediaQuery.addListener(handleSystemPreferenceChange);
                 }
-
-                // Initialize dark mode on page load
-                function initDarkMode() {
-                    const storedPreference = getStoredPreference();
-                    
-                    if (storedPreference !== null) {
-                        // Use stored preference (user has manually set it)
-                        applyDarkMode(storedPreference);
-                    } else {
-                        // No stored preference, check system preference
+                
+                // Also check on visibility change (when user switches back to tab)
+                document.addEventListener('visibilitychange', function() {
+                    if (!document.hidden) {
                         const systemPrefersDark = getSystemPreference();
                         applyDarkMode(systemPrefersDark);
                     }
-                }
-
-                // Toggle dark mode
-                function toggleDarkMode() {
+                });
+                
+                // Periodic check to ensure system preference is respected
+                setInterval(function() {
+                    const systemPrefersDark = getSystemPreference();
                     const isCurrentlyDark = body.classList.contains('dark-mode');
-                    const newDarkModeState = !isCurrentlyDark;
-                    
-                    applyDarkMode(newDarkModeState);
-                    try {
-                        localStorage.setItem(STORAGE_KEY, newDarkModeState.toString());
-                    } catch (e) {
-                        console.error('Error saving to localStorage:', e);
+                    // Only update if there's a mismatch
+                    if (isCurrentlyDark !== systemPrefersDark) {
+                        applyDarkMode(systemPrefersDark);
                     }
-                    
-                    // Play sparkle sound for feedback
-                    if (typeof playSparkleSound === 'function') {
-                        playSparkleSound();
-                    }
-                }
-
-                // Listen for system preference changes
-                if (window.matchMedia) {
-                    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-                    // Use addListener for better browser compatibility
-                    if (mediaQuery.addEventListener) {
-                        mediaQuery.addEventListener('change', function(e) {
-                            // Only update if user hasn't manually set a preference
-                            const storedPreference = getStoredPreference();
-                            if (storedPreference === null) {
-                                applyDarkMode(e.matches);
-                            }
-                        });
-                    } else if (mediaQuery.addListener) {
-                        // Fallback for older browsers
-                        mediaQuery.addListener(function(e) {
-                            const storedPreference = getStoredPreference();
-                            if (storedPreference === null) {
-                                applyDarkMode(e.matches);
-                            }
-                        });
-                    }
-                }
-
-                // Initialize on page load
-                initDarkMode();
-
-                // Add click event listener to toggle button
-                darkModeToggle.addEventListener('click', toggleDarkMode);
+                }, 1000); // Check every 1 second
             }
-            
-            // Run when DOM is ready
+
+            // Initialize on page load
             if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', initDarkModeScript);
+                document.addEventListener('DOMContentLoaded', initDarkMode);
             } else {
                 // DOM is already ready, run immediately
-                initDarkModeScript();
+                initDarkMode();
             }
         })();
+
+        // Admin Check Functionality
+        (function() {
+            let isAdmin = false;
+
+            async function checkAdminStatus() {
+                try {
+                    // Get user ID from localStorage (same one used by user-tracking.js)
+                    const userId = localStorage.getItem('userTrackingId');
+                    
+                    if (!userId || typeof db === 'undefined') {
+                        // Wait a bit and try again if Firebase isn't ready
+                        setTimeout(checkAdminStatus, 500);
+                        return;
+                    }
+
+                    // Check if user document has admin flag
+                    const userDoc = await db.collection('userTracking').doc(userId).get();
+                    
+                    if (userDoc.exists) {
+                        const userData = userDoc.data();
+                        if (userData.isAdmin === true) {
+                            isAdmin = true;
+                            showAdminTab();
+                            return;
+                        }
+                    }
+
+                    // Also check admins collection for the user ID
+                    try {
+                        const adminDoc = await db.collection('admins').doc(userId).get();
+                        if (adminDoc.exists) {
+                            isAdmin = true;
+                            showAdminTab();
+                            return;
+                        }
+                    } catch (e) {
+                        // Collection might not exist, that's okay
+                    }
+
+                    // Check if there's a global admins list
+                    try {
+                        const adminsListDoc = await db.collection('config').doc('admins').get();
+                        if (adminsListDoc.exists) {
+                            const adminsList = adminsListDoc.data().userIds || [];
+                            if (adminsList.includes(userId)) {
+                                isAdmin = true;
+                                showAdminTab();
+                                return;
+                            }
+                        }
+                    } catch (e) {
+                        // Collection might not exist, that's okay
+                    }
+
+                    // If no admin status found, hide the tab
+                    hideAdminTab();
+                } catch (error) {
+                    console.error('Error checking admin status:', error);
+                    hideAdminTab();
+                }
+            }
+
+            function showAdminTab() {
+                const adminTabButton = document.getElementById('adminTabButton');
+                if (adminTabButton) {
+                    adminTabButton.classList.remove('admin-hidden');
+                }
+            }
+
+            function hideAdminTab() {
+                const adminTabButton = document.getElementById('adminTabButton');
+                if (adminTabButton) {
+                    adminTabButton.classList.add('admin-hidden');
+                }
+                // If admin tab is currently active, switch to overview
+                const adminTab = document.getElementById('admin');
+                if (adminTab && adminTab.classList.contains('active')) {
+                    switchTab('overview');
+                }
+            }
+
+            // Wait for Firebase to be ready, then check admin status
+            function initAdminCheck() {
+                if (typeof firebase !== 'undefined' && typeof db !== 'undefined') {
+                    checkAdminStatus();
+                } else {
+                    // Retry after a short delay
+                    setTimeout(initAdminCheck, 100);
+                }
+            }
+
+            // Start checking when DOM is ready
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', function() {
+                    setTimeout(initAdminCheck, 1000); // Give Firebase time to initialize
+                });
+            } else {
+                setTimeout(initAdminCheck, 1000);
+            }
+
+            // Also check periodically (in case admin status changes)
+            setInterval(checkAdminStatus, 30000); // Check every 30 seconds
+
+            // Helper function to grant admin access (can be called from browser console)
+            window.grantAdminAccess = async function() {
+                try {
+                    const userId = localStorage.getItem('userTrackingId');
+                    if (!userId || typeof db === 'undefined') {
+                        console.error('Firebase not ready or no user ID found');
+                        return;
+                    }
+                    
+                    await db.collection('userTracking').doc(userId).set({
+                        isAdmin: true
+                    }, { merge: true });
+                    
+                    console.log('✅ Admin access granted! Refresh the page to see the admin tab.');
+                    checkAdminStatus();
+                } catch (error) {
+                    console.error('Error granting admin access:', error);
+                }
+            };
+        })();
     </script>
+
+    <!-- Firebase SDK v8 (compatible with script tags) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    
+    <!-- Firebase Configuration -->
+    <script src="firebase-config.js" onerror="console.warn('firebase-config.js not found')"></script>
+    
+    <!-- User Tracking Script -->
+    <script src="user-tracking.js" onerror="console.warn('user-tracking.js not found')"></script>
 </body>
 </html>
 

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🎮 Pong Game 🎮</title>
+    <title>Pong Game</title>
     <style>
         * {
             margin: 0;
@@ -46,6 +46,12 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 1rem 2rem;
+            border-radius: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         }
 
         .player-label {
@@ -81,52 +87,58 @@
             margin: 0.5rem 0;
         }
 
-        .game-over {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.9);
-            padding: 3rem;
-            border-radius: 20px;
+        .game-over-text {
             text-align: center;
-            display: none;
-            z-index: 1000;
-            border: 3px solid white;
+            margin-top: 1rem;
+            font-size: 1.5rem;
+            min-height: 3rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
 
-        .game-over.show {
-            display: block;
-            animation: popIn 0.3s ease-out;
+        .game-over-text.show {
+            animation: fadeIn 0.5s ease-out;
         }
 
-        @keyframes popIn {
+        @keyframes fadeIn {
             0% {
-                transform: translate(-50%, -50%) scale(0.5);
                 opacity: 0;
             }
             100% {
-                transform: translate(-50%, -50%) scale(1);
                 opacity: 1;
             }
         }
 
-        .game-over h2 {
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
+        #startButton {
+            background: linear-gradient(135deg, #4ade80 0%, #16a34a 100%);
+            border: 2px solid white;
+            color: white;
+            padding: 1rem 3rem;
+            font-size: 1.3rem;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            margin-top: 1.5rem;
         }
 
-        .game-over p {
-            font-size: 1.5rem;
-            margin-bottom: 2rem;
+        #startButton:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        #startButton:active {
+            transform: translateY(0);
         }
 
         button {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             border: 2px solid white;
             color: white;
-            padding: 1rem 2rem;
-            font-size: 1.2rem;
+            padding: 0.5rem 1.5rem;
+            font-size: 1rem;
             border-radius: 50px;
             cursor: pointer;
             font-weight: bold;
@@ -141,6 +153,27 @@
 
         button:active {
             transform: translateY(0);
+        }
+
+        .static-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 800px;
+            height: 600px;
+            pointer-events: none;
+            display: none;
+            border-radius: 10px;
+        }
+
+        .static-overlay.show {
+            display: block;
+        }
+
+        .canvas-container {
+            position: relative;
+            display: inline-block;
+            margin: 0 auto;
         }
 
         .difficulty-selector {
@@ -180,7 +213,7 @@
 </head>
 <body>
     <div class="game-container">
-        <h1>🎮 PONG 🎮</h1>
+        <h1>PONG</h1>
         
         <div class="scoreboard">
             <div class="player-score">
@@ -193,7 +226,14 @@
             </div>
         </div>
 
-        <canvas id="pongCanvas" width="800" height="600"></canvas>
+        <div class="canvas-container">
+            <canvas id="pongCanvas" width="800" height="600"></canvas>
+            <canvas id="staticCanvas" class="static-overlay" width="800" height="600"></canvas>
+        </div>
+
+        <div class="game-over-text" id="gameOverText"></div>
+
+        <button id="startButton" onclick="resetGame()">Start Game</button>
 
         <div class="controls">
             <p><strong>Controls:</strong> Move your mouse up and down to control your paddle</p>
@@ -206,22 +246,19 @@
         </div>
     </div>
 
-    <div class="game-over" id="gameOver">
-        <h2 id="winnerText"></h2>
-        <p id="finalScore"></p>
-        <button onclick="resetGame()">Play Again</button>
-    </div>
-
     <script>
         const canvas = document.getElementById('pongCanvas');
         const ctx = canvas.getContext('2d');
+        const staticCanvas = document.getElementById('staticCanvas');
+        const staticCtx = staticCanvas.getContext('2d');
 
         // Game variables
         let difficulty = 'medium';
+        let gameRunning = false;
         const difficultySettings = {
-            easy: { computerSpeed: 3, ballSpeedMultiplier: 0.8 },
-            medium: { computerSpeed: 5, ballSpeedMultiplier: 1 },
-            hard: { computerSpeed: 7, ballSpeedMultiplier: 1.3 }
+            easy: { computerSpeed: 2.5, ballSpeedMultiplier: 0.8, errorMargin: 40 },
+            medium: { computerSpeed: 3.5, ballSpeedMultiplier: 1, errorMargin: 25 },
+            hard: { computerSpeed: 5, ballSpeedMultiplier: 1.2, errorMargin: 10 }
         };
 
         // Paddle properties
@@ -326,20 +363,22 @@
 
         // Update computer paddle (AI)
         function updateComputer() {
-            const computerCenter = computer.y + computer.height / 2;
-            const ballCenter = ball.y;
-            const diff = ballCenter - computerCenter;
-            
-            const computerSpeed = difficultySettings[difficulty].computerSpeed;
-            
-            // Add some randomness to make it beatable
-            const errorMargin = difficulty === 'easy' ? 30 : difficulty === 'medium' ? 15 : 5;
-            
-            if (Math.abs(diff) > errorMargin) {
-                if (diff > 0) {
-                    computer.y += computerSpeed;
-                } else {
-                    computer.y -= computerSpeed;
+            // Only move if ball is coming towards computer
+            if (ball.dx > 0) {
+                const computerCenter = computer.y + computer.height / 2;
+                const ballCenter = ball.y;
+                const diff = ballCenter - computerCenter;
+                
+                const computerSpeed = difficultySettings[difficulty].computerSpeed;
+                const errorMargin = difficultySettings[difficulty].errorMargin;
+                
+                // Add some randomness to make it beatable
+                if (Math.abs(diff) > errorMargin) {
+                    if (diff > 0) {
+                        computer.y += computerSpeed;
+                    } else {
+                        computer.y -= computerSpeed;
+                    }
                 }
             }
 
@@ -437,17 +476,27 @@
         // Check winner
         function checkWinner() {
             if (playerScore >= winningScore) {
-                endGame('🎉 YOU WIN! 🎉', `Final Score: ${playerScore} - ${computerScore}`);
+                endGame('YOU WIN!', `Final Score: ${playerScore} - ${computerScore}`);
             } else if (computerScore >= winningScore) {
-                endGame('💔 COMPUTER WINS 💔', `Final Score: ${playerScore} - ${computerScore}`);
+                endGame('COMPUTER WINS', `Final Score: ${playerScore} - ${computerScore}`);
             }
         }
 
         // End game
         function endGame(winnerText, finalScore) {
-            document.getElementById('winnerText').textContent = winnerText;
-            document.getElementById('finalScore').textContent = finalScore;
-            document.getElementById('gameOver').classList.add('show');
+            gameRunning = false;
+            
+            // Show static effect
+            staticCanvas.classList.add('show');
+            animateStatic();
+            
+            // Show winner text at bottom
+            const gameOverText = document.getElementById('gameOverText');
+            gameOverText.innerHTML = `<strong>${winnerText}</strong><br>${finalScore}`;
+            gameOverText.classList.add('show');
+            
+            // Change button text
+            document.getElementById('startButton').textContent = 'Play Again';
         }
 
         // Reset game
@@ -456,7 +505,21 @@
             computerScore = 0;
             updateScoreboard();
             resetBall();
-            document.getElementById('gameOver').classList.remove('show');
+            
+            // Hide static effect
+            staticCanvas.classList.remove('show');
+            
+            // Clear game over text
+            const gameOverText = document.getElementById('gameOverText');
+            gameOverText.innerHTML = '';
+            gameOverText.classList.remove('show');
+            
+            // Change button text and start game
+            document.getElementById('startButton').textContent = 'Restart Game';
+            
+            // Start the game
+            gameRunning = true;
+            gameLoop();
         }
 
         // Sound effects using Web Audio API
@@ -497,25 +560,51 @@
             // Draw net
             drawNet();
 
-            // Draw paddles
-            drawRect(player.x, player.y, player.width, player.height, '#fff');
-            drawRect(computer.x, computer.y, computer.width, computer.height, '#fff');
+            // Draw paddles - Blue for player, Red for computer
+            drawRect(player.x, player.y, player.width, player.height, '#3b82f6');
+            drawRect(computer.x, computer.y, computer.width, computer.height, '#ef4444');
 
             // Draw ball
             drawCircle(ball.x, ball.y, ball.radius, '#fff');
         }
 
-        // Game loop
-        function gameLoop() {
-            updatePlayer();
-            updateComputer();
-            updateBall();
-            draw();
-            requestAnimationFrame(gameLoop);
+        // Draw static effect
+        function drawStatic() {
+            const imageData = staticCtx.createImageData(staticCanvas.width, staticCanvas.height);
+            const data = imageData.data;
+            
+            for (let i = 0; i < data.length; i += 4) {
+                const value = Math.random() * 255;
+                data[i] = value;     // red
+                data[i + 1] = value; // green
+                data[i + 2] = value; // blue
+                data[i + 3] = 100;   // alpha (semi-transparent)
+            }
+            
+            staticCtx.putImageData(imageData, 0, 0);
         }
 
-        // Start game
-        gameLoop();
+        // Animate static effect
+        function animateStatic() {
+            if (staticCanvas.classList.contains('show')) {
+                drawStatic();
+                requestAnimationFrame(animateStatic);
+            }
+        }
+
+        // Game loop
+        function gameLoop() {
+            if (gameRunning) {
+                updatePlayer();
+                updateComputer();
+                updateBall();
+                draw();
+                requestAnimationFrame(gameLoop);
+            }
+        }
+
+        // Start game on page load (just draw the initial state)
+        draw();
     </script>
 </body>
 </html>
