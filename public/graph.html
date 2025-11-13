@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coordinate Graph Visualizer</title>
+    <script src="https://cdn.jsdelivr.net/npm/mathjs@11.11.0/lib/browser/math.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem;
+            color: white;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .function-menu {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            align-items: center;
+            margin-left: 1rem;
+        }
+
+        .function-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 5px;
+            padding: 0.4rem 0.8rem;
+            color: white;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+
+        .function-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.05);
+        }
+
+        .function-group {
+            display: flex;
+            gap: 0.3rem;
+            align-items: center;
+        }
+
+        .function-group-label {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.7);
+            margin-right: 0.3rem;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .input-section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .input-group {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        label {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            min-width: 300px;
+            padding: 0.8rem 1.2rem;
+            font-size: 1.1rem;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        input[type="text"]:focus {
+            border-color: rgba(255, 255, 255, 0.6);
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        input[type="text"]::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        button {
+            padding: 0.8rem 2rem;
+            font-size: 1.1rem;
+            background: rgba(255, 255, 255, 0.3);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background: rgba(255, 255, 255, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .examples {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .examples strong {
+            color: white;
+        }
+
+        .graphs-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .graph-wrapper {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+
+        .graph-controls {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .control-btn {
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .control-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .graph-title {
+            text-align: center;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            font-weight: bold;
+        }
+
+        .zoom-info {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.8);
+            text-align: center;
+            margin-top: 0.5rem;
+        }
+
+        canvas {
+            width: 100%;
+            height: 500px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 10px;
+            cursor: crosshair;
+        }
+
+        #cartesianCanvas {
+            cursor: grab;
+        }
+
+        #cartesianCanvas.dragging {
+            cursor: grabbing;
+        }
+
+        .polar-canvas-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+        }
+
+        #polarCanvas {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .error-message {
+            background: rgba(255, 0, 0, 0.3);
+            border: 2px solid rgba(255, 0, 0, 0.5);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+            color: white;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        @media (max-width: 1024px) {
+            .graphs-container {
+                grid-template-columns: 1fr;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .input-group {
+                flex-direction: column;
+            }
+
+            input[type="text"] {
+                width: 100%;
+                min-width: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Coordinate Graph Visualizer</h1>
+        
+        <div class="input-section">
+            <div class="input-group">
+                <label for="equation">Equation:</label>
+                <input type="text" id="equation" placeholder="Enter equation (e.g., sin(x), r*cos(theta), sqrt(x))" value="sin(x)">
+                <div class="function-menu">
+                    <div class="function-group">
+                        <span class="function-group-label">Vars:</span>
+                        <button class="function-btn" onclick="insertSymbol('θ')">θ</button>
+                        <button class="function-btn" onclick="insertSymbol('r')">r</button>
+                        <button class="function-btn" onclick="insertSymbol('x')">x</button>
+                        <button class="function-btn" onclick="insertSymbol('π')">π</button>
+                    </div>
+                    <div class="function-group">
+                        <span class="function-group-label">Func:</span>
+                        <button class="function-btn" onclick="insertSymbol('sin(')">sin</button>
+                        <button class="function-btn" onclick="insertSymbol('cos(')">cos</button>
+                        <button class="function-btn" onclick="insertSymbol('tan(')">tan</button>
+                        <button class="function-btn" onclick="insertSymbol('sqrt(')">√</button>
+                        <button class="function-btn" onclick="insertSymbol('log(')">log</button>
+                        <button class="function-btn" onclick="insertSymbol('exp(')">exp</button>
+                        <button class="function-btn" onclick="insertSymbol('abs(')">abs</button>
+                    </div>
+                    <div class="function-group">
+                        <span class="function-group-label">Ops:</span>
+                        <button class="function-btn" onclick="insertSymbol('^')">x²</button>
+                        <button class="function-btn" onclick="insertSymbol('*')">×</button>
+                        <button class="function-btn" onclick="insertSymbol('/')">÷</button>
+                        <button class="function-btn" onclick="insertSymbol('+')">+</button>
+                        <button class="function-btn" onclick="insertSymbol('-')">-</button>
+                        <button class="function-btn" onclick="insertSymbol('(')">(</button>
+                        <button class="function-btn" onclick="insertSymbol(')')">)</button>
+                    </div>
+                </div>
+            </div>
+            <div class="examples">
+                <strong>Examples:</strong> sin(x), cos(x), x^2, sqrt(x), square(x), r*cos(theta), theta^2, sin(theta), exp(x), log(x), abs(x)
+            </div>
+            <div class="error-message" id="errorMessage"></div>
+        </div>
+
+        <div class="graphs-container">
+            <div class="graph-wrapper">
+                <div class="graph-title">Cartesian Coordinates</div>
+                <div class="graph-controls">
+                    <button class="control-btn" onclick="resetZoomCartesian()">Reset View</button>
+                </div>
+                <canvas id="cartesianCanvas"></canvas>
+                <div class="zoom-info" id="cartesianZoomInfo">Click and drag to pan | Scroll to zoom</div>
+            </div>
+            <div class="graph-wrapper">
+                <div class="graph-title">Polar Coordinates</div>
+                <div class="graph-controls">
+                    <button class="control-btn" onclick="resetZoomPolar()">Reset View</button>
+                </div>
+                <div class="polar-canvas-container">
+                    <canvas id="polarCanvas"></canvas>
+                </div>
+                <div class="zoom-info" id="polarZoomInfo">Scroll to zoom</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const cartesianCanvas = document.getElementById('cartesianCanvas');
+        const polarCanvas = document.getElementById('polarCanvas');
+        const equationInput = document.getElementById('equation');
+        const errorMessage = document.getElementById('errorMessage');
+        const cartesianZoomInfo = document.getElementById('cartesianZoomInfo');
+        const polarZoomInfo = document.getElementById('polarZoomInfo');
+
+        // Pan and zoom state
+        let cartesianZoom = 1.0;
+        let cartesianCenterX = 0;
+        let cartesianCenterY = 0;
+        let isDragging = false;
+        let lastMouseX = 0;
+        let lastMouseY = 0;
+        let polarZoom = 1.0;
+
+        // Add custom functions to math.js
+        math.import({
+            square: function(x) {
+                return x * x;
+            }
+        }, { override: true });
+
+        // Set canvas dimensions
+        function setupCanvas(canvas) {
+            if (canvas.id === 'polarCanvas') {
+                // Make polar canvas square based on container width
+                const containerRect = canvas.parentElement.getBoundingClientRect();
+                const size = containerRect.width;
+                canvas.width = size;
+                canvas.height = size;
+            } else {
+                const rect = canvas.getBoundingClientRect();
+                canvas.width = rect.width;
+                canvas.height = 500;
+            }
+        }
+
+        setupCanvas(cartesianCanvas);
+        setupCanvas(polarCanvas);
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            setupCanvas(cartesianCanvas);
+            setupCanvas(polarCanvas);
+            if (equationInput.value) {
+                plotGraph();
+            }
+        });
+
+        // Real-time updates with debouncing
+        let updateTimeout;
+        equationInput.addEventListener('input', () => {
+            clearTimeout(updateTimeout);
+            updateTimeout = setTimeout(() => {
+                plotGraph();
+            }, 300); // 300ms delay
+        });
+
+        // Mouse wheel zoom for cartesian
+        cartesianCanvas.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const rect = cartesianCanvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+            
+            const padding = 60;
+            const plotWidth = cartesianCanvas.width - 2 * padding;
+            const plotHeight = cartesianCanvas.height - 2 * padding;
+            
+            const baseRange = 10 / cartesianZoom;
+            const xMin = cartesianCenterX - baseRange;
+            const xMax = cartesianCenterX + baseRange;
+            const yMin = cartesianCenterY - baseRange;
+            const yMax = cartesianCenterY + baseRange;
+            
+            // Convert mouse position to graph coordinates (point to keep fixed)
+            const graphX = xMin + ((mouseX - padding) / plotWidth) * (xMax - xMin);
+            const graphY = yMax - ((mouseY - padding) / plotHeight) * (yMax - yMin);
+            
+            const factor = e.deltaY > 0 ? 0.9 : 1.1;
+            const oldZoom = cartesianZoom;
+            cartesianZoom *= factor;
+            
+            // Adjust center so the point under mouse stays fixed
+            const newRange = 10 / cartesianZoom;
+            const oldRange = 10 / oldZoom;
+            cartesianCenterX = graphX - ((mouseX - padding) / plotWidth - 0.5) * 2 * newRange;
+            cartesianCenterY = graphY + ((mouseY - padding) / plotHeight - 0.5) * 2 * newRange;
+            
+            plotGraph();
+        });
+
+        // Click and drag panning for cartesian
+        cartesianCanvas.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            cartesianCanvas.classList.add('dragging');
+            lastMouseX = e.clientX;
+            lastMouseY = e.clientY;
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                const rect = cartesianCanvas.getBoundingClientRect();
+                const padding = 60;
+                const plotWidth = cartesianCanvas.width - 2 * padding;
+                const plotHeight = cartesianCanvas.height - 2 * padding;
+                
+                const baseRange = 10 / cartesianZoom;
+                const xRange = 2 * baseRange;
+                const yRange = 2 * baseRange;
+                
+                const deltaX = e.clientX - lastMouseX;
+                const deltaY = e.clientY - lastMouseY;
+                
+                // Convert pixel movement to graph coordinate movement
+                const dx = -(deltaX / plotWidth) * xRange;
+                const dy = (deltaY / plotHeight) * yRange; // Inverted because canvas Y is inverted
+                
+                cartesianCenterX += dx;
+                cartesianCenterY += dy;
+                
+                lastMouseX = e.clientX;
+                lastMouseY = e.clientY;
+                
+                plotGraph();
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (isDragging) {
+                isDragging = false;
+                cartesianCanvas.classList.remove('dragging');
+            }
+        });
+
+        function resetZoomCartesian() {
+            cartesianZoom = 1.0;
+            cartesianCenterX = 0;
+            cartesianCenterY = 0;
+            plotGraph();
+        }
+
+        // Mouse wheel zoom for polar
+        polarCanvas.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const factor = e.deltaY > 0 ? 0.9 : 1.1;
+            polarZoom *= factor;
+            plotGraph();
+        });
+
+        function resetZoomPolar() {
+            polarZoom = 1.0;
+            plotGraph();
+        }
+
+        function insertSymbol(symbol) {
+            const input = equationInput;
+            const start = input.selectionStart;
+            const end = input.selectionEnd;
+            const text = input.value;
+            const before = text.substring(0, start);
+            const after = text.substring(end);
+            
+            input.value = before + symbol + after;
+            input.selectionStart = input.selectionEnd = start + symbol.length;
+            input.focus();
+            
+            // Trigger input event to update graph
+            input.dispatchEvent(new Event('input'));
+        }
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.classList.add('show');
+            setTimeout(() => {
+                errorMessage.classList.remove('show');
+            }, 5000);
+        }
+
+        // Preprocess equation to handle various function names and variables
+        function preprocessEquation(equation) {
+            // Replace common function names
+            let processed = equation
+                .replace(/\bsqrt\b/g, 'sqrt')
+                .replace(/\bsquare\b/g, 'square')
+                .replace(/\btheta\b/g, 'theta')
+                .replace(/\bπ\b/g, 'pi')
+                .replace(/\bPI\b/g, 'pi');
+            
+            return processed;
+        }
+
+        // Detect which variables are used in the equation
+        function detectVariables(equation) {
+            const hasX = /\bx\b/.test(equation);
+            const hasY = /\by\b/.test(equation);
+            const hasR = /\br\b/.test(equation);
+            const hasTheta = /\btheta\b/.test(equation);
+            
+            return { hasX, hasY, hasR, hasTheta };
+        }
+
+        function plotGraph() {
+            const equation = equationInput.value.trim();
+            if (!equation) {
+                return;
+            }
+
+            try {
+                const processed = preprocessEquation(equation);
+                const vars = detectVariables(processed);
+                
+                // Test if the equation is valid
+                const testVals = {
+                    x: 1,
+                    y: 1,
+                    r: 1,
+                    theta: 1
+                };
+                const testExpr = processed
+                    .replace(/\bx\b/g, `(${testVals.x})`)
+                    .replace(/\by\b/g, `(${testVals.y})`)
+                    .replace(/\br\b/g, `(${testVals.r})`)
+                    .replace(/\btheta\b/g, `(${testVals.theta})`);
+                math.evaluate(testExpr);
+
+                plotCartesian(processed, vars);
+                plotPolar(processed, vars);
+                errorMessage.classList.remove('show');
+            } catch (error) {
+                showError('Invalid equation: ' + error.message);
+            }
+        }
+
+        function plotCartesian(equation, vars) {
+            const ctx = cartesianCanvas.getContext('2d');
+            const width = cartesianCanvas.width;
+            const height = cartesianCanvas.height;
+            const padding = 60;
+            const plotWidth = width - 2 * padding;
+            const plotHeight = height - 2 * padding;
+
+            // Clear canvas
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, width, height);
+
+            // Set up coordinate system with zoom
+            const baseRange = 10 / cartesianZoom;
+            const xMin = cartesianCenterX - baseRange;
+            const xMax = cartesianCenterX + baseRange;
+            const xRange = xMax - xMin;
+            const yMin = cartesianCenterY - baseRange;
+            const yMax = cartesianCenterY + baseRange;
+            const yRange = yMax - yMin;
+
+            // Update zoom info
+            cartesianZoomInfo.textContent = `Zoom: ${cartesianZoom.toFixed(2)}x | Click and drag to pan`;
+
+            // Draw grid
+            ctx.strokeStyle = '#e0e0e0';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= 20; i++) {
+                const x = padding + (i / 20) * plotWidth;
+                ctx.beginPath();
+                ctx.moveTo(x, padding);
+                ctx.lineTo(x, height - padding);
+                ctx.stroke();
+            }
+            for (let i = 0; i <= 20; i++) {
+                const y = padding + (i / 20) * plotHeight;
+                ctx.beginPath();
+                ctx.moveTo(padding, y);
+                ctx.lineTo(width - padding, y);
+                ctx.stroke();
+            }
+
+            // Draw axes
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            const xAxisY = padding + ((0 - yMin) / yRange) * plotHeight;
+            const yAxisX = padding + ((0 - xMin) / xRange) * plotWidth;
+
+            // X-axis
+            ctx.beginPath();
+            ctx.moveTo(padding, xAxisY);
+            ctx.lineTo(width - padding, xAxisY);
+            ctx.stroke();
+
+            // Y-axis
+            ctx.beginPath();
+            ctx.moveTo(yAxisX, padding);
+            ctx.lineTo(yAxisX, height - padding);
+            ctx.stroke();
+
+            // Draw axis labels
+            ctx.fillStyle = '#333';
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'center';
+            const xStep = Math.max(1, Math.ceil((xMax - xMin) / 10));
+            for (let i = Math.ceil(xMin / xStep) * xStep; i <= xMax; i += xStep) {
+                if (Math.abs(i) > 0.1) {
+                    const x = padding + ((i - xMin) / xRange) * plotWidth;
+                    ctx.fillText(i.toFixed(1), x, xAxisY + 20);
+                }
+            }
+            ctx.textAlign = 'right';
+            const yStep = Math.max(1, Math.ceil((yMax - yMin) / 10));
+            for (let i = Math.ceil(yMin / yStep) * yStep; i <= yMax; i += yStep) {
+                if (Math.abs(i) > 0.1) {
+                    const y = padding + ((i - yMin) / yRange) * plotHeight;
+                    ctx.fillText(i.toFixed(1), yAxisX - 10, y + 4);
+                }
+            }
+
+            // Always use θ for x-axis and r for y-axis
+            const xLabel = 'θ';
+            const yLabel = 'r';
+
+            // Draw axis labels
+            ctx.fillStyle = '#333';
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(xLabel, width - padding - 20, xAxisY + 35);
+            ctx.textAlign = 'right';
+            ctx.fillText(yLabel, yAxisX - 25, padding + 15);
+
+            // Plot the function
+            ctx.strokeStyle = '#667eea';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+
+            let firstPoint = true;
+            const step = (xMax - xMin) / (plotWidth * 2); // Adaptive step size
+            let lastY = null;
+
+            // Always iterate over theta for cartesian (since we're plotting r vs θ)
+            // But if only x is present, use x
+            let iterateVar = 'theta';
+            if (vars.hasX && !vars.hasTheta && !vars.hasR) {
+                iterateVar = 'x';
+            }
+
+            const range = (xMax - xMin);
+            const start = xMin;
+            const end = xMax;
+
+            for (let val = start; val <= end; val += step) {
+                try {
+                    let expr = equation;
+                    let y;
+                    
+                    // Always plot as r = f(θ) in cartesian (r on y-axis, θ on x-axis)
+                    if (iterateVar === 'theta') {
+                        const theta = val;
+                        // Handle equations like r = f(theta)
+                        if (equation.includes('=')) {
+                            const parts = equation.split('=');
+                            if (parts.length === 2) {
+                                const rightSide = parts[1].trim();
+                                expr = rightSide.replace(/\btheta\b/g, `(${theta})`);
+                            }
+                        } else {
+                            // Replace theta, treat result as r
+                            // Also handle x as theta for backward compatibility
+                            expr = equation.replace(/\btheta\b/g, `(${theta})`).replace(/\bx\b/g, `(${theta})`);
+                        }
+                        y = math.evaluate(expr);
+                    } else {
+                        // Fallback to x if only x is present (treat as r = f(x) where x is theta)
+                        const x = val;
+                        expr = equation.replace(/\bx\b/g, `(${x})`);
+                        y = math.evaluate(expr);
+                    }
+
+                    // Handle complex numbers
+                    if (typeof y === 'object' && y.re !== undefined) {
+                        y = y.re;
+                    }
+
+                    // Skip if y is out of range or invalid
+                    if (isNaN(y) || !isFinite(y) || y < yMin - baseRange || y > yMax + baseRange) {
+                        firstPoint = true;
+                        lastY = null;
+                        continue;
+                    }
+
+                    const plotX = padding + ((val - xMin) / xRange) * plotWidth;
+                    const plotY = padding + ((yMax - y) / yRange) * plotHeight;
+
+                    if (firstPoint) {
+                        ctx.moveTo(plotX, plotY);
+                        firstPoint = false;
+                    } else {
+                        // Check for discontinuities
+                        if (lastY !== null && Math.abs(y - lastY) > baseRange * 2) {
+                            ctx.moveTo(plotX, plotY);
+                        } else {
+                            ctx.lineTo(plotX, plotY);
+                        }
+                    }
+                    lastY = y;
+                } catch (error) {
+                    firstPoint = true;
+                    lastY = null;
+                }
+            }
+
+            ctx.stroke();
+        }
+
+        function plotPolar(equation, vars) {
+            const ctx = polarCanvas.getContext('2d');
+            const width = polarCanvas.width;
+            const height = polarCanvas.height;
+            const centerX = width / 2;
+            const centerY = height / 2;
+            const polarPadding = 10;
+            const baseRadius = Math.min(width, height) / 2 - polarPadding;
+
+            // Find maximum r value to scale appropriately (extend to infinite)
+            let maxR = 5 / polarZoom;
+            const sampleStep = 0.01;
+            const sampleThetaMax = 4 * Math.PI;
+            
+            // Sample to find max r
+            for (let theta = 0; theta <= sampleThetaMax; theta += sampleStep * 10) {
+                try {
+                    let expr = equation;
+                    if (vars.hasR && vars.hasTheta) {
+                        if (equation.includes('=')) {
+                            const parts = equation.split('=');
+                            if (parts.length === 2) {
+                                const rightSide = parts[1].trim();
+                                expr = rightSide.replace(/\btheta\b/g, `(${theta})`);
+                            }
+                        } else {
+                            expr = equation.replace(/\btheta\b/g, `(${theta})`);
+                        }
+                    } else if (vars.hasX && !vars.hasTheta) {
+                        expr = equation.replace(/\bx\b/g, `(${theta})`);
+                    } else if (vars.hasTheta) {
+                        expr = equation.replace(/\btheta\b/g, `(${theta})`);
+                    } else {
+                        expr = equation.replace(/\bx\b/g, `(${theta})`);
+                    }
+                    
+                    let r = math.evaluate(expr);
+                    if (typeof r === 'object' && r.re !== undefined) {
+                        r = r.re;
+                    }
+                    if (!isNaN(r) && isFinite(r)) {
+                        maxR = Math.max(maxR, Math.abs(r) * 1.1);
+                    }
+                } catch (e) {}
+            }
+            
+            // Apply zoom
+            maxR = maxR / polarZoom;
+            const radius = baseRadius;
+
+            // Clear canvas
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, width, height);
+
+            // Draw concentric circles (adaptive based on maxR, similar to Desmos)
+            ctx.strokeStyle = '#e0e0e0';
+            ctx.lineWidth = 1;
+            
+            // Calculate step size based on zoom level (smaller steps when zoomed in)
+            const baseStep = Math.max(0.5, 5 / polarZoom);
+            const numCircles = Math.min(10, Math.ceil(maxR / baseStep));
+            const circleStep = maxR / numCircles;
+            
+            for (let i = 1; i <= numCircles; i++) {
+                const r = i * circleStep;
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, (r / maxR) * radius, 0, 2 * Math.PI);
+                ctx.stroke();
+            }
+
+            // Draw radial lines
+            for (let angle = 0; angle < 360; angle += 30) {
+                const rad = (angle * Math.PI) / 180;
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.lineTo(
+                    centerX + radius * Math.cos(rad),
+                    centerY + radius * Math.sin(rad)
+                );
+                ctx.stroke();
+            }
+
+            // Draw axes
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(centerX - radius, centerY);
+            ctx.lineTo(centerX + radius, centerY);
+            ctx.moveTo(centerX, centerY - radius);
+            ctx.lineTo(centerX, centerY + radius);
+            ctx.stroke();
+
+            // Draw axis labels
+            ctx.fillStyle = '#333';
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('0', centerX, centerY + 15);
+            for (let i = 1; i <= numCircles; i++) {
+                const r = i * circleStep;
+                const label = r < 10 ? r.toFixed(1) : r.toFixed(0);
+                ctx.fillText(label, centerX + (r / maxR) * radius + 15, centerY + 4);
+            }
+            
+            // Update zoom info
+            polarZoomInfo.textContent = `Zoom: ${polarZoom.toFixed(2)}x`;
+
+            // Plot the polar function
+            ctx.strokeStyle = '#764ba2';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+
+            let firstPoint = true;
+            const step = 0.01;
+            const thetaMax = 4 * Math.PI; // Plot multiple rotations for better visualization
+
+            for (let theta = 0; theta <= thetaMax; theta += step) {
+                try {
+                    let expr = equation;
+                    let r;
+
+                    // Handle different variable cases
+                    if (vars.hasR && vars.hasTheta) {
+                        // r = f(theta) - replace theta, keep r as result
+                        if (equation.includes('=')) {
+                            const parts = equation.split('=');
+                            if (parts.length === 2) {
+                                const rightSide = parts[1].trim();
+                                expr = rightSide.replace(/\btheta\b/g, `(${theta})`);
+                            }
+                        } else {
+                            // Assume r is the result
+                            expr = equation.replace(/\btheta\b/g, `(${theta})`);
+                        }
+                        r = math.evaluate(expr);
+                    } else if (vars.hasX && !vars.hasTheta) {
+                        // Treat x as theta
+                        expr = equation.replace(/\bx\b/g, `(${theta})`);
+                        r = math.evaluate(expr);
+                    } else if (vars.hasTheta) {
+                        // r = f(theta)
+                        expr = equation.replace(/\btheta\b/g, `(${theta})`);
+                        r = math.evaluate(expr);
+                    } else {
+                        // Default: treat x as theta
+                        expr = equation.replace(/\bx\b/g, `(${theta})`);
+                        r = math.evaluate(expr);
+                    }
+
+                    // Handle complex numbers
+                    if (typeof r === 'object' && r.re !== undefined) {
+                        r = r.re;
+                    }
+
+                    // Skip if r is invalid
+                    if (isNaN(r) || !isFinite(r)) {
+                        firstPoint = true;
+                        continue;
+                    }
+
+                    // Convert polar to cartesian
+                    // Note: Negative r means we go in the opposite direction
+                    const x = r * Math.cos(theta);
+                    const y = r * Math.sin(theta);
+
+                    // Scale to canvas coordinates (extend to infinite range)
+                    const plotX = centerX + (x / maxR) * radius;
+                    const plotY = centerY - (y / maxR) * radius; // Negative because canvas Y is inverted
+
+                    // Check bounds
+                    if (plotX >= 0 && plotX <= width && plotY >= 0 && plotY <= height) {
+                        if (firstPoint) {
+                            ctx.moveTo(plotX, plotY);
+                            firstPoint = false;
+                        } else {
+                            ctx.lineTo(plotX, plotY);
+                        }
+                    } else {
+                        firstPoint = true;
+                    }
+                } catch (error) {
+                    firstPoint = true;
+                }
+            }
+
+            ctx.stroke();
+        }
+
+        // Plot default equation on load
+        window.addEventListener('load', () => {
+            plotGraph();
+        });
+    </script>
+</body>
+</html>
+
