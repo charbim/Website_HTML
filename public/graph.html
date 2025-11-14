@@ -253,6 +253,138 @@
                 width: 100%;
                 min-width: auto;
             }
+            
+            #rangeSection .input-group {
+                grid-template-columns: 1fr 1fr !important;
+            }
+        }
+        
+        @media (max-width: 600px) {
+            #rangeSection .input-group {
+                grid-template-columns: 1fr !important;
+            }
+        }
+
+        .slider-section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .slider-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .slider-mode-toggle {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .mode-btn {
+            padding: 0.6rem 1.2rem;
+            font-size: 0.95rem;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .mode-btn.active {
+            background: rgba(255, 255, 255, 0.4);
+            border-color: rgba(255, 255, 255, 0.6);
+            font-weight: bold;
+        }
+
+        .mode-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .slider-range-inputs {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .slider-range-inputs input[type="number"] {
+            width: 120px;
+            padding: 0.6rem;
+            font-size: 1rem;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .slider-range-inputs label {
+            font-size: 0.9rem;
+            margin-right: 0.3rem;
+        }
+
+        .slider-container {
+            margin-top: 1rem;
+        }
+
+        .slider-wrapper {
+            position: relative;
+            margin: 1rem 0;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.3);
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .slider-value {
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-top: 0.5rem;
+            color: white;
+        }
+
+        .slider-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.8);
+            margin-top: 0.3rem;
         }
     </style>
 </head>
@@ -264,6 +396,7 @@
             <div class="input-group">
                 <label for="equation">Equation:</label>
                 <input type="text" id="equation" placeholder="Enter equation (e.g., sin(x), r*cos(theta), sqrt(x))" value="sin(x)">
+                <button onclick="toggleRangeSection()" style="padding: 0.8rem 1.5rem; font-size: 1rem; margin-left: 0.5rem;">Adjust Range</button>
                 <div class="function-menu">
                     <div class="function-group">
                         <span class="function-group-label">Vars:</span>
@@ -298,6 +431,63 @@
                 <strong>Examples:</strong> sin(x), cos(x), x^2, sqrt(x), square(x), r*cos(theta), theta^2, sin(theta), exp(x), log(x), abs(x)
             </div>
             <div class="error-message" id="errorMessage"></div>
+        </div>
+
+        <div class="input-section" id="rangeSection" style="display: none;">
+            <div style="margin-bottom: 1rem;">
+                <h3 style="font-size: 1.3rem; margin-bottom: 0.5rem;">Adjust Range</h3>
+                <p style="font-size: 0.9rem; color: rgba(255, 255, 255, 0.8); margin-bottom: 1rem;">
+                    Manually set the bounds for both graphs. Leave empty to use auto-detected range.
+                </p>
+            </div>
+            <div class="input-group" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem;">
+                <div>
+                    <label for="xMin" style="font-size: 0.9rem; display: block; margin-bottom: 0.3rem;">θ Min:</label>
+                    <input type="number" id="xMin" placeholder="Auto" step="any" style="width: 100%; padding: 0.6rem; font-size: 1rem;">
+                </div>
+                <div>
+                    <label for="xMax" style="font-size: 0.9rem; display: block; margin-bottom: 0.3rem;">θ Max:</label>
+                    <input type="number" id="xMax" placeholder="Auto" step="any" style="width: 100%; padding: 0.6rem; font-size: 1rem;">
+                </div>
+                <div>
+                    <label for="yMin" style="font-size: 0.9rem; display: block; margin-bottom: 0.3rem;">r Min:</label>
+                    <input type="number" id="yMin" placeholder="Auto" step="any" style="width: 100%; padding: 0.6rem; font-size: 1rem;">
+                </div>
+                <div>
+                    <label for="yMax" style="font-size: 0.9rem; display: block; margin-bottom: 0.3rem;">r Max:</label>
+                    <input type="number" id="yMax" placeholder="Auto" step="any" style="width: 100%; padding: 0.6rem; font-size: 1rem;">
+                </div>
+            </div>
+            <div style="margin-top: 1rem; display: flex; gap: 0.5rem;">
+                <button onclick="resetRangeToAuto()" style="padding: 0.6rem 1.5rem; font-size: 0.95rem;">Reset to Auto</button>
+                <button onclick="toggleRangeSection()" style="padding: 0.6rem 1.5rem; font-size: 0.95rem;">Hide Range Controls</button>
+            </div>
+        </div>
+
+        <div class="slider-section" id="sliderSection">
+            <div style="margin-bottom: 1rem;">
+                <h3 style="font-size: 1.3rem; margin-bottom: 0.5rem;">Theta Slider</h3>
+                <p style="font-size: 0.9rem; color: rgba(255, 255, 255, 0.8); margin-bottom: 1rem;">
+                    Move the slider to see the point on both graphs. Choose between pre-drawn mode (dot travels) or drawing mode (graph draws as you move).
+                </p>
+            </div>
+            <div class="slider-controls">
+                <div class="slider-mode-toggle">
+                    <span style="font-size: 0.95rem; margin-right: 0.5rem;">Mode:</span>
+                    <button class="mode-btn active" id="modePreDrawn" onclick="setSliderMode('preDrawn')">Pre-drawn</button>
+                    <button class="mode-btn" id="modeDrawing" onclick="setSliderMode('drawing')">Drawing</button>
+                </div>
+            </div>
+            <div class="slider-container">
+                <div class="slider-wrapper">
+                    <input type="range" id="thetaSlider" min="0" max="100" value="0" step="0.01">
+                    <div class="slider-value" id="sliderValue">θ = 0.00</div>
+                    <div class="slider-info" style="display: flex; justify-content: space-between; gap: 1rem; margin-top: 0.25rem;">
+                        <span id="sliderMinLabel" style="cursor: pointer;" title="Double-click to edit">Min: 0.00</span>
+                        <span id="sliderMaxLabel" style="cursor: pointer;" title="Double-click to edit">Max: 0.00</span>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="graphs-container">
@@ -338,6 +528,19 @@
         let lastMouseX = 0;
         let lastMouseY = 0;
         let polarZoom = 1.0;
+        
+        // Manual range bounds (null means auto)
+        let manualXMin = null;
+        let manualXMax = null;
+        let manualYMin = null;
+        let manualYMax = null;
+
+        // Slider state
+        let sliderMode = 'preDrawn'; // 'preDrawn' or 'drawing'
+        let currentTheta = 0;
+        let sliderMin = null; // null means use manualXMin or auto
+        let sliderMax = null; // null means use manualXMax or auto
+        let sliderTheta = 0; // Current slider theta value
 
         // Add custom functions to math.js
         math.import({
@@ -378,6 +581,12 @@
         equationInput.addEventListener('input', () => {
             clearTimeout(updateTimeout);
             updateTimeout = setTimeout(() => {
+                // Auto-detect periodicity and set range
+                const equation = equationInput.value.trim();
+                if (equation) {
+                    autoSetRange(equation);
+                }
+                updateSliderBounds();
                 plotGraph();
             }, 300); // 300ms delay
         });
@@ -440,10 +649,10 @@
                 
                 // Convert pixel movement to graph coordinate movement
                 const dx = -(deltaX / plotWidth) * xRange;
-                const dy = (deltaY / plotHeight) * yRange; // Inverted because canvas Y is inverted
+                const dy = (deltaY / plotHeight) * yRange;
                 
                 cartesianCenterX += dx;
-                cartesianCenterY += dy;
+                cartesianCenterY -= dy; // drag down -> content down
                 
                 lastMouseX = e.clientX;
                 lastMouseY = e.clientY;
@@ -463,7 +672,9 @@
             cartesianZoom = 1.0;
             cartesianCenterX = 0;
             cartesianCenterY = 0;
+            polarZoom = 1.0; // Reset polar zoom to maintain sync
             plotGraph();
+            updateRangeInputsFromView();
         }
 
         // Mouse wheel zoom for polar
@@ -495,6 +706,169 @@
             input.dispatchEvent(new Event('input'));
         }
 
+        // Detect periodicity and calculate appropriate range
+        function detectPeriodicity(equation) {
+            const processed = preprocessEquation(equation);
+            const hasSin = /\bsin\b/.test(processed);
+            const hasCos = /\bcos\b/.test(processed);
+            const hasTan = /\btan\b/.test(processed);
+            
+            if (hasSin || hasCos) {
+                // sin and cos have period 2π
+                return { period: 2 * Math.PI, periods: 1 };
+            } else if (hasTan) {
+                // tan has period π
+                return { period: Math.PI, periods: 1 };
+            }
+            
+            return null; // No periodicity detected
+        }
+
+        // Compute current view bounds (ignores manual fields; view is driven by zoom/center)
+        function getViewBounds() {
+            const baseRange = 10 / cartesianZoom;
+            return {
+                xMin: cartesianCenterX - baseRange,
+                xMax: cartesianCenterX + baseRange,
+                yMin: cartesianCenterY - baseRange,
+                yMax: cartesianCenterY + baseRange
+            };
+        }
+
+        // Apply view from explicit bounds; keeps graph as the source of truth
+        function setViewFromRange(xMin, xMax, yMin, yMax) {
+            if ([xMin, xMax, yMin, yMax].some(v => typeof v !== 'number' || !isFinite(v))) {
+                return;
+            }
+            const centerX = (xMin + xMax) / 2;
+            const centerY = (yMin + yMax) / 2;
+            const halfX = Math.abs(xMax - xMin) / 2;
+            const halfY = Math.abs(yMax - yMin) / 2;
+            const desiredBaseRange = Math.max(halfX, halfY, 0.0001);
+            cartesianCenterX = centerX;
+            cartesianCenterY = centerY;
+            cartesianZoom = 10 / desiredBaseRange;
+            // Clear any manual overrides; view is authoritative
+            manualXMin = null;
+            manualXMax = null;
+            manualYMin = null;
+            manualYMax = null;
+            plotGraph();
+        }
+
+        // Keep range inputs in sync with current view unless the user is actively editing
+        let isEditingRangeInput = false;
+        function updateRangeInputsFromView() {
+            const xMinInput = document.getElementById('xMin');
+            const xMaxInput = document.getElementById('xMax');
+            const yMinInput = document.getElementById('yMin');
+            const yMaxInput = document.getElementById('yMax');
+            if (!xMinInput || !xMaxInput || !yMinInput || !yMaxInput) return;
+            if (isEditingRangeInput) return;
+            const { xMin, xMax, yMin, yMax } = getViewBounds();
+            xMinInput.value = xMin.toFixed(3);
+            xMaxInput.value = xMax.toFixed(3);
+            yMinInput.value = yMin.toFixed(3);
+            yMaxInput.value = yMax.toFixed(3);
+        }
+
+        // Auto-set initial view range based on periodicity (non-intrusive; does not show UI)
+        function autoSetRange(equation) {
+            if (!equation || !equation.trim()) return;
+            try {
+                const processed = preprocessEquation(equation);
+                const periodicity = detectPeriodicity(processed);
+                if (!periodicity) return;
+                const { period } = periodicity;
+                const thetaMin = 0;
+                const thetaMax = period;
+
+                // Sample r over theta range to estimate y bounds
+                const sampleStep = 0.02;
+                let minR = Infinity;
+                let maxR = -Infinity;
+                let evalExpr = processed;
+                if (processed.includes('=')) {
+                    const parts = processed.split('=');
+                    if (parts.length === 2) {
+                        evalExpr = parts[1].trim();
+                    }
+                }
+                for (let theta = thetaMin; theta <= thetaMax; theta += sampleStep) {
+                    try {
+                        const expr = evalExpr.replace(/\btheta\b/g, `(${theta})`).replace(/\bx\b/g, `(${theta})`);
+                        let r = math.evaluate(expr);
+                        if (typeof r === 'object' && r.re !== undefined) r = r.re;
+                        if (!isNaN(r) && isFinite(r)) {
+                            minR = Math.min(minR, r);
+                            maxR = Math.max(maxR, r);
+                        }
+                    } catch (e) {}
+                }
+                if (!isFinite(minR) || !isFinite(maxR)) {
+                    minR = -10;
+                    maxR = 10;
+                }
+                const padding = Math.max((maxR - minR) * 0.1, 0.1);
+                setViewFromRange(thetaMin, thetaMax, minR - padding, maxR + padding);
+                updateRangeInputsFromView();
+            } catch (e) {
+                // Silent fail
+            }
+        }
+
+        function toggleRangeSection() {
+            const section = document.getElementById('rangeSection');
+            if (section.style.display === 'none') {
+                section.style.display = 'block';
+                // Pre-fill with current view values when opening
+                updateRangeInputsFromView();
+            } else {
+                section.style.display = 'none';
+            }
+        }
+
+        function resetRangeToAuto() {
+            manualXMin = null;
+            manualXMax = null;
+            manualYMin = null;
+            manualYMax = null;
+            
+            updateRangeInputsFromView();
+            
+            plotGraph();
+        }
+
+        // Add event listeners for range inputs (setup after DOM is ready)
+        function setupRangeInputListeners() {
+            const rangeInputs = ['xMin', 'xMax', 'yMin', 'yMax'];
+            rangeInputs.forEach(id => {
+                const input = document.getElementById(id);
+                if (input) {
+                    input.addEventListener('focus', () => { isEditingRangeInput = true; });
+                    input.addEventListener('blur', () => { isEditingRangeInput = false; });
+                    let updateTimeout;
+                    input.addEventListener('input', () => {
+                        clearTimeout(updateTimeout);
+                        updateTimeout = setTimeout(() => {
+                            // Read all inputs and apply view
+                            const bounds = getViewBounds();
+                            const xMinInput = parseFloat(document.getElementById('xMin').value);
+                            const xMaxInput = parseFloat(document.getElementById('xMax').value);
+                            const yMinInput = parseFloat(document.getElementById('yMin').value);
+                            const yMaxInput = parseFloat(document.getElementById('yMax').value);
+                            const xMin = isNaN(xMinInput) ? bounds.xMin : xMinInput;
+                            const xMax = isNaN(xMaxInput) ? bounds.xMax : xMaxInput;
+                            const yMin = isNaN(yMinInput) ? bounds.yMin : yMinInput;
+                            const yMax = isNaN(yMaxInput) ? bounds.yMax : yMaxInput;
+                            setViewFromRange(xMin, xMax, yMin, yMax);
+                            updateRangeInputsFromView();
+                        }, 300);
+                    });
+                }
+            });
+        }
+
         function showError(message) {
             errorMessage.textContent = message;
             errorMessage.classList.add('show');
@@ -509,21 +883,23 @@
             let processed = equation
                 .replace(/\bsqrt\b/g, 'sqrt')
                 .replace(/\bsquare\b/g, 'square')
+                .replace(/θ/g, 'theta')
                 .replace(/\btheta\b/g, 'theta')
                 .replace(/\bπ\b/g, 'pi')
-                .replace(/\bPI\b/g, 'pi');
+                .replace(/\bPI\b/g, 'pi')
+                // Treat x as theta and y as r (canonicalize variables)
+                .replace(/\bx\b/g, 'theta')
+                .replace(/\by\b/g, 'r');
             
             return processed;
         }
 
         // Detect which variables are used in the equation
         function detectVariables(equation) {
-            const hasX = /\bx\b/.test(equation);
-            const hasY = /\by\b/.test(equation);
             const hasR = /\br\b/.test(equation);
             const hasTheta = /\btheta\b/.test(equation);
-            
-            return { hasX, hasY, hasR, hasTheta };
+            // Canonical variables only
+            return { hasX: false, hasY: false, hasR, hasTheta };
         }
 
         function plotGraph() {
@@ -535,27 +911,84 @@
             try {
                 const processed = preprocessEquation(equation);
                 const vars = detectVariables(processed);
-                
-                // Test if the equation is valid
-                const testVals = {
-                    x: 1,
-                    y: 1,
-                    r: 1,
-                    theta: 1
-                };
-                const testExpr = processed
-                    .replace(/\bx\b/g, `(${testVals.x})`)
-                    .replace(/\by\b/g, `(${testVals.y})`)
-                    .replace(/\br\b/g, `(${testVals.r})`)
-                    .replace(/\btheta\b/g, `(${testVals.theta})`);
+
+                // If an equality is present, require the left side to include r (or y before canonicalization)
+                let evalExpr = processed;
+                if (processed.includes('=')) {
+                    const parts = processed.split('=');
+                    const lhs = parts[0].trim();
+                    const rhs = parts.slice(1).join('=').trim();
+                    if (!/\br\b/.test(lhs)) {
+                        throw new Error("When using '=', put r on the left, e.g., r = f(theta)");
+                    }
+                    evalExpr = rhs;
+                }
+
+                // Test evaluate only the RHS expression
+                const testExpr = evalExpr
+                    .replace(/\br\b/g, '(1)')
+                    .replace(/\btheta\b/g, '(1)');
                 math.evaluate(testExpr);
 
                 plotCartesian(processed, vars);
                 plotPolar(processed, vars);
                 errorMessage.classList.remove('show');
+                // Keep range inputs synced with view
+                updateRangeInputsFromView();
             } catch (error) {
                 showError('Invalid equation: ' + error.message);
             }
+        }
+
+        // Quick visibility check: does the cartesian function intersect current viewport?
+        function cartesianFunctionIntersectsViewport(equation, vars, xMin, xMax, yMin, yMax) {
+            // Decide which variable drives the horizontal axis (θ by default, fallback to x)
+            let iterateVar = 'theta';
+            if (vars.hasX && !vars.hasTheta && !vars.hasR) {
+                iterateVar = 'x';
+            }
+
+            const samples = 256; // coarse sampling for a fast visibility test
+            const step = (xMax - xMin) / samples;
+
+            for (let i = 0; i <= samples; i++) {
+                const val = xMin + i * step;
+                try {
+                    let expr = equation;
+                    let y;
+
+                    if (iterateVar === 'theta') {
+                        const theta = val;
+                        if (equation.includes('=')) {
+                            const parts = equation.split('=');
+                            if (parts.length === 2) {
+                                const rightSide = parts[1].trim();
+                                expr = rightSide.replace(/\btheta\b/g, `(${theta})`);
+                            }
+                        } else {
+                            // Treat result as r, allow x as alias for theta
+                            expr = equation.replace(/\btheta\b/g, `(${theta})`).replace(/\bx\b/g, `(${theta})`);
+                        }
+                        y = math.evaluate(expr);
+                    } else {
+                        const x = val;
+                        expr = equation.replace(/\bx\b/g, `(${x})`);
+                        y = math.evaluate(expr);
+                    }
+
+                    if (typeof y === 'object' && y.re !== undefined) {
+                        y = y.re;
+                    }
+
+                    if (!isNaN(y) && isFinite(y) && y >= yMin && y <= yMax) {
+                        return true; // intersects the visible y-range
+                    }
+                } catch (e) {
+                    // ignore individual evaluation errors during visibility sampling
+                }
+            }
+
+            return false;
         }
 
         function plotCartesian(equation, vars) {
@@ -570,41 +1003,118 @@
             ctx.fillStyle = 'white';
             ctx.fillRect(0, 0, width, height);
 
-            // Set up coordinate system with zoom
-            const baseRange = 10 / cartesianZoom;
-            const xMin = cartesianCenterX - baseRange;
-            const xMax = cartesianCenterX + baseRange;
+            // Set up coordinate system from view (zoom + center drive the range)
+            const baseRangeView = 10 / cartesianZoom;
+            const xMin = cartesianCenterX - baseRangeView;
+            const xMax = cartesianCenterX + baseRangeView;
+            const yMin = cartesianCenterY - baseRangeView;
+            const yMax = cartesianCenterY + baseRangeView;
+            
             const xRange = xMax - xMin;
-            const yMin = cartesianCenterY - baseRange;
-            const yMax = cartesianCenterY + baseRange;
             const yRange = yMax - yMin;
+            // Provide a consistent baseRange for thresholds/label logic
+            const baseRange = Math.max(xRange, yRange) / 2;
 
             // Update zoom info
             cartesianZoomInfo.textContent = `Zoom: ${cartesianZoom.toFixed(2)}x | Click and drag to pan`;
 
-            // Draw grid
+            // Draw grid (world-aligned with nice steps)
             ctx.strokeStyle = '#e0e0e0';
             ctx.lineWidth = 1;
-            for (let i = 0; i <= 20; i++) {
-                const x = padding + (i / 20) * plotWidth;
+
+            function niceStepForRange(range) {
+                const targetLines = 10;
+                const rough = range / targetLines;
+                if (rough <= 0) return 1;
+                
+                const pow10 = Math.pow(10, Math.floor(Math.log10(Math.abs(rough))));
+                const n = Math.abs(rough) / pow10;
+                let nice;
+                
+                // Gradual scaling: prefer larger steps, scale down slowly
+                // 10, 5, 2, 1, 0.5, 0.2, 0.1, etc.
+                if (n > 7) nice = 10;
+                else if (n > 3) nice = 5;
+                else if (n > 1.5) nice = 2;
+                else if (n > 0.7) nice = 1;
+                else if (n > 0.35) nice = 0.5;
+                else if (n > 0.15) nice = 0.2;
+                else if (n > 0.07) nice = 0.1;
+                else if (n > 0.035) nice = 0.05;
+                else if (n > 0.015) nice = 0.02;
+                else nice = 0.01;
+                
+                return nice * pow10;
+            }
+
+            const gridXStep = niceStepForRange(xRange);
+            const gridYStep = niceStepForRange(yRange);
+            
+            // Check if we'll be showing decimals
+            const defaultRange = 10;
+            const effectiveZoom = defaultRange / baseRange;
+            const willShowXDecimals = (effectiveZoom >= 2.0 && gridXStep < 1) || 
+                                      (effectiveZoom >= 3.0 && gridXStep >= 1 && gridXStep < 10);
+            const willShowYDecimals = (effectiveZoom >= 2.0 && gridYStep < 1) || 
+                                      (effectiveZoom >= 3.0 && gridYStep >= 1 && gridYStep < 10);
+            
+            // Draw X grid lines
+            const xStartGrid = Math.ceil(xMin / gridXStep) * gridXStep;
+            for (let gx = xStartGrid; gx <= xMax + 1e-9; gx += gridXStep) {
+                const px = padding + ((gx - xMin) / xRange) * plotWidth;
+                const isWholeNumber = willShowXDecimals && (Math.abs(gx % 1) < 0.0001 || 
+                                    Math.abs(gx - Math.round(gx)) < 0.0001);
+                
+                // Make whole number lines darker when decimals are present
+                if (isWholeNumber) {
+                    ctx.strokeStyle = '#c0c0c0';
+                    ctx.lineWidth = 1.5;
+                } else {
+                    ctx.strokeStyle = '#e0e0e0';
+                    ctx.lineWidth = 1;
+                }
+                
                 ctx.beginPath();
-                ctx.moveTo(x, padding);
-                ctx.lineTo(x, height - padding);
+                ctx.moveTo(px, padding);
+                ctx.lineTo(px, height - padding);
                 ctx.stroke();
             }
-            for (let i = 0; i <= 20; i++) {
-                const y = padding + (i / 20) * plotHeight;
+            
+            // Draw Y grid lines
+            const yStartGrid = Math.ceil(yMin / gridYStep) * gridYStep;
+            for (let gy = yStartGrid; gy <= yMax + 1e-9; gy += gridYStep) {
+                const py = padding + ((yMax - gy) / yRange) * plotHeight;
+                const isWholeNumber = willShowYDecimals && (Math.abs(gy % 1) < 0.0001 || 
+                                    Math.abs(gy - Math.round(gy)) < 0.0001);
+                
+                // Make whole number lines darker when decimals are present
+                if (isWholeNumber) {
+                    ctx.strokeStyle = '#c0c0c0';
+                    ctx.lineWidth = 1.5;
+                } else {
+                    ctx.strokeStyle = '#e0e0e0';
+                    ctx.lineWidth = 1;
+                }
+                
                 ctx.beginPath();
-                ctx.moveTo(padding, y);
-                ctx.lineTo(width - padding, y);
+                ctx.moveTo(padding, py);
+                ctx.lineTo(width - padding, py);
                 ctx.stroke();
             }
+            
+            // Reset stroke style
+            ctx.strokeStyle = '#e0e0e0';
+            ctx.lineWidth = 1;
 
             // Draw axes
             ctx.strokeStyle = '#333';
             ctx.lineWidth = 2;
-            const xAxisY = padding + ((0 - yMin) / yRange) * plotHeight;
-            const yAxisX = padding + ((0 - xMin) / xRange) * plotWidth;
+            // y=0 mapped to screen (clamped to nearest edge if out of view)
+            let xAxisY = padding + ((yMax - 0) / yRange) * plotHeight;
+            xAxisY = Math.max(padding, Math.min(height - padding, xAxisY));
+            // x=0 mapped to screen (clamped to nearest edge if out of view)
+            let yAxisX = padding + ((0 - xMin) / xRange) * plotWidth;
+            yAxisX = Math.max(padding, Math.min(width - padding, yAxisX));
 
             // X-axis
             ctx.beginPath();
@@ -622,19 +1132,54 @@
             ctx.fillStyle = '#333';
             ctx.font = '12px Arial';
             ctx.textAlign = 'center';
-            const xStep = Math.max(1, Math.ceil((xMax - xMin) / 10));
-            for (let i = Math.ceil(xMin / xStep) * xStep; i <= xMax; i += xStep) {
-                if (Math.abs(i) > 0.1) {
-                    const x = padding + ((i - xMin) / xRange) * plotWidth;
-                    ctx.fillText(i.toFixed(1), x, xAxisY + 20);
+            
+            const xLabelStep = gridXStep;
+            const xLabelStart = Math.ceil(xMin / xLabelStep) * xLabelStep;
+            // Cap decimals at 1-2 max for cleaner look
+            let xDecimals = 0;
+            if (willShowXDecimals) {
+                if (xLabelStep < 1) {
+                    if (xLabelStep >= 0.1) {
+                        xDecimals = 1;
+                    } else if (xLabelStep >= 0.01) {
+                        xDecimals = 2;
+                    } else {
+                        // For very small steps, cap at 2 decimals
+                        xDecimals = 2;
+                    }
+                } else if (xLabelStep >= 1 && xLabelStep < 10) {
+                    xDecimals = 1;
+                }
+            }
+            for (let xv = xLabelStart; xv <= xMax + 1e-9; xv += xLabelStep) {
+                if (Math.abs(xv) > xLabelStep * 0.05) {
+                    const x = padding + ((xv - xMin) / xRange) * plotWidth;
+                    ctx.fillText(xv.toFixed(xDecimals), x, xAxisY + 20);
                 }
             }
             ctx.textAlign = 'right';
-            const yStep = Math.max(1, Math.ceil((yMax - yMin) / 10));
-            for (let i = Math.ceil(yMin / yStep) * yStep; i <= yMax; i += yStep) {
-                if (Math.abs(i) > 0.1) {
-                    const y = padding + ((i - yMin) / yRange) * plotHeight;
-                    ctx.fillText(i.toFixed(1), yAxisX - 10, y + 4);
+            const yLabelStep = gridYStep;
+            const yLabelStart = Math.ceil(yMin / yLabelStep) * yLabelStep;
+            // Cap decimals at 1-2 max for cleaner look
+            let yDecimals = 0;
+            if (willShowYDecimals) {
+                if (yLabelStep < 1) {
+                    if (yLabelStep >= 0.1) {
+                        yDecimals = 1;
+                    } else if (yLabelStep >= 0.01) {
+                        yDecimals = 2;
+                    } else {
+                        // For very small steps, cap at 2 decimals
+                        yDecimals = 2;
+                    }
+                } else if (yLabelStep >= 1 && yLabelStep < 10) {
+                    yDecimals = 1;
+                }
+            }
+            for (let yv = yLabelStart; yv <= yMax + 1e-9; yv += yLabelStep) {
+                if (Math.abs(yv) > yLabelStep * 0.05) {
+                    const y = padding + ((yMax - yv) / yRange) * plotHeight;
+                    ctx.fillText(yv.toFixed(yDecimals), yAxisX - 10, y + 4);
                 }
             }
 
@@ -651,6 +1196,11 @@
             ctx.fillText(yLabel, yAxisX - 25, padding + 15);
 
             // Plot the function
+            // If the function does not intersect the current viewport, skip drawing it
+            if (!cartesianFunctionIntersectsViewport(equation, vars, xMin, xMax, yMin, yMax)) {
+                return;
+            }
+
             ctx.strokeStyle = '#667eea';
             ctx.lineWidth = 3;
             ctx.beginPath();
@@ -668,7 +1218,11 @@
 
             const range = (xMax - xMin);
             const start = xMin;
-            const end = xMax;
+            // In drawing mode, only draw up to sliderTheta; in pre-drawn mode, draw full range
+            let end = xMax;
+            if (sliderMode === 'drawing') {
+                end = Math.min(xMax, Math.max(xMin, sliderTheta));
+            }
 
             for (let val = start; val <= end; val += step) {
                 try {
@@ -732,6 +1286,54 @@
             }
 
             ctx.stroke();
+
+            // Draw point at slider position
+            if (sliderTheta >= xMin && sliderTheta <= xMax) {
+                try {
+                    let expr = equation;
+                    let y;
+                    
+                    if (iterateVar === 'theta') {
+                        const theta = sliderTheta;
+                        if (equation.includes('=')) {
+                            const parts = equation.split('=');
+                            if (parts.length === 2) {
+                                const rightSide = parts[1].trim();
+                                expr = rightSide.replace(/\btheta\b/g, `(${theta})`);
+                            }
+                        } else {
+                            expr = equation.replace(/\btheta\b/g, `(${theta})`).replace(/\bx\b/g, `(${theta})`);
+                        }
+                        y = math.evaluate(expr);
+                    } else {
+                        const x = sliderTheta;
+                        expr = equation.replace(/\bx\b/g, `(${x})`);
+                        y = math.evaluate(expr);
+                    }
+
+                    if (typeof y === 'object' && y.re !== undefined) {
+                        y = y.re;
+                    }
+
+                    if (!isNaN(y) && isFinite(y) && y >= yMin - baseRange && y <= yMax + baseRange) {
+                        const plotX = padding + ((sliderTheta - xMin) / xRange) * plotWidth;
+                        const plotY = padding + ((yMax - y) / yRange) * plotHeight;
+
+                        // Draw a subtler point
+                        ctx.fillStyle = '#ff6b6b';
+                        ctx.beginPath();
+                        ctx.arc(plotX, plotY, 5, 0, 2 * Math.PI);
+                        ctx.fill();
+                        
+                        // Draw a light border for visibility
+                        ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+                        ctx.lineWidth = 1;
+                        ctx.stroke();
+                    }
+                } catch (error) {
+                    // Ignore errors when drawing point
+                }
+            }
         }
 
         function plotPolar(equation, vars) {
@@ -743,12 +1345,21 @@
             const polarPadding = 10;
             const baseRadius = Math.min(width, height) / 2 - polarPadding;
 
-            // Find maximum r value to scale appropriately (extend to infinite)
-            let maxR = 5 / polarZoom;
+            // Auto-sync polar zoom to match cartesian r-range
+            const cartesianBaseRange = 10 / cartesianZoom;
+            const cartesianYMin = cartesianCenterY - cartesianBaseRange;
+            const cartesianYMax = cartesianCenterY + cartesianBaseRange;
+            
+            // Use the cartesian y-axis range directly for polar maxR
+            // Polar shows r from 0 to maxR, so use the maximum r value from cartesian
+            // If cartesian shows negative r values, we still show from 0 to max absolute
+            let cartesianRMax = Math.max(Math.abs(cartesianYMin), Math.abs(cartesianYMax));
+            
+            // Sample to find max r from the function to ensure we show the full function
             const sampleStep = 0.01;
             const sampleThetaMax = 4 * Math.PI;
+            let functionMaxR = cartesianRMax;
             
-            // Sample to find max r
             for (let theta = 0; theta <= sampleThetaMax; theta += sampleStep * 10) {
                 try {
                     let expr = equation;
@@ -775,12 +1386,16 @@
                         r = r.re;
                     }
                     if (!isNaN(r) && isFinite(r)) {
-                        maxR = Math.max(maxR, Math.abs(r) * 1.1);
+                        functionMaxR = Math.max(functionMaxR, Math.abs(r) * 1.1);
                     }
                 } catch (e) {}
             }
             
-            // Apply zoom
+            // Use cartesian range as the primary maxR, but ensure we show the function if it extends beyond
+            // The polar graph should show circles matching the cartesian y-axis range
+            let maxR = Math.max(cartesianRMax, functionMaxR);
+            
+            // Apply manual polar zoom
             maxR = maxR / polarZoom;
             const radius = baseRadius;
 
@@ -788,24 +1403,93 @@
             ctx.fillStyle = 'white';
             ctx.fillRect(0, 0, width, height);
 
-            // Draw concentric circles (adaptive based on maxR, similar to Desmos)
+            // Draw concentric circles with adaptive increments
+            // Scale gradually: start with whole numbers, then 0.5, then smaller increments
             ctx.strokeStyle = '#e0e0e0';
             ctx.lineWidth = 1;
+
+            // Choose a circle step that adapts gradually to zoom level
+            // Scale more slowly: 10, 5, 2, 1, 0.5, 0.2, 0.1, etc.
+            const maxCircles = 12; // Reduced from 16 for cleaner look
+            function chooseNiceStep(range, maxTicks) {
+                const rough = range / maxTicks;
+                if (rough <= 0) return 1;
+                
+                const pow10 = Math.pow(10, Math.floor(Math.log10(Math.abs(rough))));
+                const n = Math.abs(rough) / pow10;
+                let nice;
+                
+                // Gradual scaling: prefer larger steps, only go smaller when really needed
+                if (n > 7) nice = 10;
+                else if (n > 3) nice = 5;
+                else if (n > 1.5) nice = 2;
+                else if (n > 0.7) nice = 1;
+                else if (n > 0.35) nice = 0.5;
+                else if (n > 0.15) nice = 0.2;
+                else if (n > 0.07) nice = 0.1;
+                else if (n > 0.035) nice = 0.05;
+                else if (n > 0.015) nice = 0.02;
+                else nice = 0.01;
+                
+                return nice * pow10;
+            }
             
-            // Calculate step size based on zoom level (smaller steps when zoomed in)
-            const baseStep = Math.max(0.5, 5 / polarZoom);
-            const numCircles = Math.min(10, Math.ceil(maxR / baseStep));
-            const circleStep = maxR / numCircles;
+            // Always choose an appropriate step based on maxR
+            let circleStep = chooseNiceStep(maxR, maxCircles);
             
+            // Ensure we have a reasonable number of circles
+            let numCircles = Math.floor(maxR / circleStep);
+            if (numCircles > maxCircles) {
+                // Too many circles, increase step size
+                circleStep = chooseNiceStep(maxR, maxCircles);
+                numCircles = Math.floor(maxR / circleStep);
+            } else if (numCircles < 4 && maxR > circleStep * 4) {
+                // Too few circles, decrease step size slightly
+                const smallerStep = circleStep / 2;
+                const newNumCircles = Math.floor(maxR / smallerStep);
+                if (newNumCircles <= maxCircles && newNumCircles >= 4) {
+                    circleStep = smallerStep;
+                    numCircles = newNumCircles;
+                }
+            }
+
+            // Determine if we'll be showing decimals (needed for whole number highlighting)
+            const totalZoom = cartesianZoom * polarZoom;
+            let willShowDecimals = false;
+            if (totalZoom >= 2.0) {
+                if (circleStep < 1 || (circleStep === 0.5 && totalZoom >= 2.5) || 
+                    (circleStep >= 1 && circleStep < 10 && totalZoom >= 3.0)) {
+                    willShowDecimals = true;
+                }
+            }
+            
+            // Draw concentric circles
             for (let i = 1; i <= numCircles; i++) {
                 const r = i * circleStep;
+                // Check if this is a whole number (when decimals are being shown)
+                const isWholeNumber = willShowDecimals && (Math.abs(r % 1) < 0.0001 || 
+                    Math.abs(r - Math.round(r)) < 0.0001);
+                
+                // Make whole number circles darker when decimals are present
+                if (isWholeNumber) {
+                    ctx.strokeStyle = '#c0c0c0';
+                    ctx.lineWidth = 1.5;
+                } else {
+                    ctx.strokeStyle = '#e0e0e0';
+                    ctx.lineWidth = 1;
+                }
+                
                 ctx.beginPath();
                 ctx.arc(centerX, centerY, (r / maxR) * radius, 0, 2 * Math.PI);
                 ctx.stroke();
             }
+            
+            // Reset stroke style
+            ctx.strokeStyle = '#e0e0e0';
+            ctx.lineWidth = 1;
 
-            // Draw radial lines
-            for (let angle = 0; angle < 360; angle += 30) {
+            // Draw radial lines (more angles: every 15°)
+            for (let angle = 0; angle < 360; angle += 15) {
                 const rad = (angle * Math.PI) / 180;
                 ctx.beginPath();
                 ctx.moveTo(centerX, centerY);
@@ -830,15 +1514,45 @@
             ctx.fillStyle = '#333';
             ctx.font = '12px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText('0', centerX, centerY + 15);
+            ctx.textBaseline = 'bottom';
+            const labelOffsetY = 6;
+            ctx.fillText('0', centerX, centerY - labelOffsetY);
+            
+            // Adaptive decimal precision - no decimals until zoomed to about 2x
+            // Cap at 1-2 decimals max for cleaner look
+            let decimals = 0;
+            
+            // Only show decimals when zoomed in past about 2x
+            if (willShowDecimals) {
+                if (circleStep < 1) {
+                    if (circleStep >= 0.1) {
+                        decimals = 1;
+                    } else if (circleStep >= 0.01) {
+                        decimals = 2;
+                    } else {
+                        // For very small steps, cap at 2 decimals
+                        decimals = 2;
+                    }
+                } else if (circleStep === 0.5) {
+                    decimals = 1;
+                } else if (circleStep >= 1 && circleStep < 10) {
+                    decimals = 1;
+                }
+            }
+            // Otherwise, keep decimals = 0 (whole numbers)
+            
             for (let i = 1; i <= numCircles; i++) {
                 const r = i * circleStep;
-                const label = r < 10 ? r.toFixed(1) : r.toFixed(0);
-                ctx.fillText(label, centerX + (r / maxR) * radius + 15, centerY + 4);
+                const label = r.toFixed(decimals);
+                ctx.fillText(label, centerX + (r / maxR) * radius, centerY - labelOffsetY);
             }
             
             // Update zoom info
-            polarZoomInfo.textContent = `Zoom: ${polarZoom.toFixed(2)}x`;
+            if (Math.abs(polarZoom - 1.0) < 0.01) {
+                polarZoomInfo.textContent = `Auto-synced with cartesian | Scroll to adjust`;
+            } else {
+                polarZoomInfo.textContent = `Zoom: ${polarZoom.toFixed(2)}x (relative to cartesian)`;
+            }
 
             // Plot the polar function
             ctx.strokeStyle = '#764ba2';
@@ -847,9 +1561,18 @@
 
             let firstPoint = true;
             const step = 0.01;
-            const thetaMax = 4 * Math.PI; // Plot multiple rotations for better visualization
+            
+            // Tie theta range to the current cartesian view (keeps both graphs in sync)
+            const thetaView = getViewBounds();
+            let thetaMin = thetaView.xMin;
+            let thetaMax = thetaView.xMax;
+            
+            // In drawing mode, only draw up to sliderTheta
+            if (sliderMode === 'drawing') {
+                thetaMax = Math.min(thetaMax, Math.max(thetaMin, sliderTheta));
+            }
 
-            for (let theta = 0; theta <= thetaMax; theta += step) {
+            for (let theta = thetaMin; theta <= thetaMax; theta += step) {
                 try {
                     let expr = equation;
                     let r;
@@ -919,12 +1642,312 @@
             }
 
             ctx.stroke();
+
+            // Draw point at slider position
+            if (sliderTheta >= thetaMin && sliderTheta <= thetaMax) {
+                try {
+                    let expr = equation;
+                    let r;
+
+                    // Handle different variable cases
+                    if (vars.hasR && vars.hasTheta) {
+                        if (equation.includes('=')) {
+                            const parts = equation.split('=');
+                            if (parts.length === 2) {
+                                const rightSide = parts[1].trim();
+                                expr = rightSide.replace(/\btheta\b/g, `(${sliderTheta})`);
+                            }
+                        } else {
+                            expr = equation.replace(/\btheta\b/g, `(${sliderTheta})`);
+                        }
+                        r = math.evaluate(expr);
+                    } else if (vars.hasX && !vars.hasTheta) {
+                        expr = equation.replace(/\bx\b/g, `(${sliderTheta})`);
+                        r = math.evaluate(expr);
+                    } else if (vars.hasTheta) {
+                        expr = equation.replace(/\btheta\b/g, `(${sliderTheta})`);
+                        r = math.evaluate(expr);
+                    } else {
+                        expr = equation.replace(/\bx\b/g, `(${sliderTheta})`);
+                        r = math.evaluate(expr);
+                    }
+
+                    if (typeof r === 'object' && r.re !== undefined) {
+                        r = r.re;
+                    }
+
+                    if (!isNaN(r) && isFinite(r)) {
+                        // Convert polar to cartesian
+                        const x = r * Math.cos(sliderTheta);
+                        const y = r * Math.sin(sliderTheta);
+
+                        // Scale to canvas coordinates
+                        const plotX = centerX + (x / maxR) * radius;
+                        const plotY = centerY - (y / maxR) * radius;
+
+                        // Draw a subtler point
+                        ctx.fillStyle = '#ff6b6b';
+                        ctx.beginPath();
+                        ctx.arc(plotX, plotY, 5, 0, 2 * Math.PI);
+                        ctx.fill();
+                        
+                        // Draw a light border for visibility
+                        ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+                        ctx.lineWidth = 1;
+                        ctx.stroke();
+                    }
+                } catch (error) {
+                    // Ignore errors when drawing point
+                }
+            }
+        }
+
+        // Slider functions
+        function setSliderMode(mode) {
+            sliderMode = mode;
+            document.getElementById('modePreDrawn').classList.toggle('active', mode === 'preDrawn');
+            document.getElementById('modeDrawing').classList.toggle('active', mode === 'drawing');
+            plotGraph();
+        }
+
+        function updateSliderRange() {
+            const minInput = document.getElementById('sliderMin');
+            const maxInput = document.getElementById('sliderMax');
+            const minValue = minInput.value.trim();
+            const maxValue = maxInput.value.trim();
+            
+            if (minValue === '') {
+                sliderMin = null;
+            } else {
+                const num = parseFloat(minValue);
+                if (!isNaN(num)) {
+                    sliderMin = num;
+                }
+            }
+            
+            if (maxValue === '') {
+                sliderMax = null;
+            } else {
+                const num = parseFloat(maxValue);
+                if (!isNaN(num)) {
+                    sliderMax = num;
+                }
+            }
+            
+            updateSliderBounds();
+            plotGraph();
+        }
+
+        function updateSliderBounds() {
+            const slider = document.getElementById('thetaSlider');
+            const minLabel = document.getElementById('sliderMinLabel');
+            const maxLabel = document.getElementById('sliderMaxLabel');
+            
+            // Determine actual min/max for slider
+            let actualMin, actualMax;
+            if (sliderMin !== null) {
+                actualMin = sliderMin;
+            } else {
+                // Use periodicity if available, else default to [0, 2π]
+                const eq = equationInput.value.trim();
+                const p = eq ? detectPeriodicity(preprocessEquation(eq)) : null;
+                actualMin = 0;
+                if (p && p.period && isFinite(p.period)) {
+                    // keep min=0
+                } else {
+                    // keep min=0 for non-periodic too
+                }
+            }
+            
+            if (sliderMax !== null) {
+                actualMax = sliderMax;
+            } else {
+                const eq = equationInput.value.trim();
+                const p = eq ? detectPeriodicity(preprocessEquation(eq)) : null;
+                if (p && p.period && isFinite(p.period)) {
+                    actualMax = p.period;
+                } else {
+                    actualMax = 2 * Math.PI; // sensible default
+                }
+            }
+            
+            // Update slider min/max
+            slider.min = 0;
+            slider.max = 100;
+            
+            // Store the actual range for conversion
+            slider.dataset.actualMin = actualMin;
+            slider.dataset.actualMax = actualMax;
+            
+            // Update labels
+            minLabel.textContent = `Min: ${formatTheta(actualMin)}`;
+            maxLabel.textContent = `Max: ${formatTheta(actualMax)}`;
+            
+            // Update current theta based on slider position
+            const sliderValue = parseFloat(slider.value);
+            sliderTheta = actualMin + (sliderValue / 100) * (actualMax - actualMin);
+            document.getElementById('sliderValue').textContent = `θ = ${sliderTheta.toFixed(2)}`;
+        }
+
+        function onSliderChange() {
+            const slider = document.getElementById('thetaSlider');
+            const actualMin = parseFloat(slider.dataset.actualMin || '-6.28');
+            const actualMax = parseFloat(slider.dataset.actualMax || '6.28');
+            const sliderValue = parseFloat(slider.value);
+            
+            sliderTheta = actualMin + (sliderValue / 100) * (actualMax - actualMin);
+            document.getElementById('sliderValue').textContent = `θ = ${formatTheta(sliderTheta)}`;
+            
+            plotGraph();
+        }
+
+        // Setup slider event listener
+        function setupSlider() {
+            const slider = document.getElementById('thetaSlider');
+            if (slider) {
+                slider.addEventListener('input', onSliderChange);
+                updateSliderBounds();
+            }
+            attachSliderLabelEditors();
+        }
+
+        // Formatting θ values; prefer exact multiples of π when close
+        function formatTheta(value) {
+            if (!isFinite(value)) return `${value}`;
+            const eps = 1e-9;
+            const k = value / Math.PI;
+            const kRounded = Math.round(k);
+            if (Math.abs(k - kRounded) < eps) {
+                if (kRounded === 0) return '0';
+                if (kRounded === 1) return 'π';
+                if (kRounded === -1) return '-π';
+                return `${kRounded}π`;
+            }
+            return value.toFixed(2);
+        }
+
+        // Allow dblclick editing of slider min/max labels inline
+        function attachSliderLabelEditors() {
+            const minLabel = document.getElementById('sliderMinLabel');
+            const maxLabel = document.getElementById('sliderMaxLabel');
+            if (minLabel) {
+                minLabel.addEventListener('dblclick', () => beginSliderLabelEdit('min'));
+            }
+            if (maxLabel) {
+                maxLabel.addEventListener('dblclick', () => beginSliderLabelEdit('max'));
+            }
+        }
+
+        function beginSliderLabelEdit(which) {
+            const slider = document.getElementById('thetaSlider');
+            const minLabel = document.getElementById('sliderMinLabel');
+            const maxLabel = document.getElementById('sliderMaxLabel');
+            const container = which === 'min' ? minLabel : maxLabel;
+            if (!container || !slider) return;
+            const current = which === 'min'
+                ? parseFloat(slider.dataset.actualMin || '0')
+                : parseFloat(slider.dataset.actualMax || (2 * Math.PI).toString());
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = current.toFixed(3);
+            input.style.width = '80px';
+            input.style.fontSize = '0.9rem';
+            input.style.padding = '2px 4px';
+            input.style.borderRadius = '4px';
+            input.style.border = '1px solid rgba(255,255,255,0.6)';
+            // Replace label text temporarily
+            const oldText = container.textContent;
+            container.textContent = '';
+            container.appendChild(input);
+            input.focus();
+            input.select();
+
+            const cleanup = (apply) => {
+                if (apply) {
+                    const raw = input.value.trim();
+                    const num = parseThetaExpression(raw);
+                    if (num !== null && isFinite(num)) {
+                        if (which === 'min') {
+                            sliderMin = num;
+                        } else {
+                            sliderMax = num;
+                        }
+                        // Ensure min < max
+                        if (sliderMin !== null && sliderMax !== null && sliderMin >= sliderMax) {
+                            if (which === 'min') {
+                                sliderMax = sliderMin + Math.max(Math.abs(sliderMin) * 0.1, 0.1);
+                            } else {
+                                sliderMin = sliderMax - Math.max(Math.abs(sliderMax) * 0.1, 0.1);
+                            }
+                        }
+                        updateSliderBounds();
+                        // Also re-render graphs if needed
+                        plotGraph();
+                    }
+                }
+                // Restore label text
+                container.removeChild(input);
+                // Refresh labels from current state
+                const actualMin = parseFloat(slider.dataset.actualMin || '0');
+                const actualMax = parseFloat(slider.dataset.actualMax || (2 * Math.PI).toString());
+                if (which === 'min') {
+                    minLabel.textContent = `Min: ${formatTheta(actualMin)}`;
+                } else {
+                    maxLabel.textContent = `Max: ${formatTheta(actualMax)}`;
+                }
+            };
+
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    cleanup(true);
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    cleanup(false);
+                }
+            });
+            input.addEventListener('blur', () => cleanup(true));
+        }
+
+        // Parse input like "pi", "2*pi", "1.5π", "3.14"
+        function parseThetaExpression(text) {
+            if (!text) return null;
+            try {
+                // Normalize π and pi to mathjs 'pi'
+                let expr = text.replace(/π/gi, 'pi').replace(/PI/gi, 'pi');
+                // Allow implicit multiplication like "2pi"
+                expr = expr.replace(/(\d)\s*pi\b/gi, '$1*pi');
+                const val = math.evaluate(expr);
+                const num = typeof val === 'object' && val && val.re !== undefined ? val.re : val;
+                return typeof num === 'number' ? num : null;
+            } catch (e) {
+                const direct = parseFloat(text);
+                return isNaN(direct) ? null : direct;
+            }
         }
 
         // Plot default equation on load
         window.addEventListener('load', () => {
+            setupRangeInputListeners();
+            setupSlider();
+            const equation = equationInput.value.trim();
+            if (equation) {
+                autoSetRange(equation);
+            }
+            updateSliderBounds();
             plotGraph();
         });
+        
+        // Also setup listeners immediately if DOM is already ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                setupRangeInputListeners();
+                setupSlider();
+            });
+        } else {
+            setupRangeInputListeners();
+            setupSlider();
+        }
     </script>
 </body>
 </html>
