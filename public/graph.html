@@ -31,7 +31,7 @@
             flex-wrap: wrap;
             gap: 0.5rem;
             align-items: center;
-            margin-left: 1rem;
+            margin-left: auto; /* push to the right edge */
         }
 
         .function-btn {
@@ -386,6 +386,24 @@
             color: rgba(255, 255, 255, 0.8);
             margin-top: 0.3rem;
         }
+        /* Make slider min/max labels look editable and obvious */
+        .slider-info span {
+            background: rgba(255, 255, 255, 0.18);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 6px;
+            padding: 4px 8px;
+            cursor: text !important;
+            transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .slider-info span:hover {
+            background: rgba(255, 255, 255, 0.28);
+            border-color: rgba(255, 255, 255, 0.8);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        }
+        /* Hide the variables shortcut group under the equation box */
+        .function-menu .function-group:first-child {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -483,8 +501,8 @@
                     <input type="range" id="thetaSlider" min="0" max="100" value="0" step="0.01">
                     <div class="slider-value" id="sliderValue">θ = 0.00</div>
                     <div class="slider-info" style="display: flex; justify-content: space-between; gap: 1rem; margin-top: 0.25rem;">
-                        <span id="sliderMinLabel" style="cursor: pointer;" title="Double-click to edit">Min: 0.00</span>
-                        <span id="sliderMaxLabel" style="cursor: pointer;" title="Double-click to edit">Max: 0.00</span>
+                        <span id="sliderMinLabel" title="Click to edit">Min: 0.00</span>
+                        <span id="sliderMaxLabel" title="Click to edit">Max: 0.00</span>
                     </div>
                 </div>
             </div>
@@ -877,6 +895,28 @@
             }, 5000);
         }
 
+        // Insert implicit multiplication so inputs like "sin(3x)", "2pi", "(x+1)(x-1)" work without explicit '*'
+        function addImplicitMultiplication(expr) {
+            if (!expr || typeof expr !== 'string') return expr;
+            
+            // 1) Number followed by (variable|constant|function|()
+            //    e.g., 3theta -> 3*theta, 2pi -> 2*pi, 4sin(theta) -> 4*sin(theta), 5(x+1) -> 5*(x+1)
+            //    Avoid touching numbers that are part of identifiers like "log10(".
+            expr = expr.replace(/(\d+(?:\.\d+)?)(?=\s*(?:theta|r|pi|sin|cos|tan|sqrt|log|exp|abs|square|\())/g, function(match, num, offset, str) {
+                const prev = offset > 0 ? str[offset - 1] : '';
+                if (prev && /[A-Za-z0-9_.]/.test(prev)) {
+                    return match; // skip numbers that are part of identifiers (e.g., log10)
+                }
+                return num + '*';
+            });
+            
+            // 2) (variable|constant|')') followed by (variable|constant|function|'(' | number)
+            //    e.g., theta(x+1) -> theta*(x+1), pi theta -> pi*theta, )( -> )*(, r2 -> r*2
+            expr = expr.replace(/(\btheta\b|\br\b|\bpi\b|\))(?=\s*(?:\btheta\b|\br\b|\bpi\b|sin|cos|tan|sqrt|log|exp|abs|square|\(|\d+(?:\.\d+)?))/g, '$1*');
+            
+            return expr;
+        }
+
         // Preprocess equation to handle various function names and variables
         function preprocessEquation(equation) {
             // Replace common function names
@@ -890,7 +930,8 @@
                 // Treat x as theta and y as r (canonicalize variables)
                 .replace(/\bx\b/g, 'theta')
                 .replace(/\by\b/g, 'r');
-            
+            // Add implicit multiplication so inputs like "sin(3x)" evaluate correctly
+            processed = addImplicitMultiplication(processed);
             return processed;
         }
 
@@ -1562,14 +1603,18 @@
             let firstPoint = true;
             const step = 0.01;
             
-            // Tie theta range to the current cartesian view (keeps both graphs in sync)
+            // Determine theta range:
+            // - Pre-drawn mode: use current cartesian view (for full preview)
+            // - Drawing mode: strictly use slider's [actualMin, sliderTheta] range
             const thetaView = getViewBounds();
             let thetaMin = thetaView.xMin;
             let thetaMax = thetaView.xMax;
-            
-            // In drawing mode, only draw up to sliderTheta
             if (sliderMode === 'drawing') {
-                thetaMax = Math.min(thetaMax, Math.max(thetaMin, sliderTheta));
+                const sliderEl = document.getElementById('thetaSlider');
+                const actualMin = sliderEl ? parseFloat(sliderEl.dataset.actualMin || '0') : 0;
+                const actualMax = sliderEl ? parseFloat(sliderEl.dataset.actualMax || (2 * Math.PI).toString()) : 2 * Math.PI;
+                thetaMin = actualMin;
+                thetaMax = Math.min(actualMax, Math.max(actualMin, sliderTheta));
             }
 
             for (let theta = thetaMin; theta <= thetaMax; theta += step) {
@@ -1786,7 +1831,7 @@
             // Update current theta based on slider position
             const sliderValue = parseFloat(slider.value);
             sliderTheta = actualMin + (sliderValue / 100) * (actualMax - actualMin);
-            document.getElementById('sliderValue').textContent = `θ = ${sliderTheta.toFixed(2)}`;
+            document.getElementById('sliderValue').textContent = `θ = ${formatTheta(sliderTheta)}`;
         }
 
         function onSliderChange() {
@@ -1811,29 +1856,40 @@
             attachSliderLabelEditors();
         }
 
-        // Formatting θ values; prefer exact multiples of π when close
+        // Formatting θ values; show clean multiples/fractions of π when close
         function formatTheta(value) {
             if (!isFinite(value)) return `${value}`;
-            const eps = 1e-9;
+            const eps = 1e-6;
             const k = value / Math.PI;
-            const kRounded = Math.round(k);
-            if (Math.abs(k - kRounded) < eps) {
-                if (kRounded === 0) return '0';
-                if (kRounded === 1) return 'π';
-                if (kRounded === -1) return '-π';
-                return `${kRounded}π`;
+            if (Math.abs(k) < eps) return '0';
+            const sign = k < 0 ? '-' : '';
+            const ak = Math.abs(k);
+            const denoms = [1, 2, 3, 4, 6, 8, 12];
+            for (const d of denoms) {
+                const n = Math.round(ak * d);
+                if (Math.abs(ak - n / d) < eps) {
+                    if (n === 0) return '0';
+                    if (d === 1) {
+                        if (n === 1) return `${sign}π`;
+                        return `${sign}${n}π`;
+                    }
+                    if (n === 1) return `${sign}π/${d}`;
+                    return `${sign}${n}π/${d}`;
+                }
             }
             return value.toFixed(2);
         }
 
-        // Allow dblclick editing of slider min/max labels inline
+        // Allow click (or dblclick) editing of slider min/max labels inline
         function attachSliderLabelEditors() {
             const minLabel = document.getElementById('sliderMinLabel');
             const maxLabel = document.getElementById('sliderMaxLabel');
             if (minLabel) {
+                minLabel.addEventListener('click', () => beginSliderLabelEdit('min'));
                 minLabel.addEventListener('dblclick', () => beginSliderLabelEdit('min'));
             }
             if (maxLabel) {
+                maxLabel.addEventListener('click', () => beginSliderLabelEdit('max'));
                 maxLabel.addEventListener('dblclick', () => beginSliderLabelEdit('max'));
             }
         }
@@ -1849,8 +1905,8 @@
                 : parseFloat(slider.dataset.actualMax || (2 * Math.PI).toString());
             const input = document.createElement('input');
             input.type = 'text';
-            input.value = current.toFixed(3);
-            input.style.width = '80px';
+            input.value = formatTheta(current);
+            input.style.width = '90px';
             input.style.fontSize = '0.9rem';
             input.style.padding = '2px 4px';
             input.style.borderRadius = '4px';
@@ -1949,6 +2005,7 @@
             setupSlider();
         }
     </script>
+    <script src="function-helper.js"></script>
 </body>
 </html>
 
