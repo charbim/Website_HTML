@@ -125,8 +125,8 @@
         button {
             padding: 0.6rem 1rem;
             font-size: 1rem;
-            background: #2563eb;
-            border: 1px solid #2563eb;
+            background: #dc2626; /* red-600 */
+            border: 1px solid #dc2626;
             border-radius: 8px;
             color: #ffffff;
             cursor: pointer;
@@ -135,8 +135,8 @@
         }
 
         button:hover {
-            background: #1d4ed8;
-            border-color: #1d4ed8;
+            background: #b91c1c; /* red-700 */
+            border-color: #b91c1c;
             box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
         }
 
@@ -176,16 +176,17 @@
         .control-btn {
             padding: 0.5rem 1rem;
             font-size: 0.9rem;
-            background: #ffffff;
-            border: 1px solid #d1d5db;
+            background: #dc2626;
+            border: 1px solid #dc2626;
             border-radius: 5px;
-            color: #111827;
+            color: #ffffff;
             cursor: pointer;
             transition: all 0.2s ease;
         }
 
         .control-btn:hover {
-            background: #f3f4f6;
+            background: #b91c1c;
+            border-color: #b91c1c;
         }
 
         .graph-title {
@@ -307,22 +308,22 @@
             padding: 0.45rem 0.9rem;
             font-size: 0.9rem;
             background: #ffffff;
-            border: 1px solid #d1d5db;
+            border: 1px solid #fecaca; /* red-200 */
             border-radius: 8px;
-            color: #111827;
+            color: #b91c1c; /* red-700 */
             cursor: pointer;
             transition: all 0.3s ease;
         }
 
         .mode-btn.active {
-            background: #eff6ff;
-            border-color: #93c5fd;
-            color: #1d4ed8;
+            background: #dc2626; /* red-600 */
+            border-color: #dc2626;
+            color: #ffffff;
             font-weight: bold;
         }
 
         .mode-btn:hover {
-            background: #f3f4f6;
+            background: #fef2f2; /* red-50 */
         }
 
         .slider-range-inputs {
@@ -505,6 +506,99 @@
             flex: 0 1 auto;
             width: clamp(360px, 40vw, 720px);
         }
+        /* Pretty math preview styling */
+        .equation-pretty {
+            margin-top: 0.35rem;
+            color: #ffffff;
+            font-size: 1.05rem;
+            user-select: none;
+        }
+        .pretty-math .frac {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            vertical-align: middle;
+            margin: 0 2px;
+        }
+        .pretty-math .frac .num,
+        .pretty-math .frac .den {
+            padding: 0 2px;
+            line-height: 1.1;
+        }
+        .pretty-math .frac .bar {
+            align-self: stretch;
+            border-top: 2px solid currentColor;
+            margin: 0.05em 0;
+        }
+        /* Interaction mode toolbar */
+        .mode-toolbar {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: flex-end;
+            align-items: center;
+            margin: 0.25rem 0 0.75rem;
+        }
+        .icon-btn {
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.2s ease, transform 0.08s ease, border-color 0.2s ease;
+            position: relative;
+        }
+        .icon-btn:hover {
+            background: #eef2ff;
+            transform: translateY(-1px);
+            border-color: #dbeafe;
+        }
+        .icon-btn.active {
+            background: #e0e7ff;
+            border-color: #c7d2fe;
+        }
+        .icon-btn svg {
+            width: 18px;
+            height: 18px;
+            fill: #374151;
+        }
+        .icon-btn.active svg {
+            fill: #4338ca;
+        }
+        /* Tooltip for icon buttons (JS adds .show-tip after ~600ms hover) */
+        .icon-tooltip {
+            position: absolute;
+            pointer-events: none;
+            white-space: nowrap;
+            background: rgba(17,24,39,0.95);
+            color: #fff;
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 6px;
+            transform: translate(-50%, -8px);
+            top: -6px;
+            left: 50%;
+            opacity: 0;
+            transition: opacity 0.15s ease;
+        }
+        .icon-btn.show-tip .icon-tooltip {
+            opacity: 1;
+        }
+        /* Hover coordinate tooltip (for View mode) */
+        .hover-tooltip {
+            position: fixed;
+            z-index: 2000;
+            pointer-events: none;
+            background: rgba(17,24,39,0.92);
+            color: #ffffff;
+            font-size: 12px;
+            padding: 6px 8px;
+            border-radius: 6px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+        }
     </style>
 </head>
 <body>
@@ -547,6 +641,7 @@
                     </div>
                 </div>
             </div>
+            <div id="equationPretty" class="equation-pretty pretty-math" aria-hidden="true"></div>
             <div class="examples">
                 <strong>Examples:</strong> sin(x), cos(x), x^2, sqrt(x), square(x), r*cos(theta), theta^2, sin(theta), exp(x), log(x), abs(x)
             </div>
@@ -616,6 +711,30 @@
             </div>
         </div>
 
+        <div class="mode-toolbar" id="interactionToolbar">
+            <button id="btnModePerspective" class="icon-btn active" onclick="setInteractionMode('perspective')" aria-label="Perspective mode">
+                <!-- 4-arrows icon -->
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M11 3l2 2-1 1 1 1-2 2-2-2 1-1-1-1 2-2zm0 16l2-2-1-1 1-1-2-2-2 2 1 1-1 1 2 2zM3 11l2-2 1 1 1-1 2 2-2 2-1-1-1 1-2-2zm16 0l-2-2-1 1-1-1-2 2 2 2 1-1 1 1 2-2z"/>
+                </svg>
+                <span class="icon-tooltip">Perspective mode</span>
+            </button>
+            <button id="btnModeView" class="icon-btn" onclick="setInteractionMode('view')" aria-label="View mode">
+                <!-- eye icon -->
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M12 5c5 0 9 4 10 7-1 3-5 7-10 7S3 15 2 12c1-3 5-7 10-7zm0 2C8.6 7 5.7 9.2 4.2 12 5.7 14.8 8.6 17 12 17s6.3-2.2 7.8-5C18.3 9.2 15.4 7 12 7zm0 2.5A2.5 2.5 0 1 1 12 14a2.5 2.5 0 0 1 0-5z"/>
+                </svg>
+                <span class="icon-tooltip">View mode</span>
+            </button>
+            <button id="btnModeEdit" class="icon-btn" onclick="setInteractionMode('edit')" aria-label="Graph edit mode">
+                <!-- wrench icon -->
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M22.7 19.3l-6.4-6.4a6 6 0 0 1-7.6-7.6l3.2 3.2 2.1-2.1-3.2-3.2a6 6 0 0 1 7.6 7.6l6.4 6.4-2.1 2.1zM2 22l6.1-1.6L3.6 15.9 2 22z"/>
+                </svg>
+                <span class="icon-tooltip">Graph edit mode</span>
+            </button>
+        </div>
+
         <div class="graphs-container">
             <div class="graph-wrapper">
                 <div class="graph-title">Cartesian Coordinates</div>
@@ -654,6 +773,17 @@
         let lastMouseX = 0;
         let lastMouseY = 0;
         let polarZoom = 1.0;
+        // Interaction modes
+        let interactionMode = 'perspective'; // 'perspective' | 'view' | 'edit'
+        let tooltipEl = null;
+        let tooltipTimer = null;
+        let lastPolarState = { centerX: 0, centerY: 0, maxR: 1, radiusPx: 1 };
+        // Edit mode state
+        let editBaseEquation = '';
+        let editParams = { amplitude: 1, frequency: 1, thetaShift: 0, rShift: 0 };
+        let isEditTranslating = false;
+        let isEditResizing = false;
+        let editStart = null;
         
         // Manual range bounds (null means auto)
         let manualXMin = null;
@@ -672,9 +802,15 @@
 
         // Add custom functions to math.js
         math.import({
-            square: function(x) {
-                return x * x;
-            }
+            square: function(x) { return x * x; },
+            // Reciprocal trig
+            sec: function(x) { return 1 / Math.cos(x); },
+            csc: function(x) { return 1 / Math.sin(x); },
+            cot: function(x) { return 1 / Math.tan(x); },
+            // Inverse reciprocal trig (principal values)
+            asec: function(x) { return Math.acos(1 / x); },
+            acsc: function(x) { return Math.asin(1 / x); },
+            acot: function(x) { return Math.atan(1 / x); }
         }, { override: true });
 
         // r-prefix UI helpers
@@ -826,6 +962,8 @@
         // Real-time updates with debouncing
         let updateTimeout;
         equationInput.addEventListener('input', () => {
+            // Update pretty preview immediately
+            updateEquationPretty();
             clearTimeout(updateTimeout);
             updateTimeout = setTimeout(() => {
                 // Auto-detect periodicity and set range
@@ -840,6 +978,7 @@
 
         // Mouse wheel zoom for cartesian
         cartesianCanvas.addEventListener('wheel', (e) => {
+            if (interactionMode !== 'perspective') return;
             e.preventDefault();
             const rect = cartesianCanvas.getBoundingClientRect();
             const mouseX = e.clientX - rect.left;
@@ -875,14 +1014,31 @@
 
         // Click and drag panning for cartesian
         cartesianCanvas.addEventListener('mousedown', (e) => {
-            isDragging = true;
-            cartesianCanvas.classList.add('dragging');
-            lastMouseX = e.clientX;
-            lastMouseY = e.clientY;
+            if (interactionMode === 'perspective') {
+                isDragging = true;
+                cartesianCanvas.classList.add('dragging');
+                lastMouseX = e.clientX;
+                lastMouseY = e.clientY;
+            } else if (interactionMode === 'edit') {
+                // Begin translation (single click & hold)
+                if (e.detail !== 2) {
+                    const c = cartesianMouseToWorld(e);
+                    if (c) {
+                        isEditTranslating = true;
+                        editStart = {
+                            theta0: c.theta,
+                            r0: c.r,
+                            thetaShift: editParams.thetaShift,
+                            rShift: editParams.rShift
+                        };
+                    }
+                    e.preventDefault();
+                }
+            }
         });
 
         document.addEventListener('mousemove', (e) => {
-            if (isDragging) {
+            if (interactionMode === 'perspective' && isDragging) {
                 const rect = cartesianCanvas.getBoundingClientRect();
                 const padding = 60;
                 const plotWidth = cartesianCanvas.width - 2 * padding;
@@ -906,6 +1062,31 @@
                 lastMouseY = e.clientY;
                 
                 plotGraph();
+            } else if (interactionMode === 'edit') {
+                if (isEditTranslating && editStart) {
+                    const c = cartesianMouseToWorld(e);
+                    if (c) {
+                        const dTheta = c.theta - editStart.theta0;
+                        const dR = c.r - editStart.r0;
+                        editParams.thetaShift = editStart.thetaShift + dTheta;
+                        editParams.rShift = editStart.rShift + dR;
+                        applyEditParams();
+                    }
+                } else if (isEditResizing && editStart) {
+                    const c = cartesianMouseToWorld(e);
+                    if (c) {
+                        const dx0 = Math.max(0.05, Math.abs(editStart.pivotTheta - editStart.thetaAtStart));
+                        const dy0 = Math.max(0.05, Math.abs(editStart.pivotR - editStart.rAtStart));
+                        const dx1 = Math.max(0.05, Math.abs(editStart.pivotTheta - c.theta));
+                        const dy1 = Math.max(0.05, Math.abs(editStart.pivotR - c.r));
+                        const scaleX = dx1 / dx0; // horizontal scale
+                        const scaleY = dy1 / dy0; // vertical scale
+                        // Frequency inversely scales with horizontal stretching
+                        editParams.frequency = clamp(0.05, 20, editStart.frequency / scaleX);
+                        editParams.amplitude = clamp(0.05, 20, editStart.amplitude * scaleY);
+                        applyEditParams();
+                    }
+                }
             }
         });
 
@@ -913,6 +1094,10 @@
             if (isDragging) {
                 isDragging = false;
                 cartesianCanvas.classList.remove('dragging');
+            }
+            if (isEditTranslating || isEditResizing) {
+                isEditTranslating = false;
+                isEditResizing = false;
             }
         });
 
@@ -926,6 +1111,7 @@
 
         // Mouse wheel zoom for polar
         polarCanvas.addEventListener('wheel', (e) => {
+            if (interactionMode !== 'perspective') return;
             e.preventDefault();
             const factor = e.deltaY > 0 ? 0.9 : 1.1;
             polarZoom *= factor;
@@ -1274,6 +1460,13 @@
                 for (const ch of textDigits) out += superscripts[ch] || ch;
                 return out;
             }
+            function toPrettyAscii(value) {
+                // Ensure base ASCII is turned into pretty where helpful
+                return value
+                    .replace(/\bpi\b/gi, 'π')
+                    .replace(/\btheta\b/gi, 'θ')
+                    .replace(/sqrt\s*\(/gi, '√(');
+            }
             function transformWithCaret(value, caretIndex, regex, replacer) {
                 if (!value) return { value, caretIndex };
                 let result = '';
@@ -1343,6 +1536,127 @@
             });
         })();
 
+        // Pretty fraction preview for the equation box
+        function escapeHTML(s) {
+            return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\"/g, '&quot;').replace(/'/g, '&#039;');
+        }
+        function isWordChar(ch) {
+            return /[A-Za-z0-9_πθ]/.test(ch);
+        }
+        function isSuperChar(ch) {
+            return /[⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻]/.test(ch);
+        }
+        function findMatchingLeftParen(s, pos) {
+            let depth = 0;
+            for (let i = pos; i >= 0; i--) {
+                if (s[i] === ')') depth++;
+                else if (s[i] === '(') {
+                    depth--;
+                    if (depth === 0) return i;
+                }
+            }
+            return -1;
+        }
+        function findMatchingRightParen(s, pos) {
+            let depth = 0;
+            for (let i = pos; i < s.length; i++) {
+                if (s[i] === '(') depth++;
+                else if (s[i] === ')') {
+                    depth--;
+                    if (depth === 0) return i;
+                }
+            }
+            return -1;
+        }
+        function grabNumeratorSpan(s, slashPos) {
+            let i = slashPos - 1;
+            while (i >= 0 && /\s/.test(s[i])) i--;
+            if (i >= 0 && s[i] === ')') {
+                let start = findMatchingLeftParen(s, i);
+                if (start >= 0) {
+                    // include function name or √ preceding the '('
+                    let j = start - 1;
+                    if (j >= 0 && s[j] === '√') {
+                        start = j;
+                    } else {
+                        let k = j;
+                        while (k >= 0 && /[A-Za-z]/.test(s[k])) k--;
+                        if (k < j) start = k + 1;
+                    }
+                    return { start, end: i };
+                }
+            }
+            // fallback: contiguous token (word/superscripts)
+            let end = i;
+            let start = i;
+            while (start >= 0 && (isWordChar(s[start]) || isSuperChar(s[start]))) start--;
+            start++;
+            return { start, end };
+        }
+        function grabDenominatorSpan(s, slashPos) {
+            let i = slashPos + 1;
+            while (i < s.length && /\s/.test(s[i])) i++;
+            if (i < s.length && s[i] === '√' && i + 1 < s.length && s[i + 1] === '(') {
+                const end = findMatchingRightParen(s, i + 1);
+                if (end >= 0) return { start: i, end };
+            }
+            if (i < s.length && s[i] === '(') {
+                const end = findMatchingRightParen(s, i);
+                if (end >= 0) return { start: i, end };
+            }
+            if (i < s.length && /[A-Za-z]/.test(s[i])) {
+                let j = i;
+                while (j < s.length && /[A-Za-z]/.test(s[j])) j++;
+                if (j < s.length && s[j] === '(') {
+                    const end = findMatchingRightParen(s, j);
+                    if (end >= 0) return { start: i, end };
+                }
+            }
+            let start = i;
+            let end = i;
+            while (end < s.length && (isWordChar(s[end]) || isSuperChar(s[end]))) end++;
+            return { start, end: end - 1 };
+        }
+        function renderPrettyHTML(s) {
+            if (!s) return '';
+            // normalize some pretty forms
+            s = s.replace(/\bpi\b/gi, 'π').replace(/\btheta\b/gi, 'θ').replace(/sqrt\s*\(/gi, '√(');
+            // superscripts for ^digits
+            s = s.replace(/\^([+\-]?\d+)/g, (_m, digits) => {
+                const map = { '0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹','+':'⁺','-':'⁻' };
+                return Array.from(digits).map(ch => map[ch] || ch).join('');
+            });
+            // find first division symbol
+            const idxSlash = s.indexOf('/');
+            const idxDiv = s.indexOf('÷');
+            let idx = -1;
+            if (idxSlash === -1) idx = idxDiv;
+            else if (idxDiv === -1) idx = idxSlash;
+            else idx = Math.min(idxSlash, idxDiv);
+            if (idx === -1) {
+                return escapeHTML(s);
+            }
+            // build fraction
+            const numSpan = grabNumeratorSpan(s, idx);
+            const denSpan = grabDenominatorSpan(s, idx);
+            if (!numSpan || !denSpan || numSpan.start > numSpan.end || denSpan.start > denSpan.end) {
+                // fallback: no change
+                return escapeHTML(s);
+            }
+            const before = s.slice(0, numSpan.start);
+            const numerator = s.slice(numSpan.start, idx).trim();
+            const denominator = s.slice(denSpan.start, denSpan.end + 1).trim();
+            const after = s.slice(denSpan.end + 1);
+            return renderPrettyHTML(before) +
+                '<span class=\"frac\"><span class=\"num\">' + renderPrettyHTML(numerator) + '</span><span class=\"bar\"></span><span class=\"den\">' + renderPrettyHTML(denominator) + '</span></span>' +
+                renderPrettyHTML(after);
+        }
+        function updateEquationPretty() {
+            const el = document.getElementById('equationPretty');
+            if (!el || !equationInput) return;
+            const raw = equationInput.value || '';
+            el.innerHTML = renderPrettyHTML(raw);
+        }
         // Insert implicit multiplication so inputs like "sin(3x)", "2pi", "(x+1)(x-1)" work without explicit '*'
         function addImplicitMultiplication(expr) {
             if (!expr || typeof expr !== 'string') return expr;
@@ -1350,7 +1664,7 @@
             // 1) Number followed by (variable|constant|function|()
             //    e.g., 3theta -> 3*theta, 2pi -> 2*pi, 4sin(theta) -> 4*sin(theta), 5(x+1) -> 5*(x+1)
             //    Avoid touching numbers that are part of identifiers like "log10(".
-            expr = expr.replace(/(\d+(?:\.\d+)?)(?=\s*(?:theta|r|pi|sin|cos|tan|sqrt|log|exp|abs|square|\())/g, function(match, num, offset, str) {
+            expr = expr.replace(/(\d+(?:\.\d+)?)(?=\s*(?:theta|r|pi|sin|cos|tan|asin|acos|atan|sec|csc|cot|asec|acsc|acot|sqrt|log|exp|abs|square|\())/g, function(match, num, offset, str) {
                 const prev = offset > 0 ? str[offset - 1] : '';
                 if (prev && /[A-Za-z0-9_.]/.test(prev)) {
                     return match; // skip numbers that are part of identifiers (e.g., log10)
@@ -1360,7 +1674,7 @@
             
             // 2) (variable|constant|')') followed by (variable|constant|function|'(' | number)
             //    e.g., theta(x+1) -> theta*(x+1), pi theta -> pi*theta, )( -> )*(, r2 -> r*2
-            expr = expr.replace(/(\btheta\b|\br\b|\bpi\b|\))(?=\s*(?:\btheta\b|\br\b|\bpi\b|sin|cos|tan|sqrt|log|exp|abs|square|\(|\d+(?:\.\d+)?))/g, '$1*');
+            expr = expr.replace(/(\btheta\b|\br\b|\bpi\b|\))(?=\s*(?:\btheta\b|\br\b|\bpi\b|sin|cos|tan|asin|acos|atan|sec|csc|cot|asec|acsc|acot|sqrt|log|exp|abs|square|\(|\d+(?:\.\d+)?))/g, '$1*');
             
             return expr;
         }
@@ -1371,6 +1685,15 @@
             let processed = equation
                 // Convert pretty symbols back to ASCII for mathjs
                 .replace(/√/g, 'sqrt')
+                .replace(/÷/g, '/')
+                // Normalize inverse trig synonyms and notations
+                .replace(/\barcsin\b/gi, 'asin')
+                .replace(/\barccos\b/gi, 'acos')
+                .replace(/\barctan\b/gi, 'atan')
+                // sin^-1(x) style
+                .replace(/sin\s*\^\s*-?\s*1\s*\(/gi, 'asin(')
+                .replace(/cos\s*\^\s*-?\s*1\s*\(/gi, 'acos(')
+                .replace(/tan\s*\^\s*-?\s*1\s*\(/gi, 'atan(')
                 // Convert superscript runs (e.g., x²³ -> x^23)
                 .replace(/([⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻]+)/g, (m) => {
                     const map = { '⁰':'0','¹':'1','²':'2','³':'3','⁴':'4','⁵':'5','⁶':'6','⁷':'7','⁸':'8','⁹':'9','⁺':'+','⁻':'-' };
@@ -1911,6 +2234,8 @@
                 actualMin = parseFloat(sliderElForDomain.dataset.actualMin || '0');
                 actualMax = parseFloat(sliderElForDomain.dataset.actualMax || (2 * Math.PI).toString());
             }
+            // Track last polar state for hover mapping
+            lastPolarState = { centerX, centerY, maxR: 1, radiusPx: baseRadius };
             
             // Sample to find max r from the function to ensure we show the full function
             const sampleStep = 0.01;
@@ -1942,6 +2267,8 @@
             // Apply polar zoom (independent of cartesian view)
             maxR = maxR / polarZoom;
             const radius = baseRadius;
+            lastPolarState.maxR = maxR;
+            lastPolarState.radiusPx = radius;
 
             // Clear canvas
             ctx.fillStyle = 'white';
@@ -2292,6 +2619,7 @@
                 updateSliderBounds();
             }
             attachSliderLabelEditors();
+            attachThetaValueEditor();
         }
 
         // Formatting θ values; show clean multiples/fractions of π when close
@@ -2317,6 +2645,254 @@
             }
             return value.toFixed(2);
         }
+
+        // ===== Interaction Modes & Helpers =====
+        function clamp(min, max, v) { return Math.max(min, Math.min(max, v)); }
+
+        function formatThetaExpr(value) {
+            if (!isFinite(value)) return `${value}`;
+            const eps = 1e-6;
+            const k = value / Math.PI;
+            if (Math.abs(k) < eps) return '0';
+            const sign = k < 0 ? '-' : '';
+            const ak = Math.abs(k);
+            const denoms = [1, 2, 3, 4, 6, 8, 12];
+            for (const d of denoms) {
+                const n = Math.round(ak * d);
+                if (Math.abs(ak - n / d) < eps) {
+                    if (n === 0) return '0';
+                    if (d === 1) {
+                        if (n === 1) return `${sign}pi`;
+                        return `${sign}${n}*pi`;
+                    }
+                    if (n === 1) return `${sign}pi/${d}`;
+                    return `${sign}${n}*pi/${d}`;
+                }
+            }
+            return value.toFixed(3);
+        }
+
+        function ensureTooltip() {
+            if (!tooltipEl) {
+                tooltipEl = document.createElement('div');
+                tooltipEl.className = 'hover-tooltip';
+                tooltipEl.style.display = 'none';
+                document.body.appendChild(tooltipEl);
+            }
+            return tooltipEl;
+        }
+        function showCoordTooltip(text, x, y) {
+            const el = ensureTooltip();
+            el.textContent = text;
+            el.style.left = `${x + 12}px`;
+            el.style.top = `${y + 12}px`;
+            el.style.display = 'block';
+        }
+        function hideCoordTooltip() {
+            if (tooltipEl) tooltipEl.style.display = 'none';
+        }
+
+        function setInteractionMode(mode) {
+            interactionMode = mode;
+            const btnP = document.getElementById('btnModePerspective');
+            const btnV = document.getElementById('btnModeView');
+            const btnE = document.getElementById('btnModeEdit');
+            if (btnP) btnP.classList.toggle('active', mode === 'perspective');
+            if (btnV) btnV.classList.toggle('active', mode === 'view');
+            if (btnE) btnE.classList.toggle('active', mode === 'edit');
+            updateCanvasCursor();
+            hideCoordTooltip();
+            if (mode === 'edit') {
+                // Initialize edit session from current equation
+                editBaseEquation = (equationInput.value || '').trim();
+                editParams = { amplitude: 1, frequency: 1, thetaShift: 0, rShift: 0 };
+                isEditTranslating = false;
+                isEditResizing = false;
+                editStart = null;
+            }
+        }
+
+        function updateCanvasCursor() {
+            if (!cartesianCanvas || !polarCanvas) return;
+            if (interactionMode === 'perspective') {
+                cartesianCanvas.style.cursor = 'grab';
+                polarCanvas.style.cursor = 'zoom-in';
+            } else if (interactionMode === 'view') {
+                cartesianCanvas.style.cursor = 'crosshair';
+                polarCanvas.style.cursor = 'crosshair';
+            } else {
+                cartesianCanvas.style.cursor = 'move';
+                polarCanvas.style.cursor = 'move';
+            }
+        }
+
+        // Show delayed tooltips on toolbar buttons
+        (function setupModeTooltips() {
+            const toolbar = document.getElementById('interactionToolbar');
+            if (!toolbar) return;
+            let hoverTimer = null;
+            toolbar.querySelectorAll('.icon-btn').forEach(btn => {
+                btn.addEventListener('mouseenter', () => {
+                    hoverTimer = setTimeout(() => {
+                        btn.classList.add('show-tip');
+                    }, 600);
+                });
+                btn.addEventListener('mouseleave', () => {
+                    clearTimeout(hoverTimer);
+                    btn.classList.remove('show-tip');
+                });
+            });
+        })();
+
+        function extractRHSForEditing() {
+            const { rhs } = extractRExponentAndRHS(equationInput.value || '');
+            return rhs || '';
+        }
+
+        function applyEditParamsToEquation(baseEq, params) {
+            // Work on RHS only
+            const rhs = extractRExponentAndRHS(baseEq).rhs || baseEq;
+            const freq = params.frequency;
+            const amp = params.amplitude;
+            const tShift = params.thetaShift;
+            const rShift = params.rShift;
+            // Replace canonical 'theta' in the RHS with transformed argument
+            // (freq)*(theta - tShift)
+            const arg = (() => {
+                const parts = [];
+                if (isFinite(freq) && Math.abs(freq - 1) > 1e-12) {
+                    parts.push(`(${freq.toFixed(3)})*`);
+                }
+                if (isFinite(tShift) && Math.abs(tShift) > 1e-12) {
+                    // theta - tShift (note: shift right by +tShift)
+                    const shiftStr = formatThetaExpr(Math.abs(tShift));
+                    const sign = tShift >= 0 ? '-' : '+';
+                    return `${parts.join('')}(theta ${sign} ${shiftStr})`;
+                }
+                return `${parts.join('')}theta`;
+            })();
+            let transformed = rhs.replace(/\btheta\b/g, `(${arg})`);
+            if (isFinite(amp) && Math.abs(amp - 1) > 1e-12) {
+                transformed = `(${amp.toFixed(3)})*(${transformed})`;
+            }
+            if (isFinite(rShift) && Math.abs(rShift) > 1e-12) {
+                // Prepend vertical shift to the expression: rShift + (rest)
+                transformed = `${(rShift).toFixed(3)} + (${transformed})`;
+            } else {
+                transformed = `${transformed}`;
+            }
+            // Ensure pretty printing updates later
+            return transformed;
+        }
+
+        function applyEditParams() {
+            const newRHS = applyEditParamsToEquation(editBaseEquation, editParams);
+            equationInput.value = newRHS;
+            updateEquationPretty();
+            // Recompute slider bounds if frequency changed the inferred period
+            updateSliderBounds();
+            plotGraph();
+        }
+
+        function evaluateRAtTheta(theta) {
+            try {
+                const { exponent: effExp, rhs } = extractRExponentAndRHS(equationInput.value || '');
+                const expr = rhs.replace(/\btheta\b/g, `(${theta})`).replace(/\bx\b/g, `(${theta})`);
+                let rBase = math.evaluate(expr);
+                if (typeof rBase === 'object' && rBase && rBase.re !== undefined) rBase = rBase.re;
+                let r = applyExponentToValue(rBase, effExp);
+                if (typeof r === 'object' && r && r.re !== undefined) r = r.re;
+                return (isFinite(r) ? r : NaN);
+            } catch (_) {
+                return NaN;
+            }
+        }
+
+        function cartesianMouseToWorld(e) {
+            const rect = cartesianCanvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+            const padding = 60;
+            const plotWidth = cartesianCanvas.width - 2 * padding;
+            const plotHeight = cartesianCanvas.height - 2 * padding;
+            if (mouseX < padding || mouseX > cartesianCanvas.width - padding ||
+                mouseY < padding || mouseY > cartesianCanvas.height - padding) {
+                return null;
+            }
+            const baseRangeView = 10 / cartesianZoom;
+            const xMin = cartesianCenterX - baseRangeView;
+            const xMax = cartesianCenterX + baseRangeView;
+            const yMin = cartesianCenterY - baseRangeView;
+            const yMax = cartesianCenterY + baseRangeView;
+            const theta = xMin + ((mouseX - padding) / plotWidth) * (xMax - xMin);
+            const r = yMax - ((mouseY - padding) / plotHeight) * (yMax - yMin);
+            return { theta, r };
+        }
+
+        function updateSliderFromTheta(theta) {
+            const slider = document.getElementById('thetaSlider');
+            if (!slider) return;
+            const actualMin = parseFloat(slider.dataset.actualMin || '0');
+            const actualMax = parseFloat(slider.dataset.actualMax || (2 * Math.PI).toString());
+            const t = clamp(actualMin, actualMax, theta);
+            sliderTheta = t;
+            const pct = ((t - actualMin) / (actualMax - actualMin)) * 100;
+            slider.value = String(pct);
+            document.getElementById('sliderValue').textContent = `θ = ${formatTheta(t)}`;
+        }
+
+        function onCartesianHover(e) {
+            if (interactionMode !== 'view') { hideCoordTooltip(); return; }
+            const c = cartesianMouseToWorld(e);
+            if (!c) { hideCoordTooltip(); return; }
+            updateSliderFromTheta(c.theta);
+            const r = evaluateRAtTheta(sliderTheta);
+            const msg = `θ = ${formatTheta(sliderTheta)}, r = ${isFinite(r) ? r.toFixed(2) : '—'}`;
+            showCoordTooltip(msg, e.clientX, e.clientY);
+            plotGraph();
+        }
+        function onCartesianLeave() { hideCoordTooltip(); }
+        cartesianCanvas.addEventListener('mousemove', onCartesianHover);
+        cartesianCanvas.addEventListener('mouseleave', onCartesianLeave);
+
+        function onPolarHover(e) {
+            if (interactionMode !== 'view') { hideCoordTooltip(); return; }
+            const rect = polarCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            const dx = x - lastPolarState.centerX;
+            const dy = lastPolarState.centerY - y; // invert Y
+            const thetaRaw = Math.atan2(dy, dx);
+            let theta = thetaRaw;
+            if (theta < 0) theta += 2 * Math.PI;
+            updateSliderFromTheta(theta);
+            const r = evaluateRAtTheta(sliderTheta);
+            const px = lastPolarState.centerX + (Math.cos(sliderTheta) * (r / lastPolarState.maxR) * lastPolarState.radiusPx);
+            const py = lastPolarState.centerY - (Math.sin(sliderTheta) * (r / lastPolarState.maxR) * lastPolarState.radiusPx);
+            const msg = `θ = ${formatTheta(sliderTheta)}, r = ${isFinite(r) ? r.toFixed(2) : '—'}`;
+            showCoordTooltip(msg, e.clientX, e.clientY);
+            plotGraph();
+        }
+        function onPolarLeave() { hideCoordTooltip(); }
+        polarCanvas.addEventListener('mousemove', onPolarHover);
+        polarCanvas.addEventListener('mouseleave', onPolarLeave);
+
+        // Begin "resize" gesture on double-click in edit mode
+        cartesianCanvas.addEventListener('dblclick', (e) => {
+            if (interactionMode !== 'edit') return;
+            const c = cartesianMouseToWorld(e);
+            if (!c) return;
+            isEditResizing = true;
+            editStart = {
+                pivotTheta: c.theta,
+                pivotR: c.r,
+                thetaAtStart: c.theta,
+                rAtStart: c.r,
+                amplitude: editParams.amplitude,
+                frequency: editParams.frequency
+            };
+            e.preventDefault();
+        });
 
         // Allow click (or dblclick) editing of slider min/max labels inline
         function attachSliderLabelEditors() {
@@ -2403,6 +2979,63 @@
             input.addEventListener('blur', () => cleanup(true));
         }
 
+        // Allow dblclick editing of the θ value in the center label
+        function attachThetaValueEditor() {
+            const label = document.getElementById('sliderValue');
+            const slider = document.getElementById('thetaSlider');
+            if (!label || !slider) return;
+            label.title = 'Double-click to set θ exactly';
+            label.addEventListener('dblclick', () => {
+                // Build inline editor: "θ = [input]"
+                const container = document.createElement('span');
+                const prefix = document.createElement('span');
+                prefix.textContent = 'θ = ';
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.value = formatTheta(sliderTheta);
+                input.style.width = '110px';
+                input.style.fontSize = '1rem';
+                input.style.padding = '2px 6px';
+                input.style.borderRadius = '6px';
+                input.style.border = '1px solid rgba(255,255,255,0.6)';
+                input.style.background = 'rgba(255,255,255,0.95)';
+                input.style.color = '#111827';
+                container.appendChild(prefix);
+                container.appendChild(input);
+                // Swap contents
+                label.textContent = '';
+                label.appendChild(container);
+                input.focus();
+                input.select();
+                const finish = (apply) => {
+                    if (apply) {
+                        const raw = input.value.trim();
+                        const val = parseThetaExpression(raw);
+                        if (val !== null && isFinite(val)) {
+                            const actualMin = parseFloat(slider.dataset.actualMin || '0');
+                            const actualMax = parseFloat(slider.dataset.actualMax || (2 * Math.PI).toString());
+                            // Clamp within range
+                            const theta = Math.max(actualMin, Math.min(actualMax, val));
+                            sliderTheta = theta;
+                            // Update slider thumb position
+                            const pct = ((theta - actualMin) / (actualMax - actualMin)) * 100;
+                            slider.value = String(pct);
+                            label.textContent = `θ = ${formatTheta(theta)}`;
+                            plotGraph();
+                            return;
+                        }
+                    }
+                    // Fallback restore without changes
+                    label.textContent = `θ = ${formatTheta(sliderTheta)}`;
+                };
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') { e.preventDefault(); finish(true); }
+                    else if (e.key === 'Escape') { e.preventDefault(); finish(false); }
+                });
+                input.addEventListener('blur', () => finish(true));
+            });
+        }
+
         // Parse input like "pi", "2*pi", "1.5π", "π/2", "3.14"
         function parseThetaExpression(text) {
             if (!text) return null;
@@ -2418,6 +3051,8 @@
                 });
                 // Map pretty root back
                 expr = expr.replace(/√/g, 'sqrt');
+                // Normalize division symbol
+                expr = expr.replace(/÷/g, '/');
                 // Allow implicit multiplication like "2pi"
                 expr = expr.replace(/(\d)\s*pi\b/gi, '$1*pi');
                 const val = math.evaluate(expr);
@@ -2434,11 +3069,13 @@
             setupRangeInputListeners();
             setupSlider();
             initRPrefix();
+            updateCanvasCursor();
             const equation = equationInput.value.trim();
             if (equation) {
                 autoSetRange(equation);
             }
             updateSliderBounds();
+            updateEquationPretty();
             plotGraph();
         });
         
@@ -2448,11 +3085,13 @@
                 setupRangeInputListeners();
                 setupSlider();
                 initRPrefix();
+                updateCanvasCursor();
             });
         } else {
             setupRangeInputListeners();
             setupSlider();
             initRPrefix();
+            updateCanvasCursor();
         }
     </script>
     <script src="function-helper.js"></script>
