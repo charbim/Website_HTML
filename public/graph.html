@@ -310,18 +310,22 @@
             height: 16px;
         }
 
-        /* Distinct colors for toggles and matching equation tokens */
-        #toggleTheta { accent-color: #16a34a; }
-        #toggleTheta + span { color: #16a34a; font-weight: 600; }
-        #toggleRadius { accent-color: #f59e0b; }
-        #toggleRadius + span { color: #f59e0b; font-weight: 600; }
-        #toggleFreq { accent-color: #8b5cf6; }
-        #toggleFreq + span { color: #8b5cf6; font-weight: 600; }
+        /* Distinct colors for toggles and matching equation tokens - muted/toned down */
+        #toggleTheta { accent-color: #9333ea; }
+        #toggleTheta + span { color: #9333ea; font-weight: 600; }
+        #toggleRadius { accent-color: #dc2626; }
+        #toggleRadius + span { color: #dc2626; font-weight: 600; }
+        #toggleAmp { accent-color: #ea580c; }
+        #toggleAmp + span { color: #ea580c; font-weight: 600; }
+        #toggleFreq { accent-color: #16a34a; }
+        #toggleFreq + span { color: #16a34a; font-weight: 600; }
+        #toggleShifts { accent-color: #ca8a04; }
+        #toggleShifts + span { color: #ca8a04; font-weight: 600; }
         #toggleColorRadius { accent-color: #0ea5e9; }
         #toggleColorRadius + span { color: #0ea5e9; font-weight: 600; }
 
-        .equation-pretty .token-theta { color: #16a34a; font-weight: 700; }
-        .equation-pretty .token-r { color: #f59e0b; font-weight: 700; }
+        .equation-pretty .token-theta { color: #9333ea; font-weight: 700; }
+        .equation-pretty .token-r { color: #dc2626; font-weight: 700; }
 
         .toggle-hint {
             font-size: 0.85rem;
@@ -1075,7 +1079,7 @@
                             </label>
                             <label class="toggle-item" for="toggleAmp">
                                 <input type="checkbox" id="toggleAmp">
-                                <span>Amp</span>
+                                <span>Amplitude</span>
                             </label>
                             <label class="toggle-item" for="toggleShifts">
                                 <input type="checkbox" id="toggleShifts">
@@ -2846,7 +2850,9 @@
                             ctx.moveTo(plotX, plotY);
                             drawing = true;
                         } else {
-                            if (lastY !== null && Math.abs(y - lastY) > baseRange * 2) {
+                            // Only break line on actual discontinuities (very large jumps), not just large value changes
+                            // This prevents white spaces when amplitude changes
+                            if (lastY !== null && Math.abs(y - lastY) > baseRange * 10) {
                                 ctx.stroke();
                                 ctx.beginPath();
                                 ctx.strokeStyle = color;
@@ -2928,7 +2934,7 @@
                 xAxisY = Math.max(padding, Math.min(height - padding, xAxisY));
                 ctx.save();
                 ctx.setLineDash([6, 4]);
-                ctx.strokeStyle = '#16a34a'; // theta color
+                ctx.strokeStyle = '#9333ea'; // theta color (muted purple)
                 ctx.lineWidth = 2;
                 ctx.beginPath();
                 ctx.moveTo(x0, xAxisY);
@@ -2946,7 +2952,7 @@
                     const y1 = padding + ((yMax - rAtTheta) / yRange) * plotHeight;
                     ctx.save();
                     ctx.setLineDash([6, 4]);
-                    ctx.strokeStyle = '#f59e0b'; // radius color
+                    ctx.strokeStyle = '#dc2626'; // radius color (muted red)
                     ctx.lineWidth = 2;
                     ctx.beginPath();
                     ctx.moveTo(sx, y0);
@@ -3286,7 +3292,7 @@
             if (thetaToggle && thetaToggle.checked) {
                 ctx.save();
                 // Draw an arc slice from 0 to sliderTheta near the origin (counter-clockwise in math coords)
-                ctx.strokeStyle = '#16a34a'; // theta color
+                ctx.strokeStyle = '#9333ea'; // theta color (muted purple)
                 ctx.lineWidth = 2;
                 const arcR = Math.max(18, Math.min(radius * 0.22, 60)); // small arc radius
                 const step = Math.max(0.02, Math.min(0.1, Math.abs(sliderTheta) / 24));
@@ -3302,7 +3308,7 @@
                 const mid = sliderTheta / 2;
                 const tx = centerX + (arcR + 12) * Math.cos(mid);
                 const ty = centerY - (arcR + 12) * Math.sin(mid);
-                ctx.fillStyle = '#16a34a';
+                ctx.fillStyle = '#9333ea';
                 ctx.font = '14px Arial';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
@@ -3310,23 +3316,37 @@
                 ctx.restore();
             }
             const radiusToggle = document.getElementById('toggleRadius');
-            if (radiusToggle && radiusToggle.checked) {
-                const rAtTheta = evaluateRAtTheta(sliderTheta);
-                if (isFinite(rAtTheta)) {
-                    const x = rAtTheta * Math.cos(sliderTheta);
-                    const y = rAtTheta * Math.sin(sliderTheta);
-                    const plotX = centerX + (x / maxR) * radius;
-                    const plotY = centerY - (y / maxR) * radius;
-                    ctx.save();
-                    ctx.setLineDash([6, 4]);
-                    ctx.strokeStyle = '#f59e0b'; // radius color
-                    ctx.lineWidth = 2;
-                    ctx.beginPath();
-                    ctx.moveTo(centerX, centerY);
-                    ctx.lineTo(plotX, plotY);
-                    ctx.stroke();
-                    ctx.restore();
-                }
+            const rAtTheta = evaluateRAtTheta(sliderTheta);
+            // Show dotted line from theta angle to origin if radius is negative OR radius toggle is off
+            if (isFinite(rAtTheta) && (rAtTheta < 0 || !radiusToggle || !radiusToggle.checked)) {
+                ctx.save();
+                ctx.setLineDash([4, 4]);
+                ctx.strokeStyle = '#dc2626'; // muted red
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                // Draw line from origin along the theta angle direction
+                const lineEndX = centerX + radius * 0.5 * Math.cos(sliderTheta);
+                const lineEndY = centerY - radius * 0.5 * Math.sin(sliderTheta);
+                ctx.moveTo(centerX, centerY);
+                ctx.lineTo(lineEndX, lineEndY);
+                ctx.stroke();
+                ctx.restore();
+            }
+            // Show solid line to actual point if radius toggle is on and radius is positive
+            if (radiusToggle && radiusToggle.checked && isFinite(rAtTheta) && rAtTheta >= 0) {
+                const x = rAtTheta * Math.cos(sliderTheta);
+                const y = rAtTheta * Math.sin(sliderTheta);
+                const plotX = centerX + (x / maxR) * radius;
+                const plotY = centerY - (y / maxR) * radius;
+                ctx.save();
+                ctx.setLineDash([6, 4]);
+                ctx.strokeStyle = '#dc2626'; // radius color (muted red)
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.lineTo(plotX, plotY);
+                ctx.stroke();
+                ctx.restore();
             }
         }
 
@@ -3595,9 +3615,178 @@
             }
         }
 
+        // --- Helpers to normalize/denormalize theta symbol and simplify/factor linear forms ---
+        function normalizeThetaSymbols(s) {
+            // Convert 'θ' to 'theta' for parsing/mathjs
+            return (s || '').replace(/θ/g, 'theta');
+        }
+        function denormalizeThetaSymbols(s) {
+            // Convert 'theta' back to 'θ' for display/storage
+            return (s || '').replace(/\btheta\b/g, 'θ');
+        }
+        function toNumber(value) {
+            const n = Number(value);
+            return Number.isFinite(n) ? n : NaN;
+        }
+        function getConstantNumeric(node) {
+            try {
+                // Evaluate node if it does not depend on 'theta'/'θ'/'x'
+                const deps = (typeof node.filter === 'function')
+                    ? node.filter(n => n.isSymbolNode).map(n => n.name)
+                    : [];
+                const hasTheta = deps && deps.some(name => name === 'theta' || name === 'θ' || name === 'x');
+                if (hasTheta) return null;
+                // Safe numeric evaluation (pi, e, numbers, arithmetic)
+                const v = node.compile().evaluate();
+                return (typeof v === 'number' && Number.isFinite(v)) ? v : null;
+            } catch (_) {
+                return null;
+            }
+        }
+        function cloneNode(n) { try { return math.parse(n.toString()); } catch { return n; } }
+        function getLinearFormInTheta(node) {
+            // Returns {k, c} if node is linear in theta: k*theta + c, else null
+            const eps = 1e-12;
+            if (!node || typeof node !== 'object') return null;
+            if (node.isParenthesisNode) {
+                return getLinearFormInTheta(node.content);
+            }
+            if (node.isSymbolNode) {
+                if (node.name === 'theta' || node.name === 'θ') return { k: 1, c: 0 };
+                if (node.name === 'x') return { k: 1, c: 0 }; // treat x like theta for factoring when used
+                // constants like 'pi', 'e'
+                const c = getConstantNumeric(node);
+                return (c === null) ? null : { k: 0, c };
+            }
+            if (node.isConstantNode) {
+                const c = toNumber(node.value);
+                return Number.isFinite(c) ? { k: 0, c } : null;
+            }
+            if (node.isOperatorNode) {
+                const op = node.op;
+                if ((op === '+' || op === '-') && node.args && node.args.length >= 2) {
+                    let k = 0, c = 0;
+                    for (let i = 0; i < node.args.length; i++) {
+                        const a = node.args[i];
+                        const lf = getLinearFormInTheta(a);
+                        if (!lf) return null;
+                        if (i === 0) { k += lf.k; c += lf.c; }
+                        else {
+                            if (op === '+') { k += lf.k; c += lf.c; }
+                            else { k -= lf.k; c -= lf.c; }
+                        }
+                    }
+                    return { k, c };
+                }
+                if (op === '*' && node.args && node.args.length >= 2) {
+                    // Only allow one linear factor and the rest constants
+                    let k = 1, c = 0; // start as "1 * theta + 0" neutral
+                    let hasLinear = false;
+                    for (const a of node.args) {
+                        const lf = getLinearFormInTheta(a);
+                        if (lf) {
+                            if (hasLinear) return null; // more than one linear factor => non-linear
+                            hasLinear = true;
+                            // Multiply (k*theta + c) by existing constant factor accK
+                            // Current accumulated is constant 'acc', represented by kConst
+                            // We'll track multiplicative constant separately
+                            // Approach: if currently not linear (k==1, c==0) use lf, else combine constants
+                            // Instead: accumulate a separate 'acc' constant multiplier
+                        } else {
+                            const val = getConstantNumeric(a);
+                            if (val === null) return null;
+                        }
+                    }
+                    // Re-evaluate properly with two-pass:
+                    let acc = 1;
+                    let base = { k: 0, c: 0 };
+                    for (const a of node.args) {
+                        const lf = getLinearFormInTheta(a);
+                        if (lf) {
+                            if (base.k !== 0 || base.c !== 0) return null;
+                            base = lf;
+                        } else {
+                            const val = getConstantNumeric(a);
+                            if (val === null) return null;
+                            acc *= val;
+                        }
+                    }
+                    if (!hasLinear) {
+                        // Pure constant multiplication
+                        return { k: 0, c: acc };
+                    }
+                    return { k: acc * base.k, c: acc * base.c };
+                }
+                if (op === '/' && node.args && node.args.length === 2) {
+                    const numLF = getLinearFormInTheta(node.args[0]);
+                    const denConst = getConstantNumeric(node.args[1]);
+                    if (numLF && denConst !== null && denConst !== 0) {
+                        return { k: numLF.k / denConst, c: numLF.c / denConst };
+                    }
+                    return null;
+                }
+                if ((op === '-' || op === '+') && node.args && node.args.length === 1) {
+                    // unary plus/minus
+                    const lf = getLinearFormInTheta(node.args[0]);
+                    if (!lf) return null;
+                    if (op === '+') return lf;
+                    return { k: -lf.k, c: -lf.c };
+                }
+                return null;
+            }
+            return null;
+        }
+        function formatLinearTheta(k, c) {
+            const eps = 1e-10;
+            if (Math.abs(k) < eps) {
+                // No theta term; return just constant
+                return fmtNum(c);
+            }
+            const shift = c / k; // k*theta + c = k*(theta + c/k)
+            const kStr = (Math.abs(k - 1) < eps) ? '' : `${fmtNum(k)}*`;
+            const sAbs = Math.abs(shift);
+            const shiftStr = sAbs < eps ? '' : `${shift >= 0 ? '+' : '-'} ${formatThetaExpr(sAbs)}`;
+            if (!shiftStr) return `${kStr}theta`;
+            return `${kStr}(theta ${shiftStr})`;
+        }
+        function factorLinearThetaInAST(node) {
+            try {
+                return node.transform(function (n) {
+                    const lf = getLinearFormInTheta(n);
+                    if (lf && (Math.abs(lf.k) > 1e-12 || Math.abs(lf.c) > 1e-12)) {
+                        // Replace with formatted linear string, using 'theta'
+                        const s = formatLinearTheta(lf.k, lf.c);
+                        return math.parse(s);
+                    }
+                    return n;
+                });
+            } catch (_) {
+                return node;
+            }
+        }
+        function stringifyWithDivisionParentheses(node) {
+            try {
+                const handler = {
+                    'OperatorNode': function (n, options) {
+                        if (n.op === '/' && n.args && n.args.length === 2) {
+                            const l = n.args[0].toString({ parenthesis: 'auto', handler: this });
+                            const r = n.args[1].toString({ parenthesis: 'auto', handler: this });
+                            return `(${l}) / (${r})`;
+                        }
+                        // Fallback to default printing for other operators
+                        return undefined;
+                    }
+                };
+                return node.toString({ parenthesis: 'auto', handler });
+            } catch (_) {
+                return node.toString({ parenthesis: 'auto' });
+            }
+        }
+
         function applyEditParamsToEquation(baseEq, params) {
             // Work on RHS only
-            const rhs = extractRExponentAndRHS(baseEq).rhs || baseEq;
+            const rhsRaw = extractRExponentAndRHS(baseEq).rhs || baseEq;
+            const rhs = normalizeThetaSymbols(rhsRaw);
             const freq = params.frequency;
             const amp = params.amplitude;
             const tShift = params.thetaShift;
@@ -3608,6 +3797,7 @@
             const hasFreq = isFinite(freq) && Math.abs(freq - 1) > 1e-12;
             const shiftStr = hasShift ? `(theta ${tShift >= 0 ? '-' : '+'} ${formatThetaExpr(Math.abs(tShift))})` : 'theta';
             const argCore = hasFreq ? `${fmtNum(freq)}*${shiftStr}` : shiftStr;
+            // Replace both 'theta' and any literal 'θ' after normalization (just 'theta' now)
             let transformed = rhs.replace(/\btheta\b/g, `(${argCore})`);
             const hasAmp = isFinite(amp) && Math.abs(amp - 1) > 1e-12;
             if (hasAmp) {
@@ -3616,7 +3806,22 @@
             if (isFinite(rShift) && Math.abs(rShift) > 1e-12) {
                 transformed = `(${transformed}) ${rShift >= 0 ? '+' : '-'} ${fmtNum(Math.abs(rShift))}`;
             }
-            return cleanupSliderExpression(transformed);
+            // Simplify, then factor linear theta into k*(theta ± shift)
+            try {
+                let node = math.parse(transformed);
+                node = math.simplify(node);
+                node = factorLinearThetaInAST(node);
+                // Format with explicit numerator/denominator grouping for divisions
+                let out = stringifyWithDivisionParentheses(node);
+                // Convert 'theta' -> 'θ' for display
+                out = denormalizeThetaSymbols(out);
+                return out;
+            } catch (_) {
+                // Fall back to basic cleanup and symbol replacement
+                let out = cleanupSliderExpression(transformed);
+                out = denormalizeThetaSymbols(out);
+                return out;
+            }
         }
 
         function applyEditParams() {
@@ -3631,7 +3836,10 @@
         function evaluateRAtTheta(theta) {
             try {
                 const { exponent: effExp, rhs } = extractRExponentAndRHS(equationInput.value || '');
-                const expr = rhs.replace(/\btheta\b/g, `(${theta})`).replace(/\bx\b/g, `(${theta})`);
+                const expr = rhs
+                    .replace(/\btheta\b/g, `(${theta})`)
+                    .replace(/θ/g, `(${theta})`)
+                    .replace(/\bx\b/g, `(${theta})`);
                 let rBase = math.evaluate(expr);
                 if (typeof rBase === 'object' && rBase && rBase.re !== undefined) rBase = rBase.re;
                 let r = applyExponentToValue(rBase, effExp);
