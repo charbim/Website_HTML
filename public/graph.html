@@ -23,6 +23,18 @@
             color: #111827;
         }
 
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
         .container {
             max-width: 1400px;
             margin: 0 auto;
@@ -83,9 +95,237 @@
 
         /* Condense and center the equation bar card */
         .equation-bar {
-            max-width: 900px;
-            margin-left: auto;
-            margin-right: auto;
+            width: 100%;
+            margin: 0;
+        }
+
+        .equation-stack {
+            width: 100%;
+            margin: 0 0 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .equation-card {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .equation-heading {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .eyebrow-label {
+            font-size: 0.75rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: #dc2626; /* red titles per style guide */
+        }
+
+        .helper-text {
+            font-size: 0.85rem;
+            color: #6b7280;
+        }
+
+        .equation-field {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            width: 100%;
+            position: relative;
+        }
+
+        .equation-field input[type="text"] {
+            flex: 1;
+            min-width: 0;
+        }
+
+        /* Inline color overlay for equation input */
+        .equation-color-overlay {
+            position: absolute;
+            pointer-events: none;
+            top: 0;
+            left: 0;
+            width: 0; /* will be set by JS */
+            height: 0; /* will be set by JS */
+            overflow: hidden;
+            white-space: nowrap;
+            color: #111827;
+            font: inherit;
+        }
+        .equation-field.overlay-active #equation {
+            color: transparent; /* hide raw text while showing colored overlay */
+            caret-color: #111827; /* keep caret visible */
+        }
+
+        .equation-actions {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .secondary-btn {
+            background: #f9fafb;
+            border: 1px solid #d1d5db;
+            color: #111827;
+        }
+
+        .secondary-btn:hover {
+            background: #f3f4f6;
+            border-color: #cbd5f5;
+            color: #111827;
+        }
+        
+        .eq-symbol {
+            font-weight: 700;
+            color: #111827;
+        }
+
+        .mini-slider-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .mini-slider-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .mini-slider-grid {
+            display: grid;
+            gap: 0.75rem;
+        }
+
+        @media (min-width: 720px) {
+            .mini-slider-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        .mini-slider {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            padding: 0.75rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            background: #f9fafb;
+        }
+
+        .mini-slider label {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #dc2626; /* style guide red for titles */
+        }
+
+        .mini-slider-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.6rem;
+        }
+
+        .mini-slider-value {
+            flex: 0 0 90px;
+            width: 90px;
+            min-width: 0;
+            padding: 0.45rem 0.6rem;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            background: #ffffff;
+        }
+
+        .mini-slider-range {
+            flex: 1;
+        }
+
+        .mini-slider-bounds {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.85rem;
+            color: #111827;
+            margin-top: 0.15rem;
+        }
+
+        .mini-slider-bounds .value {
+            cursor: pointer;
+            font-weight: 600;
+            color: #111827;
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            padding: 4px 8px;
+            min-width: 70px;
+            text-align: center;
+        }
+
+        .toggle-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .toggle-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .toggle-grid {
+            display: grid;
+            gap: 0.5rem;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        }
+
+        .toggle-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.45rem 0.5rem;
+            border: 1px dashed #e5e7eb;
+            border-radius: 8px;
+            background: #f9fafb;
+        }
+
+        .toggle-item input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Distinct colors for toggles and matching equation tokens */
+        #toggleTheta { accent-color: #16a34a; }
+        #toggleTheta + span { color: #16a34a; font-weight: 600; }
+        #toggleRadius { accent-color: #f59e0b; }
+        #toggleRadius + span { color: #f59e0b; font-weight: 600; }
+        #toggleFreq { accent-color: #8b5cf6; }
+        #toggleFreq + span { color: #8b5cf6; font-weight: 600; }
+        #toggleColorRadius { accent-color: #0ea5e9; }
+        #toggleColorRadius + span { color: #0ea5e9; font-weight: 600; }
+
+        .equation-pretty .token-theta { color: #16a34a; font-weight: 700; }
+        .equation-pretty .token-r { color: #f59e0b; font-weight: 700; }
+
+        .toggle-hint {
+            font-size: 0.85rem;
+            color: #6b7280;
         }
 
         .input-group {
@@ -111,6 +351,12 @@
             color: #111827;
             outline: none;
             transition: all 0.3s ease;
+        }
+
+        .mini-slider .mini-slider-value {
+            flex: 0 0 90px;
+            width: 90px;
+            min-width: 0;
         }
 
         input[type="text"]:focus {
@@ -150,27 +396,55 @@
             color: #111827;
         }
 
-        .graphs-container {
+        .main-layout {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 1.5rem;
+            align-items: flex-start;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 1100px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .controls-column,
+        .graph-column {
+            display: flex;
+            flex-direction: column;
             gap: 1rem;
-            margin-bottom: 2rem;
+        }
+
+        .graph-top-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .graphs-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .graph-reset {
+            text-align: center;
+            margin-top: 0.25rem;
+        }
+
+        .graph-reset .control-btn {
+            min-width: 180px;
         }
 
         .graph-wrapper {
             background: #ffffff;
             border: 1px solid #e5e7eb;
-            border-radius: 12px;
-            padding: 1rem;
-            box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
+            border-radius: 10px;
+            padding: 0.5rem;
+            box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
             position: relative;
-        }
-
-        .graph-controls {
-            display: flex;
-            justify-content: center;
-            gap: 0.5rem;
-            margin-bottom: 1rem;
         }
 
         .control-btn {
@@ -189,26 +463,15 @@
             border-color: #b91c1c;
         }
 
-        .graph-title {
-            text-align: center;
-            font-size: 1.5rem;
-            margin-bottom: 1rem;
-            font-weight: bold;
-        }
-
-        .zoom-info {
-            font-size: 0.85rem;
-            color: #6b7280;
-            text-align: center;
-            margin-top: 0.5rem;
-        }
-
         canvas {
             width: 100%;
-            height: 440px;
             background: #ffffff;
             border-radius: 10px;
             cursor: crosshair;
+            aspect-ratio: 1 / 1;
+            max-height: min(380px, 45vh);
+            height: auto;
+            display: block;
         }
 
         #cartesianCanvas {
@@ -217,19 +480,6 @@
 
         #cartesianCanvas.dragging {
             cursor: grabbing;
-        }
-
-        .polar-canvas-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            width: 100%;
-        }
-
-        #polarCanvas {
-            width: 100%;
-            height: auto;
-            display: block;
         }
 
         .error-message {
@@ -247,10 +497,6 @@
         }
 
         @media (max-width: 1024px) {
-            .graphs-container {
-                grid-template-columns: 1fr;
-            }
-
             h1 {
                 font-size: 1.75rem;
             }
@@ -376,7 +622,7 @@
             width: 12px;
             height: 12px;
             border-radius: 50%;
-            background: #2563eb;
+            background: #dc2626; /* red thumb */
             cursor: pointer;
             box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
         }
@@ -385,7 +631,7 @@
             width: 12px;
             height: 12px;
             border-radius: 50%;
-            background: #2563eb;
+            background: #dc2626; /* red thumb */
             cursor: pointer;
             border: none;
             box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
@@ -596,7 +842,7 @@
         .mode-toolbar {
             display: flex;
             gap: 0.5rem;
-            justify-content: flex-end;
+            justify-content: center;
             align-items: center;
             margin: 0.25rem 0 0.75rem;
         }
@@ -700,205 +946,228 @@
             </div>
         </div>
 
-        <div class="slider-section" id="sliderSection">
-            <div style="margin-bottom: 1rem;">
-                <h3 style="font-size: 1.3rem; margin-bottom: 0.5rem;">Theta Slider</h3>
-                <p style="font-size: 0.9rem; color: rgba(255, 255, 255, 0.8); margin-bottom: 1rem;">
-                    Move the slider to see the point on both graphs. Choose between pre-drawn mode (dot travels) or drawing mode (graph draws as you move).
-                </p>
-            </div>
-            <div class="slider-controls">
-                <div class="slider-mode-toggle">
-                    <span style="font-size: 0.95rem; margin-right: 0.5rem;">Mode:</span>
-                    <button class="mode-btn active" id="modePreDrawn" onclick="setSliderMode('preDrawn')">Pre-drawn</button>
-                    <button class="mode-btn" id="modeDrawing" onclick="setSliderMode('drawing')">Drawing</button>
-                </div>
-            </div>
-            <div class="slider-container">
-                <div class="slider-wrapper">
-                    <input type="range" id="thetaSlider" min="0" max="100" value="0" step="0.01">
-                    <div class="slider-value" id="sliderValue">θ = 0.00</div>
-                    <div class="slider-info" style="display: flex; justify-content: space-between; gap: 1rem; margin-top: 0.25rem;">
-                        <div class="slider-bound">
-                            <span class="label">Min:</span>
-                            <span id="sliderMinLabel" class="value" title="Click to edit">0.00</span>
-                        </div>
-                        <div class="slider-bound">
-                            <span class="label">Max:</span>
-                            <span id="sliderMaxLabel" class="value" title="Click to edit">0.00</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
 
-        <div class="mode-toolbar" id="interactionToolbar">
-            <button id="btnModePerspective" class="icon-btn active" onclick="setInteractionMode('perspective')" aria-label="Perspective mode">
-                <!-- 4-arrows icon -->
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M11 3l2 2-1 1 1 1-2 2-2-2 1-1-1-1 2-2zm0 16l2-2-1-1 1-1-2-2-2 2 1 1-1 1 2 2zM3 11l2-2 1 1 1-1 2 2-2 2-1-1-1 1-2-2zm16 0l-2-2-1 1-1-1-2 2 2 2 1-1 1 1 2-2z"/>
-                </svg>
-                <span class="icon-tooltip">Perspective mode</span>
-            </button>
-            <button id="btnModeView" class="icon-btn" onclick="setInteractionMode('view')" aria-label="View mode">
-                <!-- eye icon -->
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M12 5c5 0 9 4 10 7-1 3-5 7-10 7S3 15 2 12c1-3 5-7 10-7zm0 2C8.6 7 5.7 9.2 4.2 12 5.7 14.8 8.6 17 12 17s6.3-2.2 7.8-5C18.3 9.2 15.4 7 12 7zm0 2.5A2.5 2.5 0 1 1 12 14a2.5 2.5 0 0 1 0-5z"/>
-                </svg>
-                <span class="icon-tooltip">View mode</span>
-            </button>
-            <button id="btnModeEdit" class="icon-btn" onclick="setInteractionMode('edit')" aria-label="Graph edit mode">
-                <!-- wrench icon -->
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M22.7 19.3l-6.4-6.4a6 6 0 0 1-7.6-7.6l3.2 3.2 2.1-2.1-3.2-3.2a6 6 0 0 1 7.6 7.6l6.4 6.4-2.1 2.1zM2 22l6.1-1.6L3.6 15.9 2 22z"/>
-                </svg>
-                <span class="icon-tooltip">Graph edit mode</span>
-            </button>
-        </div>
+        <div class="main-layout">
+            <div class="controls-column">
+                <div class="equation-stack">
+                    <!-- Equation bar -->
+                    <div class="input-section equation-bar equation-card">
+                        <div class="equation-heading">
+                            <div>
+                                <label for="equation" class="eyebrow-label">Equation</label>
+                                <p class="helper-text">Write r in terms of θ or x.</p>
+                            </div>
+                        </div>
+                        <div class="equation-field">
+                            <span id="rPrefix" class="r-prefix" title="Click to choose r, r², or r³">r<sup id="rExp" style="display:none"></sup></span>
+                            <span class="eq-symbol">=</span>
+                            <input type="text" id="equation" placeholder="Enter equation (e.g., sin(x), r*cos(theta), sqrt(x))" value="sin(x)">
+                        </div>
+                        <div class="equation-actions">
+                            <button type="button" class="secondary-btn" onclick="toggleRangeSection()">Adjust Range</button>
+                            <div class="function-menu">
+                                <div class="function-group">
+                                    <span class="function-group-label">Vars:</span>
+                                    <button class="function-btn" onclick="insertSymbol('θ')">θ</button>
+                                    <button class="function-btn" onclick="insertSymbol('r')">r</button>
+                                    <button class="function-btn" onclick="insertSymbol('x')">x</button>
+                                    <button class="function-btn" onclick="insertSymbol('π')">π</button>
+                                </div>
+                                <div class="function-group">
+                                    <span class="function-group-label">Func:</span>
+                                    <button class="function-btn" onclick="insertSymbol('sin(')">sin</button>
+                                    <button class="function-btn" onclick="insertSymbol('cos(')">cos</button>
+                                    <button class="function-btn" onclick="insertSymbol('tan(')">tan</button>
+                                    <button class="function-btn" onclick="insertSymbol('sqrt(')">√</button>
+                                    <button class="function-btn" onclick="insertSymbol('log(')">log</button>
+                                    <button class="function-btn" onclick="insertSymbol('exp(')">exp</button>
+                                    <button class="function-btn" onclick="insertSymbol('abs(')">abs</button>
+                                </div>
+                                <div class="function-group">
+                                    <span class="function-group-label">Ops:</span>
+                                    <button class="function-btn" onclick="insertSymbol('^')">x²</button>
+                                    <button class="function-btn" onclick="insertSymbol('*')">×</button>
+                                    <button class="function-btn" onclick="insertSymbol('/')">÷</button>
+                                    <button class="function-btn" onclick="insertSymbol('+')">+</button>
+                                    <button class="function-btn" onclick="insertSymbol('-')">-</button>
+                                    <button class="function-btn" onclick="insertSymbol('(')">(</button>
+                                    <button class="function-btn" onclick="insertSymbol(')')">)</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="equationPretty" class="equation-pretty pretty-math" aria-hidden="true"></div>
+                        <div class="error-message" id="errorMessage"></div>
+                    </div>
 
-        <div class="graphs-container">
-            <div class="graph-wrapper">
-                <div class="graph-title">Cartesian Coordinates</div>
-                <div class="graph-controls">
-                    <button class="control-btn" onclick="resetZoomCartesian()">Reset View</button>
-                </div>
-                <canvas id="cartesianCanvas"></canvas>
-                <div class="zoom-info" id="cartesianZoomInfo">Click and drag to pan | Scroll to zoom</div>
-            </div>
-            <div class="graph-wrapper">
-                <div class="graph-title">Polar Coordinates</div>
-                <div class="graph-controls">
-                    <button class="control-btn" onclick="resetZoomPolar()">Reset View</button>
-                </div>
-                <div class="polar-canvas-container">
-                    <canvas id="polarCanvas"></canvas>
-                </div>
-                <div class="zoom-info" id="polarZoomInfo">Scroll to zoom</div>
-            </div>
-        </div>
-        <!-- Equation bar (moved above sliders) -->
-        <div class="input-section equation-bar">
-            <div class="input-group">
-                <label for="equation">Equation:</label>
-                <span id="rPrefix" class="r-prefix" title="Double-click to choose r, r², or r³">r<sup id="rExp" style="display:none"></sup>&nbsp;=</span>
-                <input type="text" id="equation" placeholder="Enter equation (e.g., sin(x), r*cos(theta), sqrt(x))" value="sin(x)">
-                <button onclick="toggleRangeSection()" style="padding: 0.8rem 1.5rem; font-size: 1rem; margin-left: 0.5rem;">Adjust Range</button>
-                <div class="function-menu">
-                    <div class="function-group">
-                        <span class="function-group-label">Vars:</span>
-                        <button class="function-btn" onclick="insertSymbol('θ')">θ</button>
-                        <button class="function-btn" onclick="insertSymbol('r')">r</button>
-                        <button class="function-btn" onclick="insertSymbol('x')">x</button>
-                        <button class="function-btn" onclick="insertSymbol('π')">π</button>
+                    <!-- Parameter sliders -->
+                    <div class="input-section mini-slider-panel" id="paramSliderSection">
+                        <div class="mini-slider-header">
+                            <div>
+                                <div class="eyebrow-label">Sliders</div>
+                                <p class="helper-text">Fine-tune amplitude, frequency, and shifts.</p>
+                            </div>
+                            <button id="resetParamsBtn" class="secondary-btn" type="button">Reset</button>
+                        </div>
+                        <div class="mini-slider-grid">
+                            <!-- Amp -->
+                            <div class="mini-slider" data-param="amp">
+                                <div class="mini-slider-top">
+                                    <label for="ampSlider">Amplitude</label>
+                                    <input type="number" id="ampInput" step="0.01" value="1" class="mini-slider-value">
+                                </div>
+                                <input type="range" id="ampSlider" min="-5" max="5" step="0.01" value="1" class="mini-slider-range">
+                                <div class="mini-slider-bounds">
+                                    <span id="ampMinLabel" class="value" title="Click to edit">-5.00</span>
+                                    <span id="ampMaxLabel" class="value" title="Click to edit">5.00</span>
+                                </div>
+                            </div>
+                            <!-- X Shift -->
+                            <div class="mini-slider" data-param="xShift">
+                                <div class="mini-slider-top">
+                                    <label for="xShiftSlider">x-shift</label>
+                                    <input type="text" id="xShiftInput" value="0" class="mini-slider-value">
+                                </div>
+                                <input type="range" id="xShiftSlider" min="-6.283" max="6.283" step="0.01" value="0" class="mini-slider-range">
+                                <div class="mini-slider-bounds">
+                                    <span id="xShiftMinLabel" class="value" title="Click to edit">-2π</span>
+                                    <span id="xShiftMaxLabel" class="value" title="Click to edit">2π</span>
+                                </div>
+                            </div>
+                            <!-- Frequency -->
+                            <div class="mini-slider" data-param="freq">
+                                <div class="mini-slider-top">
+                                    <label for="freqSlider">Frequency</label>
+                                    <input type="number" id="freqInput" step="0.01" value="1" class="mini-slider-value">
+                                </div>
+                                <input type="range" id="freqSlider" min="0.05" max="20" step="0.01" value="1" class="mini-slider-range">
+                                <div class="mini-slider-bounds">
+                                    <span id="freqMinLabel" class="value" title="Click to edit">0.05</span>
+                                    <span id="freqMaxLabel" class="value" title="Click to edit">20.00</span>
+                                </div>
+                            </div>
+                            <!-- Y Shift -->
+                            <div class="mini-slider" data-param="yShift">
+                                <div class="mini-slider-top">
+                                    <label for="yShiftSlider">y-shift</label>
+                                    <input type="number" id="yShiftInput" step="0.01" value="0" class="mini-slider-value">
+                                </div>
+                                <input type="range" id="yShiftSlider" min="-10" max="10" step="0.01" value="0" class="mini-slider-range">
+                                <div class="mini-slider-bounds">
+                                    <span id="yShiftMinLabel" class="value" title="Click to edit">-10.00</span>
+                                    <span id="yShiftMaxLabel" class="value" title="Click to edit">10.00</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="function-group">
-                        <span class="function-group-label">Func:</span>
-                        <button class="function-btn" onclick="insertSymbol('sin(')">sin</button>
-                        <button class="function-btn" onclick="insertSymbol('cos(')">cos</button>
-                        <button class="function-btn" onclick="insertSymbol('tan(')">tan</button>
-                        <button class="function-btn" onclick="insertSymbol('sqrt(')">√</button>
-                        <button class="function-btn" onclick="insertSymbol('log(')">log</button>
-                        <button class="function-btn" onclick="insertSymbol('exp(')">exp</button>
-                        <button class="function-btn" onclick="insertSymbol('abs(')">abs</button>
-                    </div>
-                    <div class="function-group">
-                        <span class="function-group-label">Ops:</span>
-                        <button class="function-btn" onclick="insertSymbol('^')">x²</button>
-                        <button class="function-btn" onclick="insertSymbol('*')">×</button>
-                        <button class="function-btn" onclick="insertSymbol('/')">÷</button>
-                        <button class="function-btn" onclick="insertSymbol('+')">+</button>
-                        <button class="function-btn" onclick="insertSymbol('-')">-</button>
-                        <button class="function-btn" onclick="insertSymbol('(')">(</button>
-                        <button class="function-btn" onclick="insertSymbol(')')">)</button>
-                    </div>
-                </div>
-            </div>
-            <div id="equationPretty" class="equation-pretty pretty-math" aria-hidden="true"></div>
-            <div class="error-message" id="errorMessage"></div>
-        </div>
 
-        <!-- Parameter sliders below graphs -->
-        <div class="input-section slider-section param-sliders" id="paramSliderSection">
-            <div class="param-grid">
-                <div class="param" data-param="amp">
-                    <div class="param-header">
-                        <label for="ampSlider">Amplitude</label>
-                        <input type="number" id="ampInput" step="0.01" value="1">
-                    </div>
-                    <div class="param-slider-wrapper">
-                        <input type="range" id="ampSlider" min="-5" max="5" step="0.01" value="1">
-                        <div class="param-info slider-info">
-                            <div class="slider-bound">
-                                <span class="label">Min:</span>
-                                <span id="ampMinLabel" class="value" title="Double-click to edit">-5.00</span>
+                    <div class="input-section toggle-panel">
+                        <div class="toggle-header">
+                            <div>
+                                <div class="eyebrow-label">Toggles</div>
+                                <p class="helper-text">Preview upcoming controls.</p>
                             </div>
-                            <div class="slider-bound">
-                                <span class="label">Max:</span>
-                                <span id="ampMaxLabel" class="value" title="Double-click to edit">5.00</span>
-                            </div>
+                            <button type="button" class="secondary-btn" id="toggleResetBtn" disabled>Reset</button>
                         </div>
-                    </div>
-                </div>
-                <div class="param" data-param="freq">
-                    <div class="param-header">
-                        <label for="freqSlider">Frequency</label>
-                        <input type="number" id="freqInput" step="0.01" value="1">
-                    </div>
-                    <div class="param-slider-wrapper">
-                        <input type="range" id="freqSlider" min="0.05" max="20" step="0.01" value="1">
-                        <div class="param-info slider-info">
-                            <div class="slider-bound">
-                                <span class="label">Min:</span>
-                                <span id="freqMinLabel" class="value" title="Double-click to edit">0.05</span>
-                            </div>
-                            <div class="slider-bound">
-                                <span class="label">Max:</span>
-                                <span id="freqMaxLabel" class="value" title="Double-click to edit">20.00</span>
-                            </div>
+                        <div class="toggle-grid">
+                            <label class="toggle-item" for="toggleTheta">
+                                <input type="checkbox" id="toggleTheta">
+                                <span>Theta</span>
+                            </label>
+                            <label class="toggle-item" for="toggleAmp">
+                                <input type="checkbox" id="toggleAmp">
+                                <span>Amp</span>
+                            </label>
+                            <label class="toggle-item" for="toggleShifts">
+                                <input type="checkbox" id="toggleShifts">
+                                <span>Shifts</span>
+                            </label>
+                            <label class="toggle-item" for="toggleRadius">
+                                <input type="checkbox" id="toggleRadius">
+                                <span>Radius</span>
+                            </label>
+                            <label class="toggle-item" for="toggleFreq">
+                                <input type="checkbox" id="toggleFreq">
+                                <span>Frequency</span>
+                            </label>
+                            <label class="toggle-item" for="toggleColorRadius">
+                                <input type="checkbox" id="toggleColorRadius">
+                                <span>Color-coded radius</span>
+                            </label>
                         </div>
-                    </div>
-                </div>
-                <div class="param" data-param="xShift">
-                    <div class="param-header">
-                        <label for="xShiftSlider">x-shift</label>
-                        <input type="text" id="xShiftInput" value="0">
-                    </div>
-                    <div class="param-slider-wrapper">
-                        <input type="range" id="xShiftSlider" min="-6.283" max="6.283" step="0.01" value="0">
-                        <div class="param-info slider-info">
-                            <div class="slider-bound">
-                                <span class="label">Min:</span>
-                                <span id="xShiftMinLabel" class="value" title="Double-click to edit">-2π</span>
-                            </div>
-                            <div class="slider-bound">
-                                <span class="label">Max:</span>
-                                <span id="xShiftMaxLabel" class="value" title="Double-click to edit">2π</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="param" data-param="yShift">
-                    <div class="param-header">
-                        <label for="yShiftSlider">y-shift</label>
-                        <input type="number" id="yShiftInput" step="0.01" value="0">
-                    </div>
-                    <div class="param-slider-wrapper">
-                        <input type="range" id="yShiftSlider" min="-10" max="10" step="0.01" value="0">
-                        <div class="param-info slider-info">
-                            <div class="slider-bound">
-                                <span class="label">Min:</span>
-                                <span id="yShiftMinLabel" class="value" title="Double-click to edit">-10.00</span>
-                            </div>
-                            <div class="slider-bound">
-                                <span class="label">Max:</span>
-                                <span id="yShiftMaxLabel" class="value" title="Double-click to edit">10.00</span>
-                            </div>
-                        </div>
+                        <p class="toggle-hint">These toggles are visual placeholders for now.</p>
                     </div>
                 </div>
             </div>
-            <div class="param-actions">
-                <button id="resetParamsBtn" class="control-btn">Reset</button>
+            <div class="graph-column">
+                <div class="graph-top-panel">
+                    <div class="slider-section" id="sliderSection">
+                        <div style="margin-bottom: 1rem;">
+                            <h3 style="font-size: 1.3rem; margin-bottom: 0.5rem; color: #dc2626;">Theta Slider</h3>
+                            <p style="font-size: 0.9rem; color: rgba(255, 255, 255, 0.8); margin-bottom: 1rem;">
+                                Move the slider to see the point on both graphs. Choose between pre-drawn mode (dot travels) or drawing mode (graph draws as you move).
+                            </p>
+                        </div>
+                        <div class="slider-controls">
+                            <div class="slider-mode-toggle">
+                                <span style="font-size: 0.95rem; margin-right: 0.5rem;">Mode:</span>
+                                <button class="mode-btn active" id="modePreDrawn" onclick="setSliderMode('preDrawn')">Pre-drawn</button>
+                                <button class="mode-btn" id="modeDrawing" onclick="setSliderMode('drawing')">Drawing</button>
+                            </div>
+                        </div>
+                        <div class="slider-container">
+                            <div class="slider-wrapper">
+                                <input type="range" id="thetaSlider" min="0" max="100" value="0" step="0.01">
+                                <div class="slider-value" id="sliderValue">θ = 0.00</div>
+                                <div class="slider-info" style="display: flex; justify-content: space-between; gap: 1rem; margin-top: 0.25rem;">
+                                    <div class="slider-bound">
+                                        <span class="label">Min:</span>
+                                        <span id="sliderMinLabel" class="value" title="Click to edit">0.00</span>
+                                    </div>
+                                    <div class="slider-bound">
+                                        <span class="label">Max:</span>
+                                        <span id="sliderMaxLabel" class="value" title="Click to edit">0.00</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mode-toolbar" id="interactionToolbar">
+                        <button id="btnModePerspective" class="icon-btn active" onclick="setInteractionMode('perspective')" aria-label="Move mode">
+                            <!-- plus + arrow icon -->
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <rect x="11" y="5" width="2" height="14"/>
+                                <rect x="5" y="11" width="14" height="2"/>
+                                <path d="M14 7l5 5-5 5v-4h-4v-2h4z"/>
+                            </svg>
+                            <span class="icon-tooltip">Move mode</span>
+                        </button>
+                        <button id="btnModeView" class="icon-btn" onclick="setInteractionMode('view')" aria-label="View mode">
+                            <!-- eye icon -->
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M12 5c5 0 9 4 10 7-1 3-5 7-10 7S3 15 2 12c1-3 5-7 10-7zm0 2C8.6 7 5.7 9.2 4.2 12 5.7 14.8 8.6 17 12 17s6.3-2.2 7.8-5C18.3 9.2 15.4 7 12 7zm0 2.5A2.5 2.5 0 1 1 12 14a2.5 2.5 0 0 1 0-5z"/>
+                            </svg>
+                            <span class="icon-tooltip">View mode</span>
+                        </button>
+                        <button id="btnModeEdit" class="icon-btn" onclick="setInteractionMode('edit')" aria-label="Graph edit mode">
+                            <!-- wrench icon -->
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M22.7 19.3l-6.4-6.4a6 6 0 0 1-7.6-7.6l3.2 3.2 2.1-2.1-3.2-3.2a6 6 0 0 1 7.6 7.6l6.4 6.4-2.1 2.1zM2 22l6.1-1.6L3.6 15.9 2 22z"/>
+                            </svg>
+                            <span class="icon-tooltip">Graph edit mode</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="graphs-container">
+                    <div class="graph-wrapper">
+                        <canvas id="cartesianCanvas"></canvas>
+                    </div>
+                    <div class="graph-wrapper">
+                        <canvas id="polarCanvas"></canvas>
+                    </div>
+                </div>
+                <div class="graph-reset">
+                    <button id="resetGraphsBtn" class="control-btn" type="button">Reset</button>
+                </div>
             </div>
         </div>
     </div>
@@ -908,8 +1177,6 @@
         const polarCanvas = document.getElementById('polarCanvas');
         const equationInput = document.getElementById('equation');
         const errorMessage = document.getElementById('errorMessage');
-        const cartesianZoomInfo = document.getElementById('cartesianZoomInfo');
-        const polarZoomInfo = document.getElementById('polarZoomInfo');
 
         // Pan and zoom state
         let cartesianZoom = 1.0;
@@ -953,6 +1220,19 @@
         // Param slider session flags
         let sliderSessionActive = false;
         let updatingEquationFromSliders = false;
+        // Default view memory
+        let defaultCartesianBounds = null;
+        let defaultPolarZoom = null;
+
+        function rememberDefaultCartesianView(force = false) {
+            if (!force && defaultCartesianBounds) return;
+            defaultCartesianBounds = getViewBounds();
+        }
+
+        function rememberDefaultPolarZoom(force = false) {
+            if (!force && defaultPolarZoom !== null) return;
+            defaultPolarZoom = polarZoom;
+        }
 
         // Add custom functions to math.js
         math.import({
@@ -1018,7 +1298,8 @@
         function initRPrefix() {
             const prefix = document.getElementById('rPrefix');
             if (!prefix) return;
-            prefix.addEventListener('dblclick', openRExponentMenu);
+            // Single click to open menu per request
+            prefix.addEventListener('click', openRExponentMenu);
             renderRPrefix();
         }
 
@@ -1129,6 +1410,7 @@
             if (equationInput.value) {
                 plotGraph();
             }
+            positionEquationOverlay();
         });
 
         // Real-time updates with debouncing
@@ -1287,11 +1569,21 @@
         });
 
         function resetZoomCartesian() {
-            cartesianZoom = 1.0;
-            cartesianCenterX = 0;
-            cartesianCenterY = 0;
-            plotGraph();
-            updateRangeInputsFromView();
+            if (defaultCartesianBounds) {
+                setViewFromRange(
+                    defaultCartesianBounds.xMin,
+                    defaultCartesianBounds.xMax,
+                    defaultCartesianBounds.yMin,
+                    defaultCartesianBounds.yMax
+                );
+                updateRangeInputsFromView();
+            } else {
+                cartesianZoom = 1.0;
+                cartesianCenterX = 0;
+                cartesianCenterY = 0;
+                plotGraph();
+                updateRangeInputsFromView();
+            }
         }
 
         // Mouse wheel zoom for polar
@@ -1304,8 +1596,13 @@
         });
 
         function resetZoomPolar() {
-            polarZoom = 1.0;
+            polarZoom = (defaultPolarZoom !== null) ? defaultPolarZoom : 1.0;
             plotGraph();
+        }
+
+        function resetBothGraphs() {
+            resetZoomCartesian();
+            resetZoomPolar();
         }
 
         function insertSymbol(symbol) {
@@ -1572,6 +1869,7 @@
                 const padding = Math.max((maxR - minR) * 0.1, 0.1);
                 setViewFromRange(thetaMin, thetaMax, minR - padding, maxR + padding);
                 updateRangeInputsFromView();
+                rememberDefaultCartesianView(true);
             } catch (e) {
                 // Silent fail
             }
@@ -1841,6 +2139,175 @@
             if (!el || !equationInput) return;
             const raw = equationInput.value || '';
             el.innerHTML = renderPrettyHTML(raw);
+            colorizeEquation(el);
+            updateEquationOverlay(); // keep input overlay in sync
+        }
+        function colorizeEquation(container) {
+            const thetaEl = document.getElementById('toggleTheta');
+            const radiusEl = document.getElementById('toggleRadius');
+            const colorRadiusEl = document.getElementById('toggleColorRadius');
+            const colorThetaOn = !!(thetaEl && thetaEl.checked);
+            const colorROn = !!((radiusEl && radiusEl.checked) || (colorRadiusEl && colorRadiusEl.checked));
+            if (!colorThetaOn && !colorROn) return;
+
+            function wrapMatchesInTextNode(node, token, className) {
+                const text = node.nodeValue || '';
+                const parts = [];
+                let i = 0;
+                while (i < text.length) {
+                    if (token === 'theta') {
+                        const idx = text.indexOf('theta', i);
+                        if (idx === -1) break;
+                        if (idx > i) parts.push(document.createTextNode(text.slice(i, idx)));
+                        const span = document.createElement('span');
+                        span.className = className;
+                        span.textContent = 'theta';
+                        parts.push(span);
+                        i = idx + 5;
+                        continue;
+                    } else if (token === 'θ') {
+                        const idx = text.indexOf('θ', i);
+                        if (idx === -1) break;
+                        if (idx > i) parts.push(document.createTextNode(text.slice(i, idx)));
+                        const span = document.createElement('span');
+                        span.className = className;
+                        span.textContent = 'θ';
+                        parts.push(span);
+                        i = idx + 1;
+                        continue;
+                    } else if (token === 'r') {
+                        let found = -1;
+                        for (let j = i; j < text.length; j++) {
+                            if (text[j] === 'r') {
+                                const prev = j > 0 ? text[j - 1] : '';
+                                const next = j < text.length - 1 ? text[j + 1] : '';
+                                if (!/[A-Za-z0-9]/.test(prev) && !/[A-Za-z0-9]/.test(next)) { found = j; break; }
+                            }
+                        }
+                        if (found === -1) break;
+                        if (found > i) parts.push(document.createTextNode(text.slice(i, found)));
+                        const span = document.createElement('span');
+                        span.className = className;
+                        span.textContent = 'r';
+                        parts.push(span);
+                        i = found + 1;
+                        continue;
+                    } else {
+                        break;
+                    }
+                }
+                if (parts.length === 0) return;
+                if (i < text.length) parts.push(document.createTextNode(text.slice(i)));
+                const parent = node.parentNode;
+                parts.forEach(n => parent.insertBefore(n, node));
+                parent.removeChild(node);
+            }
+
+            // First pass: wrap ascii 'theta'
+            const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null);
+            const textNodes = [];
+            while (true) {
+                const n = walker.nextNode();
+                if (!n) break;
+                if (n.nodeValue) textNodes.push(n);
+            }
+            if (colorThetaOn) {
+                textNodes.forEach(node => wrapMatchesInTextNode(node, 'theta', 'token-theta'));
+            }
+            // Second pass: new walk for 'θ' and 'r'
+            const walker2 = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null);
+            const nodes2 = [];
+            while (true) {
+                const n = walker2.nextNode();
+                if (!n) break;
+                if (n.nodeValue) nodes2.push(n);
+            }
+            nodes2.forEach(node => {
+                if (colorThetaOn) wrapMatchesInTextNode(node, 'θ', 'token-theta');
+                if (colorROn) wrapMatchesInTextNode(node, 'r', 'token-r');
+            });
+        }
+        function ensureEquationOverlay() {
+            let overlay = document.getElementById('equationOverlay');
+            if (!overlay) {
+                const field = document.querySelector('.equation-field');
+                if (!field) return null;
+                overlay = document.createElement('div');
+                overlay.id = 'equationOverlay';
+                overlay.className = 'equation-color-overlay';
+                overlay.setAttribute('aria-hidden', 'true');
+                field.appendChild(overlay);
+            }
+            return overlay;
+        }
+        function positionEquationOverlay() {
+            const field = document.querySelector('.equation-field');
+            const input = document.getElementById('equation');
+            const overlay = ensureEquationOverlay();
+            if (!field || !input || !overlay) return;
+            const fr = field.getBoundingClientRect();
+            const ir = input.getBoundingClientRect();
+            const left = ir.left - fr.left;
+            const top = ir.top - fr.top;
+            overlay.style.left = left + 'px';
+            overlay.style.top = top + 'px';
+            overlay.style.width = ir.width + 'px';
+            overlay.style.height = ir.height + 'px';
+            overlay.style.padding = window.getComputedStyle(input).padding;
+            overlay.style.lineHeight = window.getComputedStyle(input).lineHeight;
+            overlay.style.fontSize = window.getComputedStyle(input).fontSize;
+            overlay.style.fontFamily = window.getComputedStyle(input).fontFamily;
+        }
+        function escapeHTML(s) {
+            return (s || '').replace(/[&<>"']/g, (ch) => {
+                switch (ch) {
+                    case '&': return '&amp;';
+                    case '<': return '&lt;';
+                    case '>': return '&gt;';
+                    case '"': return '&quot;';
+                    case "'": return '&#39;';
+                    default: return ch;
+                }
+            });
+        }
+        function renderColoredPlainEquation(text, opts) {
+            const colorThetaOn = !!(opts && opts.theta);
+            const colorROn = !!(opts && opts.radius);
+            let html = escapeHTML(text);
+            // Wrap 'theta' and 'θ'
+            if (colorThetaOn) {
+                html = html.replace(/\btheta\b/g, '<span class="token-theta">theta</span>');
+                html = html.replace(/θ/g, '<span class="token-theta">θ</span>');
+            }
+            if (colorROn) {
+                // wrap standalone 'r' only
+                html = html.replace(/(^|[^A-Za-z0-9_])r([^A-Za-z0-9_]|$)/g, (m, pre, post) => {
+                    return pre + '<span class="token-r">r</span>' + post;
+                });
+            }
+            return html;
+        }
+        function updateEquationOverlay() {
+            const field = document.querySelector('.equation-field');
+            const input = document.getElementById('equation');
+            const overlay = ensureEquationOverlay();
+            if (!field || !input || !overlay) return;
+            const thetaEl = document.getElementById('toggleTheta');
+            const radiusEl = document.getElementById('toggleRadius');
+            const colorRadiusEl = document.getElementById('toggleColorRadius');
+            const colorThetaOn = !!(thetaEl && thetaEl.checked);
+            const colorROn = !!((radiusEl && radiusEl.checked) || (colorRadiusEl && colorRadiusEl.checked));
+            const shouldShow = colorThetaOn || colorROn;
+            if (!shouldShow) {
+                field.classList.remove('overlay-active');
+                overlay.style.display = 'none';
+                return;
+            }
+            // Sync geometry and content
+            positionEquationOverlay();
+            overlay.innerHTML = renderColoredPlainEquation(input.value || '', { theta: colorThetaOn, radius: colorROn });
+            overlay.style.display = 'block';
+            field.classList.add('overlay-active');
         }
         // Insert implicit multiplication so inputs like "sin(3x)", "2pi", "(x+1)(x-1)" work without explicit '*'
         function addImplicitMultiplication(expr) {
@@ -2063,7 +2530,7 @@
             const baseRange = Math.max(xRange, yRange) / 2;
 
             // Update zoom info
-            cartesianZoomInfo.textContent = `Zoom: ${cartesianZoom.toFixed(2)}x | Click and drag to pan`;
+            // Optional status text could go here if UI is reintroduced
 
             // Draw grid (world-aligned with nice steps)
             ctx.strokeStyle = '#e0e0e0';
@@ -2277,84 +2744,127 @@
 
             const { exponent: effExp, rhs: rhsEquation } = extractRExponentAndRHS(equation);
 
-            ctx.strokeStyle = '#667eea';
-            ctx.lineWidth = 3;
-            ctx.beginPath();
-
-            let firstPoint = true;
+            const colorRadiusOn = !!(document.getElementById('toggleColorRadius') && document.getElementById('toggleColorRadius').checked);
+            const CURVE_DEFAULT = '#667eea';
+            const COLOR_POS = '#60a5fa'; // light blue for r > 0 (top)
+            const COLOR_NEG = '#1e3a8a'; // dark blue for r < 0 (bottom)
             const step = (xMax - xMin) / (plotWidth * 2); // Adaptive step size
-            let lastY = null;
-
-            // Always iterate over theta for cartesian (since we're plotting r vs θ)
-            // But if only x is present, use x
             let iterateVar = 'theta';
             if (vars.hasX && !vars.hasTheta && !vars.hasR) {
                 iterateVar = 'x';
             }
-
-            const range = (xMax - xMin);
             const start = xMin;
-            // In drawing mode, only draw up to sliderTheta; in pre-drawn mode, draw full range
             let end = xMax;
             if (sliderMode === 'drawing') {
                 end = Math.min(xMax, Math.max(xMin, sliderTheta));
             }
-
-            for (let val = start; val <= end; val += step) {
-                try {
-                    let expr = equation;
-                    let y;
-                    
-                    // Always plot as r = f(θ) in cartesian (r on y-axis, θ on x-axis)
-                    if (iterateVar === 'theta') {
-                        const theta = val;
-                        expr = rhsEquation.replace(/\btheta\b/g, `(${theta})`).replace(/\bx\b/g, `(${theta})`);
-                        let base = math.evaluate(expr);
-                        if (typeof base === 'object' && base.re !== undefined) base = base.re;
-                        y = applyExponentToValue(base, effExp);
-                    } else {
-                        // Fallback to x if only x is present (treat as r = f(x) where x is theta)
-                        const x = val;
-                        expr = rhsEquation.replace(/\bx\b/g, `(${x})`);
-                        let base = math.evaluate(expr);
-                        if (typeof base === 'object' && base.re !== undefined) base = base.re;
-                        y = applyExponentToValue(base, effExp);
-                    }
-
-                    // Handle complex numbers
-                    if (typeof y === 'object' && y.re !== undefined) {
-                        y = y.re;
-                    }
-
-                    // Skip if y is out of range or invalid
-                    if (isNaN(y) || !isFinite(y) || y < yMin - baseRange || y > yMax + baseRange) {
-                        firstPoint = true;
-                        lastY = null;
-                        continue;
-                    }
-
-                    const plotX = padding + ((val - xMin) / xRange) * plotWidth;
-                    const plotY = padding + ((yMax - y) / yRange) * plotHeight;
-
-                    if (firstPoint) {
-                        ctx.moveTo(plotX, plotY);
-                        firstPoint = false;
-                    } else {
-                        // Check for discontinuities
-                        if (lastY !== null && Math.abs(y - lastY) > baseRange * 2) {
-                            ctx.moveTo(plotX, plotY);
+            if (!colorRadiusOn) {
+                ctx.strokeStyle = CURVE_DEFAULT;
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                let firstPoint = true;
+                let lastY = null;
+                for (let val = start; val <= end; val += step) {
+                    try {
+                        let expr = equation;
+                        let y;
+                        if (iterateVar === 'theta') {
+                            const theta = val;
+                            expr = rhsEquation.replace(/\btheta\b/g, `(${theta})`).replace(/\bx\b/g, `(${theta})`);
+                            let base = math.evaluate(expr);
+                            if (typeof base === 'object' && base.re !== undefined) base = base.re;
+                            y = applyExponentToValue(base, effExp);
                         } else {
-                            ctx.lineTo(plotX, plotY);
+                            const x = val;
+                            expr = rhsEquation.replace(/\bx\b/g, `(${x})`);
+                            let base = math.evaluate(expr);
+                            if (typeof base === 'object' && base.re !== undefined) base = base.re;
+                            y = applyExponentToValue(base, effExp);
                         }
+                        if (typeof y === 'object' && y.re !== undefined) y = y.re;
+                        if (isNaN(y) || !isFinite(y) || y < yMin - baseRange || y > yMax + baseRange) {
+                            firstPoint = true;
+                            lastY = null;
+                            continue;
+                        }
+                        const plotX = padding + ((val - xMin) / xRange) * plotWidth;
+                        const plotY = padding + ((yMax - y) / yRange) * plotHeight;
+                        if (firstPoint) {
+                            ctx.moveTo(plotX, plotY);
+                            firstPoint = false;
+                        } else {
+                            if (lastY !== null && Math.abs(y - lastY) > baseRange * 2) {
+                                ctx.moveTo(plotX, plotY);
+                            } else {
+                                ctx.lineTo(plotX, plotY);
+                            }
+                        }
+                        lastY = y;
+                    } catch (_) {
+                        firstPoint = true;
                     }
-                    lastY = y;
-                } catch (error) {
-                    firstPoint = true;
-                    lastY = null;
                 }
+                ctx.stroke();
+            } else {
+                // Color-code by sign of r
+                ctx.lineWidth = 3;
+                let lastY = null;
+                let prevSign = null;
+                let drawing = false;
+                for (let val = start; val <= end; val += step) {
+                    try {
+                        let expr = equation;
+                        let y;
+                        if (iterateVar === 'theta') {
+                            const theta = val;
+                            expr = rhsEquation.replace(/\btheta\b/g, `(${theta})`).replace(/\bx\b/g, `(${theta})`);
+                            let base = math.evaluate(expr);
+                            if (typeof base === 'object' && base.re !== undefined) base = base.re;
+                            y = applyExponentToValue(base, effExp);
+                        } else {
+                            const x = val;
+                            expr = rhsEquation.replace(/\bx\b/g, `(${x})`);
+                            let base = math.evaluate(expr);
+                            if (typeof base === 'object' && base.re !== undefined) base = base.re;
+                            y = applyExponentToValue(base, effExp);
+                        }
+                        if (typeof y === 'object' && y.re !== undefined) y = y.re;
+                        if (isNaN(y) || !isFinite(y) || y < yMin - baseRange || y > yMax + baseRange) {
+                            if (drawing) { ctx.stroke(); drawing = false; }
+                            prevSign = null;
+                            lastY = null;
+                            continue;
+                        }
+                        const plotX = padding + ((val - xMin) / xRange) * plotWidth;
+                        const plotY = padding + ((yMax - y) / yRange) * plotHeight;
+                        const sign = (y > 0) ? 1 : (y < 0 ? -1 : 0);
+                        const color = (sign < 0) ? COLOR_NEG : COLOR_POS;
+                        if (!drawing || prevSign !== sign) {
+                            if (drawing) ctx.stroke();
+                            ctx.beginPath();
+                            ctx.strokeStyle = color;
+                            ctx.moveTo(plotX, plotY);
+                            drawing = true;
+                        } else {
+                            if (lastY !== null && Math.abs(y - lastY) > baseRange * 2) {
+                                ctx.stroke();
+                                ctx.beginPath();
+                                ctx.strokeStyle = color;
+                                ctx.moveTo(plotX, plotY);
+                            } else {
+                                ctx.lineTo(plotX, plotY);
+                            }
+                        }
+                        prevSign = sign;
+                        lastY = y;
+                    } catch (_) {
+                        if (drawing) { ctx.stroke(); drawing = false; }
+                        prevSign = null;
+                        lastY = null;
+                    }
+                }
+                if (drawing) ctx.stroke();
             }
-
-            ctx.stroke();
 
             // Draw point at slider position
             if (sliderTheta >= xMin && sliderTheta <= xMax) {
@@ -2384,8 +2894,12 @@
                         const plotX = padding + ((sliderTheta - xMin) / xRange) * plotWidth;
                         const plotY = padding + ((yMax - y) / yRange) * plotHeight;
 
-                        // Draw a subtler point
-                        ctx.fillStyle = '#ff6b6b';
+                        // Draw a subtler point (use sign color if color-coding is enabled)
+                        if (!!(document.getElementById('toggleColorRadius') && document.getElementById('toggleColorRadius').checked)) {
+                            ctx.fillStyle = (y < 0 ? '#1e3a8a' : '#60a5fa');
+                        } else {
+                            ctx.fillStyle = '#ff6b6b';
+                        }
                         ctx.beginPath();
                         ctx.arc(plotX, plotY, 5, 0, 2 * Math.PI);
                         ctx.fill();
@@ -2397,6 +2911,48 @@
                     }
                 } catch (error) {
                     // Ignore errors when drawing point
+                }
+            }
+
+            // Overlay: Theta horizontal base on x-axis and Radius vertical to the point
+            const thetaToggle = document.getElementById('toggleTheta');
+            if (thetaToggle && thetaToggle.checked) {
+                // Draw horizontal base along y = 0 from x = 0 to x = sliderTheta
+                const x0Val = 0;
+                const x1Val = sliderTheta;
+                // Map to screen
+                const x0 = padding + ((x0Val - xMin) / xRange) * plotWidth;
+                const x1 = padding + ((x1Val - xMin) / xRange) * plotWidth;
+                // y = 0 mapped and clamped already
+                let xAxisY = padding + ((yMax - 0) / yRange) * plotHeight;
+                xAxisY = Math.max(padding, Math.min(height - padding, xAxisY));
+                ctx.save();
+                ctx.setLineDash([6, 4]);
+                ctx.strokeStyle = '#16a34a'; // theta color
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(x0, xAxisY);
+                ctx.lineTo(x1, xAxisY);
+                ctx.stroke();
+                ctx.restore();
+            }
+            const radiusToggle = document.getElementById('toggleRadius');
+            if (radiusToggle && radiusToggle.checked) {
+                const rAtTheta = evaluateRAtTheta(sliderTheta);
+                if (isFinite(rAtTheta) && rAtTheta >= yMin - baseRange && rAtTheta <= yMax + baseRange) {
+                    // Vertical segment at x = sliderTheta from y = 0 to y = r(theta)
+                    const sx = padding + ((sliderTheta - xMin) / xRange) * plotWidth;
+                    const y0 = padding + ((yMax - 0) / yRange) * plotHeight; // x-axis Y
+                    const y1 = padding + ((yMax - rAtTheta) / yRange) * plotHeight;
+                    ctx.save();
+                    ctx.setLineDash([6, 4]);
+                    ctx.strokeStyle = '#f59e0b'; // radius color
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(sx, y0);
+                    ctx.lineTo(sx, y1);
+                    ctx.stroke();
+                    ctx.restore();
                 }
             }
         }
@@ -2605,70 +3161,84 @@
             }
             
             // Update zoom info
-            polarZoomInfo.textContent = `Zoom: ${polarZoom.toFixed(2)}x | Scroll to zoom`;
+            // Optional polar zoom status can be surfaced in UI if desired
 
-            // Plot the polar function
-            ctx.strokeStyle = '#764ba2';
-            ctx.lineWidth = 3;
-            ctx.beginPath();
-
-            let firstPoint = true;
+            // Plot the polar function (optionally color-code by sign of r)
+            const colorRadiusOn = !!(document.getElementById('toggleColorRadius') && document.getElementById('toggleColorRadius').checked);
+            const CURVE_DEFAULT_POLAR = '#764ba2';
+            const COLOR_POS = '#60a5fa'; // light blue for r > 0 (top)
+            const COLOR_NEG = '#1e3a8a'; // dark blue for r < 0 (bottom)
             const step = 0.01;
-            
-            // Determine theta range independent of cartesian view:
-            // - Pre-drawn mode: use slider's configured domain
-            // - Drawing mode: strictly use slider's [actualMin, sliderTheta] range
             let thetaMin = actualMin;
             let thetaMax = actualMax;
             if (sliderMode === 'drawing') {
                 thetaMin = actualMin;
                 thetaMax = Math.min(actualMax, Math.max(actualMin, sliderTheta));
             }
-
-            for (let theta = thetaMin; theta <= thetaMax; theta += step) {
-                try {
-                    let expr = rhsEquation.replace(/\btheta\b/g, `(${theta})`).replace(/\bx\b/g, `(${theta})`);
-                    let rBase = math.evaluate(expr);
-                    if (typeof rBase === 'object' && rBase.re !== undefined) rBase = rBase.re;
-                    let r = applyExponentToValue(rBase, effExp);
-
-                    // Handle complex numbers
-                    if (typeof r === 'object' && r.re !== undefined) {
-                        r = r.re;
-                    }
-
-                    // Skip if r is invalid
-                    if (isNaN(r) || !isFinite(r)) {
-                        firstPoint = true;
-                        continue;
-                    }
-
-                    // Convert polar to cartesian
-                    // Note: Negative r means we go in the opposite direction
-                    const x = r * Math.cos(theta);
-                    const y = r * Math.sin(theta);
-
-                    // Scale to canvas coordinates (extend to infinite range)
-                    const plotX = centerX + (x / maxR) * radius;
-                    const plotY = centerY - (y / maxR) * radius; // Negative because canvas Y is inverted
-
-                    // Check bounds
-                    if (plotX >= 0 && plotX <= width && plotY >= 0 && plotY <= height) {
-                        if (firstPoint) {
+            if (!colorRadiusOn) {
+                ctx.strokeStyle = CURVE_DEFAULT_POLAR;
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                let firstPoint = true;
+                for (let theta = thetaMin; theta <= thetaMax; theta += step) {
+                    try {
+                        let expr = rhsEquation.replace(/\btheta\b/g, `(${theta})`).replace(/\bx\b/g, `(${theta})`);
+                        let rBase = math.evaluate(expr);
+                        if (typeof rBase === 'object' && rBase.re !== undefined) rBase = rBase.re;
+                        let r = applyExponentToValue(rBase, effExp);
+                        if (typeof r === 'object' && r.re !== undefined) r = r.re;
+                        if (isNaN(r) || !isFinite(r)) { firstPoint = true; continue; }
+                        const x = r * Math.cos(theta);
+                        const y = r * Math.sin(theta);
+                        const plotX = centerX + (x / maxR) * radius;
+                        const plotY = centerY - (y / maxR) * radius;
+                        if (plotX >= 0 && plotX <= width && plotY >= 0 && plotY <= height) {
+                            if (firstPoint) { ctx.moveTo(plotX, plotY); firstPoint = false; }
+                            else { ctx.lineTo(plotX, plotY); }
+                        } else {
+                            firstPoint = true;
+                        }
+                    } catch (_) { firstPoint = true; }
+                }
+                ctx.stroke();
+            } else {
+                ctx.lineWidth = 3;
+                let drawing = false;
+                let prevSign = null;
+                let firstPoint = true;
+                for (let theta = thetaMin; theta <= thetaMax; theta += step) {
+                    try {
+                        let expr = rhsEquation.replace(/\btheta\b/g, `(${theta})`).replace(/\bx\b/g, `(${theta})`);
+                        let rBase = math.evaluate(expr);
+                        if (typeof rBase === 'object' && rBase.re !== undefined) rBase = rBase.re;
+                        let r = applyExponentToValue(rBase, effExp);
+                        if (typeof r === 'object' && r.re !== undefined) r = r.re;
+                        if (isNaN(r) || !isFinite(r)) { if (drawing) { ctx.stroke(); drawing = false; } firstPoint = true; prevSign = null; continue; }
+                        const x = r * Math.cos(theta);
+                        const y = r * Math.sin(theta);
+                        const plotX = centerX + (x / maxR) * radius;
+                        const plotY = centerY - (y / maxR) * radius;
+                        const sign = (r > 0) ? 1 : (r < 0 ? -1 : 0);
+                        const color = (sign < 0) ? COLOR_NEG : COLOR_POS;
+                        if (!drawing || prevSign !== sign) {
+                            if (drawing) ctx.stroke();
+                            ctx.beginPath();
+                            ctx.strokeStyle = color;
                             ctx.moveTo(plotX, plotY);
+                            drawing = true;
                             firstPoint = false;
                         } else {
                             ctx.lineTo(plotX, plotY);
                         }
-                    } else {
+                        prevSign = sign;
+                    } catch (_) {
+                        if (drawing) { ctx.stroke(); drawing = false; }
                         firstPoint = true;
+                        prevSign = null;
                     }
-                } catch (error) {
-                    firstPoint = true;
                 }
+                if (drawing) ctx.stroke();
             }
-
-            ctx.stroke();
 
             // Draw point at slider position
             if (sliderTheta >= thetaMin && sliderTheta <= thetaMax) {
@@ -2691,8 +3261,12 @@
                         const plotX = centerX + (x / maxR) * radius;
                         const plotY = centerY - (y / maxR) * radius;
 
-                        // Draw a subtler point
-                        ctx.fillStyle = '#ff6b6b';
+                        // Draw a subtler point (use sign color if color-coding is enabled)
+                        if (!!(document.getElementById('toggleColorRadius') && document.getElementById('toggleColorRadius').checked)) {
+                            ctx.fillStyle = (r < 0 ? '#1e3a8a' : '#60a5fa');
+                        } else {
+                            ctx.fillStyle = '#ff6b6b';
+                        }
                         ctx.beginPath();
                         ctx.arc(plotX, plotY, 5, 0, 2 * Math.PI);
                         ctx.fill();
@@ -2704,6 +3278,54 @@
                     }
                 } catch (error) {
                     // Ignore errors when drawing point
+                }
+            }
+
+            // Overlays: theta arc slice and radial line to point (radius)
+            const thetaToggle = document.getElementById('toggleTheta');
+            if (thetaToggle && thetaToggle.checked) {
+                ctx.save();
+                // Draw an arc slice from 0 to sliderTheta near the origin (counter-clockwise in math coords)
+                ctx.strokeStyle = '#16a34a'; // theta color
+                ctx.lineWidth = 2;
+                const arcR = Math.max(18, Math.min(radius * 0.22, 60)); // small arc radius
+                const step = Math.max(0.02, Math.min(0.1, Math.abs(sliderTheta) / 24));
+                ctx.beginPath();
+                for (let a = 0; a <= sliderTheta + 1e-9; a += step) {
+                    const px = centerX + arcR * Math.cos(a);
+                    const py = centerY - arcR * Math.sin(a);
+                    if (a === 0) ctx.moveTo(px, py);
+                    else ctx.lineTo(px, py);
+                }
+                ctx.stroke();
+                // Theta symbol near the middle of the arc
+                const mid = sliderTheta / 2;
+                const tx = centerX + (arcR + 12) * Math.cos(mid);
+                const ty = centerY - (arcR + 12) * Math.sin(mid);
+                ctx.fillStyle = '#16a34a';
+                ctx.font = '14px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('θ', tx, ty);
+                ctx.restore();
+            }
+            const radiusToggle = document.getElementById('toggleRadius');
+            if (radiusToggle && radiusToggle.checked) {
+                const rAtTheta = evaluateRAtTheta(sliderTheta);
+                if (isFinite(rAtTheta)) {
+                    const x = rAtTheta * Math.cos(sliderTheta);
+                    const y = rAtTheta * Math.sin(sliderTheta);
+                    const plotX = centerX + (x / maxR) * radius;
+                    const plotY = centerY - (y / maxR) * radius;
+                    ctx.save();
+                    ctx.setLineDash([6, 4]);
+                    ctx.strokeStyle = '#f59e0b'; // radius color
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(centerX, centerY);
+                    ctx.lineTo(plotX, plotY);
+                    ctx.stroke();
+                    ctx.restore();
                 }
             }
         }
@@ -2816,6 +3438,8 @@
             }
             attachSliderLabelEditors();
             attachThetaValueEditor();
+            // Keep equation overlay positioned on load
+            updateEquationOverlay();
         }
 
         // Formatting θ values; show clean multiples/fractions of π when close
@@ -2931,6 +3555,7 @@
                 cartesianCanvas.style.cursor = 'crosshair';
                 polarCanvas.style.cursor = 'crosshair';
             } else {
+                // Edit mode default: plus with arrows (move) over helper graph
                 cartesianCanvas.style.cursor = 'move';
                 polarCanvas.style.cursor = 'move';
             }
@@ -2959,6 +3584,17 @@
             return rhs || '';
         }
 
+        function cleanupSliderExpression(expr) {
+            if (!expr) return expr;
+            if (typeof math === 'undefined' || typeof math.parse !== 'function') return expr;
+            try {
+                const node = math.parse(expr);
+                return node.toString({ parenthesis: 'auto' });
+            } catch (_) {
+                return expr;
+            }
+        }
+
         function applyEditParamsToEquation(baseEq, params) {
             // Work on RHS only
             const rhs = extractRExponentAndRHS(baseEq).rhs || baseEq;
@@ -2980,7 +3616,7 @@
             if (isFinite(rShift) && Math.abs(rShift) > 1e-12) {
                 transformed = `(${transformed}) ${rShift >= 0 ? '+' : '-'} ${fmtNum(Math.abs(rShift))}`;
             }
-            return transformed;
+            return cleanupSliderExpression(transformed);
         }
 
         function applyEditParams() {
@@ -3049,7 +3685,13 @@
             showCoordTooltip(msg, e.clientX, e.clientY);
             plotGraph();
         }
-        function onCartesianLeave() { hideCoordTooltip(); }
+        function onCartesianLeave() {
+            hideCoordTooltip();
+            if (interactionMode === 'edit' && cartesianCanvas) {
+                // Default back to move (plus with arrows) when not over the graph
+                cartesianCanvas.style.cursor = 'move';
+            }
+        }
         cartesianCanvas.addEventListener('mousemove', onCartesianHover);
         cartesianCanvas.addEventListener('mouseleave', onCartesianLeave);
 
@@ -3077,19 +3719,27 @@
 
         // Decide which axis to resize based on local shape at clicked θ
         function chooseResizeAxisAtTheta(theta) {
+            // Decide based on local screen-space slope: near-horizontal -> 'ns-resize' (amplitude),
+            // steep/near-vertical -> 'ew-resize' (frequency)
             const baseRangeView = 10 / cartesianZoom;
             const xMin = cartesianCenterX - baseRangeView;
             const xMax = cartesianCenterX + baseRangeView;
-            const span = Math.max(1e-3, xMax - xMin);
-            const h = Math.max(1e-3, span * 0.01); // ~1% of current θ span
-            const y0 = evaluateRAtTheta(theta);
+            const yMin = cartesianCenterY - baseRangeView;
+            const yMax = cartesianCenterY + baseRangeView;
+            const xRange = Math.max(1e-6, xMax - xMin);
+            const yRange = Math.max(1e-6, yMax - yMin);
+            const plotWidth = Math.max(1e-3, (cartesianCanvas.width - 120));  // width - 2*padding(60)
+            const plotHeight = Math.max(1e-3, (cartesianCanvas.height - 120)); // height - 2*padding(60)
+            const h = Math.max(1e-4, xRange * 0.01); // small delta theta ~1% of visible span
             const y1 = evaluateRAtTheta(theta + h);
             const y2 = evaluateRAtTheta(theta - h);
-            if (!isFinite(y0) || !isFinite(y1) || !isFinite(y2)) return 'frequency';
-            const slopeMag = Math.abs((y1 - y2) / (2 * h));
-            const peakness = Math.abs(y0 - (y1 + y2) / 2);
-            // Near peaks/troughs (side curvature larger than slope) -> amplitude; else frequency
-            return (peakness > slopeMag * 0.5) ? 'amplitude' : 'frequency';
+            if (!isFinite(y1) || !isFinite(y2)) return 'frequency';
+            const dRdTheta = (y1 - y2) / (2 * h);
+            const sxPerTheta = plotWidth / xRange;
+            const syPerR = plotHeight / yRange;
+            const slopePx = Math.abs(dRdTheta) * (syPerR / sxPerTheta); // |dy/dx| in pixels-per-pixel
+            const HORIZONTAL_SLOPE_THRESHOLD = 0.7; // < ~35-40° => treat as near-horizontal
+            return (slopePx < HORIZONTAL_SLOPE_THRESHOLD) ? 'amplitude' : 'frequency';
         }
 
         // Begin "resize" gesture on double-click in edit mode
@@ -3206,6 +3856,66 @@
         // Enhance edit mode mouse handling to update overlay and snapping
         document.addEventListener('mousemove', (e) => {
             if (interactionMode === 'edit') {
+                // Update cursor based on local slope region over the helper graph
+                if (cartesianCanvas) {
+                    const rect = cartesianCanvas.getBoundingClientRect();
+                    const inside =
+                        e.clientX >= rect.left && e.clientX <= rect.right &&
+                        e.clientY >= rect.top && e.clientY <= rect.bottom;
+                    if (inside) {
+                        const padding = 60;
+                        const plotWidth = cartesianCanvas.width - 2 * padding;
+                        const plotHeight = cartesianCanvas.height - 2 * padding;
+                        const mouseX = e.clientX - rect.left;
+                        const mouseY = e.clientY - rect.top;
+                        const hover = cartesianMouseToWorld(e);
+                        // While actively dragging, keep drag cursors
+                        if (isEditResizing) {
+                            cartesianCanvas.style.cursor = (editResizeAxis === 'amplitude') ? 'ns-resize' : 'ew-resize';
+                        } else if (isEditTranslating) {
+                            cartesianCanvas.style.cursor = 'move';
+                        } else if (hover) {
+                            // Map world to screen for the curve point at this theta
+                            const baseRangeView = 10 / cartesianZoom;
+                            const xMin = cartesianCenterX - baseRangeView;
+                            const xMax = cartesianCenterX + baseRangeView;
+                            const yMin = cartesianCenterY - baseRangeView;
+                            const yMax = cartesianCenterY + baseRangeView;
+                            const xRange = xMax - xMin;
+                            const yRange = yMax - yMin;
+                            const rAtTheta = evaluateRAtTheta(hover.theta);
+                            if (isFinite(rAtTheta)) {
+                                const sx = padding + ((hover.theta - xMin) / xRange) * plotWidth;
+                                const sy = padding + ((yMax - rAtTheta) / yRange) * plotHeight;
+                                // screen-space slope at this theta
+                                const h = Math.max(1e-4, xRange * 0.01);
+                                const y1 = evaluateRAtTheta(hover.theta + h);
+                                const y2 = evaluateRAtTheta(hover.theta - h);
+                                let slopePx = 0;
+                                if (isFinite(y1) && isFinite(y2)) {
+                                    const dRdTheta = (y1 - y2) / (2 * h);
+                                    const sxPerTheta = plotWidth / xRange;
+                                    const syPerR = plotHeight / yRange;
+                                    slopePx = dRdTheta * (syPerR / sxPerTheta); // dy/dx in px/px (can be negative)
+                                }
+                                const b = sy - slopePx * sx; // line: y = slopePx * x + b
+                                const dist = Math.abs(slopePx * mouseX - mouseY + b) / Math.sqrt(slopePx * slopePx + 1);
+                                const PROX_PX = 5; // only change when directly over the line
+                                if (isFinite(dist) && dist <= PROX_PX) {
+                                    const axis = Math.abs(slopePx) < 0.7 ? 'amplitude' : 'frequency';
+                                    cartesianCanvas.style.cursor = (axis === 'amplitude') ? 'ns-resize' : 'ew-resize';
+                                } else {
+                                    // default in edit mode: plus with arrows (move)
+                                    cartesianCanvas.style.cursor = 'move';
+                                }
+                            } else {
+                                cartesianCanvas.style.cursor = 'move';
+                            }
+                        } else {
+                            cartesianCanvas.style.cursor = 'move';
+                        }
+                    }
+                }
                 const c = cartesianMouseToWorld(e);
                 if (c) lastEditMouseWorld = c;
                 if (isEditTranslating && editStart && c) {
@@ -3615,13 +4325,35 @@
             updateParamBoundsLabels();
         }
 
+        function initGraphResetButton() {
+            const btn = document.getElementById('resetGraphsBtn');
+            if (!btn) return;
+            btn.addEventListener('click', resetBothGraphs);
+        }
+        function setupToggles() {
+            const ids = ['toggleTheta','toggleRadius','toggleFreq','toggleColorRadius'];
+            for (const id of ids) {
+                const el = document.getElementById(id);
+                if (!el) continue;
+                el.addEventListener('change', () => {
+                    updateEquationPretty();
+                    updateEquationOverlay();
+                    plotGraph();
+                });
+            }
+        }
+
         // Plot default equation on load
         window.addEventListener('load', () => {
             setupRangeInputListeners();
             setupSlider();
             initParamSliders();
+            setupToggles();
+            initGraphResetButton();
             initRPrefix();
             updateCanvasCursor();
+            // Keep overlay synced on load
+            updateEquationOverlay();
             const equation = equationInput.value.trim();
             if (equation) {
                 autoSetRange(equation);
@@ -3629,6 +4361,12 @@
             updateSliderBounds();
             updateEquationPretty();
             plotGraph();
+            if (!defaultCartesianBounds) {
+                rememberDefaultCartesianView(true);
+            }
+            if (defaultPolarZoom === null) {
+                rememberDefaultPolarZoom(true);
+            }
         });
         
         // Also setup listeners immediately if DOM is already ready
@@ -3637,6 +4375,7 @@
                 setupRangeInputListeners();
                 setupSlider();
                 initParamSliders();
+                setupToggles();
                 initRPrefix();
                 updateCanvasCursor();
             });
@@ -3644,8 +4383,11 @@
             setupRangeInputListeners();
             setupSlider();
             initParamSliders();
+            setupToggles();
+            initGraphResetButton();
             initRPrefix();
             updateCanvasCursor();
+            updateEquationOverlay();
         }
     </script>
     <script src="function-helper.js"></script>

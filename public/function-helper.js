@@ -58,20 +58,20 @@
 #${ROOT_ID} {
   position: fixed;
   top: 50%;
-  right: -4px; /* slightly tucked offscreen when closed */
-  transform: translateY(-50%);
+  right: 0;
+  transform: translateY(-50%) translateX(calc(100% - 36px));
   z-index: 2147483000;
   font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-  transition: right 0.25s ease;
+  transition: transform 0.25s ease;
 }
-#${ROOT_ID}.fh-open { right: 0; }
-#${ROOT_ID}.fh-closed { right: -4px; }
+#${ROOT_ID}.fh-open {
+  transform: translateY(-50%) translateX(0);
+}
+#${ROOT_ID}.fh-closed {
+  transform: translateY(-50%) translateX(calc(100% - 36px));
+}
 #${ROOT_ID}.fh-closed .fh-panel {
-  transform: translateX(100%);
   pointer-events: none;
-}
-#${ROOT_ID}.fh-open .fh-panel {
-  transform: translateX(0);
 }
 #${ROOT_ID} .fh-panel {
   width: 240px;
@@ -82,7 +82,6 @@
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
   overflow: hidden;
   backdrop-filter: blur(6px);
-  transition: transform 0.25s ease;
 }
 #${ROOT_ID} .fh-handle {
   position: absolute;
