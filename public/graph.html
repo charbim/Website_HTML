@@ -534,6 +534,43 @@
             box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
         }
 
+        .edit-adjust-buttons {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.75rem;
+            box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .adjust-btn {
+            padding: 0.6rem 1.2rem;
+            font-size: 0.95rem;
+            background: #ffffff;
+            border: 2px solid #dc2626;
+            border-radius: 8px;
+            color: #dc2626;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .adjust-btn:hover {
+            background: #fef2f2;
+            border-color: #b91c1c;
+            color: #b91c1c;
+        }
+
+        .adjust-btn.active {
+            background: #dc2626;
+            border-color: #dc2626;
+            color: #ffffff;
+        }
+
         /* Hide verbose header in slider area to make it compact */
         .slider-section h3,
         .slider-section p {
@@ -1160,6 +1197,12 @@
                             <span class="icon-tooltip">Graph edit mode</span>
                         </button>
                     </div>
+                    <!-- Edit Mode Adjustment Buttons -->
+                    <div class="edit-adjust-buttons" id="editAdjustButtons" style="display: none;">
+                        <button class="adjust-btn" id="btnAmplitudeAdjust" onclick="activateAdjustMode('amplitude')">Amplitude adjust</button>
+                        <button class="adjust-btn" id="btnFrequencyAdjust" onclick="activateAdjustMode('frequency')">Frequency adjust</button>
+                        <button class="adjust-btn" id="btnShiftAdjust" onclick="activateAdjustMode('shift')">Shift adjust</button>
+                    </div>
                 </div>
                 <div class="graphs-container">
                     <div class="graph-wrapper">
@@ -1199,13 +1242,12 @@
         let editBaseEquation = '';
         let editParams = { amplitude: 1, frequency: 1, thetaShift: 0, rShift: 0 };
         let isEditTranslating = false;
-        let isEditResizing = false;
+        let isEditAdjustingAmplitude = false;
+        let isEditAdjustingFrequency = false;
         let editStart = null;
         let editLockedMaxR = null; // keep polar scale steady during edit
         let lastEditMouseWorld = null; // track current mouse world coords in edit mode
-        // Single-axis resize behavior
-        let editResizeAxis = null; // 'amplitude' | 'frequency'
-        let editGestureTransient = false; // true if we temporarily enter edit mode for a gesture
+        let editAdjustMode = 'shift'; // 'amplitude' | 'frequency' | 'shift' - default to shift
         
         // Manual range bounds (null means auto)
         let manualXMin = null;
@@ -1486,19 +1528,41 @@
             lastMouseX = e.clientX;
             lastMouseY = e.clientY;
             } else if (interactionMode === 'edit') {
-                // Begin translation (single click & hold)
-                if (e.detail !== 2) {
-                    const c = cartesianMouseToWorld(e);
-                    if (c) {
-                        isEditTranslating = true;
-                        editStart = {
-                            theta0: c.theta,
-                            r0: c.r,
-                            thetaShift: editParams.thetaShift,
-                            rShift: editParams.rShift
-                        };
+                if (editAdjustMode === 'shift') {
+                    // Begin translation (single click & hold) - only in shift mode
+                    if (e.detail !== 2) {
+                        const c = cartesianMouseToWorld(e);
+                        if (c) {
+                            isEditTranslating = true;
+                            editStart = {
+                                theta0: c.theta,
+                                r0: c.r,
+                                thetaShift: editParams.thetaShift,
+                                rShift: editParams.rShift
+                            };
+                        }
+                        e.preventDefault();
                     }
-                    e.preventDefault();
+                } else if (editAdjustMode === 'amplitude') {
+                    // Begin amplitude adjustment - lock to vertical movement
+                    if (e.detail !== 2) {
+                        isEditAdjustingAmplitude = true;
+                        editStart = {
+                            mouseY: e.clientY,
+                            amplitude: editParams.amplitude
+                        };
+                        e.preventDefault();
+                    }
+                } else if (editAdjustMode === 'frequency') {
+                    // Begin frequency adjustment - lock to horizontal movement
+                    if (e.detail !== 2) {
+                        isEditAdjustingFrequency = true;
+                        editStart = {
+                            mouseX: e.clientX,
+                            frequency: editParams.frequency
+                        };
+                        e.preventDefault();
+                    }
                 }
             }
         });
@@ -1529,7 +1593,7 @@
                 
                 plotGraph();
             } else if (interactionMode === 'edit') {
-                if (isEditTranslating && editStart) {
+                if (editAdjustMode === 'shift' && isEditTranslating && editStart) {
                     const c = cartesianMouseToWorld(e);
                     if (c) {
                         const dTheta = c.theta - editStart.theta0;
@@ -1538,20 +1602,32 @@
                         editParams.rShift = editStart.rShift + dR;
                         applyEditParams();
                     }
-                } else if (isEditResizing && editStart) {
-                    const c = cartesianMouseToWorld(e);
-                    if (c) {
-                        const dx0 = Math.max(0.05, Math.abs(editStart.pivotTheta - editStart.thetaAtStart));
-                        const dy0 = Math.max(0.05, Math.abs(editStart.pivotR - editStart.rAtStart));
-                        const dx1 = Math.max(0.05, Math.abs(editStart.pivotTheta - c.theta));
-                        const dy1 = Math.max(0.05, Math.abs(editStart.pivotR - c.r));
-                        const scaleX = dx1 / dx0; // horizontal scale
-                        const scaleY = dy1 / dy0; // vertical scale
-                        // Frequency inversely scales with horizontal stretching
-                        editParams.frequency = clamp(0.05, 20, editStart.frequency / scaleX);
-                        editParams.amplitude = clamp(0.05, 20, editStart.amplitude * scaleY);
-                        applyEditParams();
-                    }
+                } else if (editAdjustMode === 'amplitude' && isEditAdjustingAmplitude && editStart) {
+                    // Lock to vertical movement only - calculate amplitude change from Y movement
+                    const deltaY = e.clientY - editStart.mouseY;
+                    // Convert pixel movement to amplitude change
+                    // Negative deltaY (moving up) increases amplitude, positive (moving down) decreases
+                    // Scale factor: ~0.02 per pixel for increased sensitivity
+                    const amplitudeDelta = -deltaY * 0.02;
+                    const newAmplitude = editStart.amplitude + amplitudeDelta;
+                    // Allow negative amplitude
+                    editParams.amplitude = newAmplitude;
+                    applyEditParams();
+                    // Lock mouse to vertical movement by preventing default and constraining
+                    e.preventDefault();
+                } else if (editAdjustMode === 'frequency' && isEditAdjustingFrequency && editStart) {
+                    // Lock to horizontal movement only - calculate frequency change from X movement
+                    const deltaX = e.clientX - editStart.mouseX;
+                    // Convert pixel movement to frequency change
+                    // Positive deltaX (moving right) increases frequency, negative (moving left) decreases
+                    // Scale factor: ~0.02 per pixel for increased sensitivity
+                    const frequencyDelta = deltaX * 0.02;
+                    const newFrequency = editStart.frequency + frequencyDelta;
+                    // Clamp frequency to reasonable bounds (0.05 to 20)
+                    editParams.frequency = Math.max(0.05, Math.min(20, newFrequency));
+                    applyEditParams();
+                    // Lock mouse to horizontal movement by preventing default
+                    e.preventDefault();
                 }
             }
         });
@@ -1561,14 +1637,14 @@
                 isDragging = false;
                 cartesianCanvas.classList.remove('dragging');
             }
-            if (isEditTranslating || isEditResizing) {
+            if (isEditTranslating) {
                 isEditTranslating = false;
-                isEditResizing = false;
-                // If we entered edit mode transiently for a gesture, restore previous mode
-                if (editGestureTransient) {
-                    editGestureTransient = false;
-                    setInteractionMode('perspective');
-                }
+            }
+            if (isEditAdjustingAmplitude) {
+                isEditAdjustingAmplitude = false;
+            }
+            if (isEditAdjustingFrequency) {
+                isEditAdjustingFrequency = false;
             }
         });
 
@@ -2455,8 +2531,6 @@
                 errorMessage.classList.remove('show');
                 // Keep range inputs synced with view
                 updateRangeInputsFromView();
-                // Draw edit overlay (movement bar) if applicable
-                drawEditOverlay();
             } catch (error) {
                 showError('Invalid equation: ' + error.message);
             }
@@ -3551,6 +3625,13 @@
             if (btnP) btnP.classList.toggle('active', mode === 'perspective');
             if (btnV) btnV.classList.toggle('active', mode === 'view');
             if (btnE) btnE.classList.toggle('active', mode === 'edit');
+            
+            // Show/hide edit adjustment buttons
+            const editAdjustButtons = document.getElementById('editAdjustButtons');
+            if (editAdjustButtons) {
+                editAdjustButtons.style.display = (mode === 'edit') ? 'flex' : 'none';
+            }
+            
             updateCanvasCursor();
             hideCoordTooltip();
             if (mode === 'edit') {
@@ -3558,12 +3639,45 @@
                 editBaseEquation = (equationInput.value || '').trim();
                 editParams = { amplitude: 1, frequency: 1, thetaShift: 0, rShift: 0 };
                 isEditTranslating = false;
-                isEditResizing = false;
+                isEditAdjustingAmplitude = false;
+                isEditAdjustingFrequency = false;
                 editStart = null;
                 editLockedMaxR = (lastPolarState && isFinite(lastPolarState.maxR) && lastPolarState.maxR > 0) ? lastPolarState.maxR : null;
+                // Default to shift adjust mode
+                editAdjustMode = 'shift';
+                // Activate shift button by default
+                const adjustBtns = document.querySelectorAll('.adjust-btn');
+                adjustBtns.forEach(btn => btn.classList.remove('active'));
+                document.getElementById('btnShiftAdjust')?.classList.add('active');
             } else {
                 editLockedMaxR = null;
+                // Clear active state from adjust buttons when leaving edit mode
+                const adjustBtns = document.querySelectorAll('.adjust-btn');
+                adjustBtns.forEach(btn => btn.classList.remove('active'));
             }
+        }
+
+        function activateAdjustMode(mode) {
+            if (interactionMode !== 'edit') return;
+            
+            // Set the adjust mode
+            editAdjustMode = mode;
+            
+            // Remove active class from all adjust buttons
+            const adjustBtns = document.querySelectorAll('.adjust-btn');
+            adjustBtns.forEach(btn => btn.classList.remove('active'));
+            
+            // Add active class to clicked button
+            if (mode === 'amplitude') {
+                document.getElementById('btnAmplitudeAdjust')?.classList.add('active');
+            } else if (mode === 'frequency') {
+                document.getElementById('btnFrequencyAdjust')?.classList.add('active');
+            } else if (mode === 'shift') {
+                document.getElementById('btnShiftAdjust')?.classList.add('active');
+            }
+            
+            // Update cursor based on adjust mode
+            updateCanvasCursor();
         }
 
         function updateCanvasCursor() {
@@ -3575,9 +3689,18 @@
                 cartesianCanvas.style.cursor = 'crosshair';
                 polarCanvas.style.cursor = 'crosshair';
             } else {
-                // Edit mode default: plus with arrows (move) over helper graph
-                cartesianCanvas.style.cursor = 'move';
-                polarCanvas.style.cursor = 'move';
+                // Edit mode: cursor based on adjust mode
+                if (editAdjustMode === 'amplitude') {
+                    cartesianCanvas.style.cursor = 'ns-resize';
+                    polarCanvas.style.cursor = 'ns-resize';
+                } else if (editAdjustMode === 'frequency') {
+                    cartesianCanvas.style.cursor = 'ew-resize';
+                    polarCanvas.style.cursor = 'ew-resize';
+                } else {
+                    // Shift mode: move cursor (cross with arrows)
+                    cartesianCanvas.style.cursor = 'move';
+                    polarCanvas.style.cursor = 'move';
+                }
             }
         }
 
@@ -3925,229 +4048,95 @@
         polarCanvas.addEventListener('mousemove', onPolarHover);
         polarCanvas.addEventListener('mouseleave', onPolarLeave);
 
-        // Decide which axis to resize based on local shape at clicked θ
-        function chooseResizeAxisAtTheta(theta) {
-            // Decide based on local screen-space slope: near-horizontal -> 'ns-resize' (amplitude),
-            // steep/near-vertical -> 'ew-resize' (frequency)
-            const baseRangeView = 10 / cartesianZoom;
-            const xMin = cartesianCenterX - baseRangeView;
-            const xMax = cartesianCenterX + baseRangeView;
-            const yMin = cartesianCenterY - baseRangeView;
-            const yMax = cartesianCenterY + baseRangeView;
-            const xRange = Math.max(1e-6, xMax - xMin);
-            const yRange = Math.max(1e-6, yMax - yMin);
-            const plotWidth = Math.max(1e-3, (cartesianCanvas.width - 120));  // width - 2*padding(60)
-            const plotHeight = Math.max(1e-3, (cartesianCanvas.height - 120)); // height - 2*padding(60)
-            const h = Math.max(1e-4, xRange * 0.01); // small delta theta ~1% of visible span
-            const y1 = evaluateRAtTheta(theta + h);
-            const y2 = evaluateRAtTheta(theta - h);
-            if (!isFinite(y1) || !isFinite(y2)) return 'frequency';
-            const dRdTheta = (y1 - y2) / (2 * h);
-            const sxPerTheta = plotWidth / xRange;
-            const syPerR = plotHeight / yRange;
-            const slopePx = Math.abs(dRdTheta) * (syPerR / sxPerTheta); // |dy/dx| in pixels-per-pixel
-            const HORIZONTAL_SLOPE_THRESHOLD = 0.7; // < ~35-40° => treat as near-horizontal
-            return (slopePx < HORIZONTAL_SLOPE_THRESHOLD) ? 'amplitude' : 'frequency';
-        }
+        // drawEditOverlay function removed - no longer showing arrows when shifting
 
-        // Begin "resize" gesture on double-click in edit mode
-        cartesianCanvas.addEventListener('dblclick', (e) => {
-            if (interactionMode !== 'edit') {
-                editGestureTransient = true;
-                setInteractionMode('edit');
-            } else {
-                editGestureTransient = false;
-            }
-            const c = cartesianMouseToWorld(e);
-            if (!c) return;
-            isEditResizing = true;
-            // Decide axis based on local shape (peak vs side)
-            editResizeAxis = chooseResizeAxisAtTheta(c.theta);
-            editStart = {
-                pivotTheta: c.theta,
-                pivotR: c.r,
-                amplitude: editParams.amplitude,
-                frequency: editParams.frequency,
-                mouseX: e.clientX,
-                mouseY: e.clientY
-            };
-            e.preventDefault();
-        });
-
-        // Track edit movement and draw overlay
-        function drawEditOverlay() {
-            if (!(interactionMode === 'edit' && (isEditTranslating || isEditResizing) && editStart)) return;
-            const ctx = cartesianCanvas.getContext('2d');
-            const width = cartesianCanvas.width;
-            const height = cartesianCanvas.height;
-            const padding = 60;
-            const plotWidth = width - 2 * padding;
-            const plotHeight = height - 2 * padding;
-            const baseRangeView = 10 / cartesianZoom;
-            const xMin = cartesianCenterX - baseRangeView;
-            const xMax = cartesianCenterX + baseRangeView;
-            const yMin = cartesianCenterY - baseRangeView;
-            const yMax = cartesianCenterY + baseRangeView;
-            const xRange = xMax - xMin;
-            const yRange = yMax - yMin;
-
-            const worldToScreen = (theta, r) => {
-                const sx = padding + ((theta - xMin) / xRange) * plotWidth;
-                const sy = padding + ((yMax - r) / yRange) * plotHeight;
-                return { sx, sy };
-            };
-            const startWorld = isEditResizing
-                ? { theta: editStart.pivotTheta, r: editStart.pivotR }
-                : { theta: editStart.theta0, r: editStart.r0 };
-            const currWorldRaw = lastEditMouseWorld || startWorld;
-            // Constrain overlay to selected axis when resizing
-            let currWorld = { ...currWorldRaw };
-            if (isEditResizing && editResizeAxis === 'amplitude') {
-                currWorld.theta = startWorld.theta;
-            } else if (isEditResizing && editResizeAxis === 'frequency') {
-                currWorld.r = startWorld.r;
-            }
-            const a = worldToScreen(startWorld.theta, startWorld.r);
-            const b = worldToScreen(currWorld.theta, currWorld.r);
-
-            ctx.save();
-            // Dashed guide
-            ctx.setLineDash([6, 6]);
-            ctx.lineWidth = 2;
-            ctx.strokeStyle = 'rgba(67,56,202,0.9)'; // indigo
-            ctx.beginPath();
-            ctx.moveTo(a.sx, a.sy);
-            ctx.lineTo(b.sx, b.sy);
-            ctx.stroke();
-            ctx.setLineDash([]);
-            // Endpoints
-            ctx.fillStyle = 'rgba(67,56,202,0.95)';
-            ctx.beginPath();
-            ctx.arc(a.sx, a.sy, 4, 0, 2 * Math.PI);
-            ctx.arc(b.sx, b.sy, 4, 0, 2 * Math.PI);
-            ctx.fill();
-            // Single-direction arrow head at the moving end
-            function drawArrowHead(x0, y0, x1, y1) {
-                const angle = Math.atan2(y1 - y0, x1 - x0);
-                const size = 9;
-                ctx.beginPath();
-                ctx.moveTo(x1, y1);
-                ctx.lineTo(x1 - size * Math.cos(angle - Math.PI / 6), y1 - size * Math.sin(angle - Math.PI / 6));
-                ctx.lineTo(x1 - size * Math.cos(angle + Math.PI / 6), y1 - size * Math.sin(angle + Math.PI / 6));
-                ctx.closePath();
-                ctx.fillStyle = 'rgba(67,56,202,0.95)';
-                ctx.fill();
-            }
-            drawArrowHead(a.sx, a.sy, b.sx, b.sy);
-
-            // Label
-            ctx.font = '12px Arial';
-            let label = '';
-            if (isEditTranslating) {
-                const dTheta = currWorld.theta - startWorld.theta;
-                const dR = currWorld.r - startWorld.r;
-                label = `Δθ=${formatTheta(dTheta)}, Δr=${dR.toFixed(2)}`;
-            } else if (isEditResizing) {
-                label = `A≈${fmtNum(editParams.amplitude)}, f≈${fmtNum(editParams.frequency)}`;
-            }
-            const tx = b.sx + 8;
-            const ty = b.sy - 8;
-            // background
-            const textWidth = ctx.measureText(label).width + 10;
-            ctx.fillStyle = 'rgba(17,24,39,0.9)';
-            ctx.fillRect(tx - 4, ty - 14, textWidth, 20);
-            ctx.fillStyle = '#fff';
-            ctx.fillText(label, tx, ty);
-            ctx.restore();
-        }
-
-        // Enhance edit mode mouse handling to update overlay and snapping
+                // Enhance edit mode mouse handling to update overlay and snapping
         document.addEventListener('mousemove', (e) => {
             if (interactionMode === 'edit') {
-                // Update cursor based on local slope region over the helper graph
+                // Update cursor based on adjust mode
                 if (cartesianCanvas) {
                     const rect = cartesianCanvas.getBoundingClientRect();
                     const inside =
                         e.clientX >= rect.left && e.clientX <= rect.right &&
                         e.clientY >= rect.top && e.clientY <= rect.bottom;
                     if (inside) {
-                        const padding = 60;
-                        const plotWidth = cartesianCanvas.width - 2 * padding;
-                        const plotHeight = cartesianCanvas.height - 2 * padding;
-                        const mouseX = e.clientX - rect.left;
-                        const mouseY = e.clientY - rect.top;
-                        const hover = cartesianMouseToWorld(e);
-                        // While actively dragging, keep drag cursors
-                        if (isEditResizing) {
-                            cartesianCanvas.style.cursor = (editResizeAxis === 'amplitude') ? 'ns-resize' : 'ew-resize';
-                        } else if (isEditTranslating) {
+                        // While actively dragging, show appropriate cursor
+                        if (isEditTranslating && editAdjustMode === 'shift') {
                             cartesianCanvas.style.cursor = 'move';
-                        } else if (hover) {
-                            // Map world to screen for the curve point at this theta
-                            const baseRangeView = 10 / cartesianZoom;
-                            const xMin = cartesianCenterX - baseRangeView;
-                            const xMax = cartesianCenterX + baseRangeView;
-                            const yMin = cartesianCenterY - baseRangeView;
-                            const yMax = cartesianCenterY + baseRangeView;
-                            const xRange = xMax - xMin;
-                            const yRange = yMax - yMin;
-                            const rAtTheta = evaluateRAtTheta(hover.theta);
-                            if (isFinite(rAtTheta)) {
-                                const sx = padding + ((hover.theta - xMin) / xRange) * plotWidth;
-                                const sy = padding + ((yMax - rAtTheta) / yRange) * plotHeight;
-                                // screen-space slope at this theta
-                                const h = Math.max(1e-4, xRange * 0.01);
-                                const y1 = evaluateRAtTheta(hover.theta + h);
-                                const y2 = evaluateRAtTheta(hover.theta - h);
-                                let slopePx = 0;
-                                if (isFinite(y1) && isFinite(y2)) {
-                                    const dRdTheta = (y1 - y2) / (2 * h);
-                                    const sxPerTheta = plotWidth / xRange;
-                                    const syPerR = plotHeight / yRange;
-                                    slopePx = dRdTheta * (syPerR / sxPerTheta); // dy/dx in px/px (can be negative)
-                                }
-                                const b = sy - slopePx * sx; // line: y = slopePx * x + b
-                                const dist = Math.abs(slopePx * mouseX - mouseY + b) / Math.sqrt(slopePx * slopePx + 1);
-                                const PROX_PX = 5; // only change when directly over the line
-                                if (isFinite(dist) && dist <= PROX_PX) {
-                                    const axis = Math.abs(slopePx) < 0.7 ? 'amplitude' : 'frequency';
-                                    cartesianCanvas.style.cursor = (axis === 'amplitude') ? 'ns-resize' : 'ew-resize';
-                                } else {
-                                    // default in edit mode: plus with arrows (move)
-                                    cartesianCanvas.style.cursor = 'move';
-                                }
+                        } else if (isEditAdjustingAmplitude && editAdjustMode === 'amplitude') {
+                            cartesianCanvas.style.cursor = 'ns-resize';
+                        } else if (isEditAdjustingFrequency && editAdjustMode === 'frequency') {
+                            cartesianCanvas.style.cursor = 'ew-resize';
+                        } else {
+                            // Use cursor based on selected adjust mode
+                            if (editAdjustMode === 'amplitude') {
+                                cartesianCanvas.style.cursor = 'ns-resize';
+                            } else if (editAdjustMode === 'frequency') {
+                                cartesianCanvas.style.cursor = 'ew-resize';
                             } else {
+                                // Shift mode: move cursor (cross with arrows)
                                 cartesianCanvas.style.cursor = 'move';
                             }
+                        }
+                    }
+                }
+                // Update polar canvas cursor as well
+                if (polarCanvas) {
+                    const rect = polarCanvas.getBoundingClientRect();
+                    const inside =
+                        e.clientX >= rect.left && e.clientX <= rect.right &&
+                        e.clientY >= rect.top && e.clientY <= rect.bottom;
+                    if (inside) {
+                        // While actively dragging, show appropriate cursor
+                        if (isEditTranslating && editAdjustMode === 'shift') {
+                            polarCanvas.style.cursor = 'move';
+                        } else if (isEditAdjustingAmplitude && editAdjustMode === 'amplitude') {
+                            polarCanvas.style.cursor = 'ns-resize';
+                        } else if (isEditAdjustingFrequency && editAdjustMode === 'frequency') {
+                            polarCanvas.style.cursor = 'ew-resize';
                         } else {
-                            cartesianCanvas.style.cursor = 'move';
+                            // Use cursor based on selected adjust mode
+                            if (editAdjustMode === 'amplitude') {
+                                polarCanvas.style.cursor = 'ns-resize';
+                            } else if (editAdjustMode === 'frequency') {
+                                polarCanvas.style.cursor = 'ew-resize';
+                            } else {
+                                // Shift mode: move cursor (cross with arrows)
+                                polarCanvas.style.cursor = 'move';
+                            }
                         }
                     }
                 }
                 const c = cartesianMouseToWorld(e);
                 if (c) lastEditMouseWorld = c;
-                if (isEditTranslating && editStart && c) {
+                if (isEditTranslating && editStart && c && editAdjustMode === 'shift') {
                     const dTheta = c.theta - editStart.theta0;
                     const dR = c.r - editStart.r0;
                     editParams.thetaShift = editStart.thetaShift + dTheta;
                     editParams.rShift = editStart.rShift + dR;
                     applyEditParams();
-                    drawEditOverlay();
-                } else if (isEditResizing && editStart && c) {
-                    // Pixel-based single-axis scaling for stable behavior
-                    const dxPx = e.clientX - editStart.mouseX;
-                    const dyPx = editStart.mouseY - e.clientY; // up positive
-                    if (editResizeAxis === 'frequency') {
-                        // Right increases frequency; left decreases
-                        const factor = Math.pow(1.01, dxPx); // ~x2 per 100px
-                        editParams.frequency = clamp(0.05, 20, snapFactor(editStart.frequency * factor));
-                    } else if (editResizeAxis === 'amplitude') {
-                        // Up increases amplitude; down decreases
-                        const factor = Math.pow(1.01, dyPx); // ~x2 per 100px
-                        editParams.amplitude = clamp(0.05, 20, snapFactor(editStart.amplitude * factor));
-                    }
+                } else if (isEditAdjustingAmplitude && editStart && editAdjustMode === 'amplitude') {
+                    // Lock to vertical movement only - calculate amplitude change from Y movement
+                    const deltaY = e.clientY - editStart.mouseY;
+                    // Convert pixel movement to amplitude change
+                    // Negative deltaY (moving up) increases amplitude, positive (moving down) decreases
+                    // Scale factor: ~0.02 per pixel for increased sensitivity
+                    const amplitudeDelta = -deltaY * 0.02;
+                    const newAmplitude = editStart.amplitude + amplitudeDelta;
+                    // Allow negative amplitude
+                    editParams.amplitude = newAmplitude;
                     applyEditParams();
-                    drawEditOverlay();
+                } else if (isEditAdjustingFrequency && editStart && editAdjustMode === 'frequency') {
+                    // Lock to horizontal movement only - calculate frequency change from X movement
+                    const deltaX = e.clientX - editStart.mouseX;
+                    // Convert pixel movement to frequency change
+                    // Positive deltaX (moving right) increases frequency, negative (moving left) decreases
+                    // Scale factor: ~0.02 per pixel for increased sensitivity
+                    const frequencyDelta = deltaX * 0.02;
+                    const newFrequency = editStart.frequency + frequencyDelta;
+                    // Clamp frequency to reasonable bounds (0.05 to 20)
+                    editParams.frequency = Math.max(0.05, Math.min(20, newFrequency));
+                    applyEditParams();
                 }
             }
         }, true);
