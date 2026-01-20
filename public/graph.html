@@ -263,8 +263,9 @@
             margin-top: 0.15rem;
         }
 
-        .mini-slider-bounds .value {
-            cursor: pointer;
+        .mini-slider-bounds .value,
+        .mini-slider-bounds input.mini-bound-input {
+            box-sizing: border-box;
             font-weight: 600;
             color: #111827;
             background: #ffffff;
@@ -273,6 +274,18 @@
             padding: 4px 8px;
             min-width: 70px;
             text-align: center;
+        }
+        .mini-slider-bounds input.mini-bound-input {
+            cursor: text;
+            outline: none;
+        }
+        .mini-slider-bounds input.mini-bound-input:hover {
+            border-color: #d1d5db;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+        }
+        .mini-slider-bounds input.mini-bound-input:focus {
+            border-color: rgba(220, 38, 38, 0.65);
+            box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15);
         }
 
         .toggle-panel {
@@ -324,8 +337,19 @@
         #toggleColorRadius { accent-color: #0ea5e9; }
         #toggleColorRadius + span { color: #0ea5e9; font-weight: 600; }
 
-        .equation-pretty .token-theta { color: #9333ea; font-weight: 700; }
-        .equation-pretty .token-r { color: #dc2626; font-weight: 700; }
+        .equation-pretty .token-theta,
+        .equation-color-overlay .token-theta { color: #9333ea; font-weight: 700; }
+        .equation-pretty .token-r,
+        .equation-color-overlay .token-r { color: #dc2626; font-weight: 700; }
+        .equation-pretty .token-amp,
+        .equation-color-overlay .token-amp { color: #ea580c; font-weight: 700; }
+        .equation-pretty .token-freq,
+        .equation-color-overlay .token-freq { color: #16a34a; font-weight: 700; }
+        .equation-pretty .token-shift,
+        .equation-color-overlay .token-shift { color: #facc15; font-weight: 700; }
+
+        /* Hide the pretty-preview line under the equation input (keep the live input overlay) */
+        #equationPretty { display: none; }
 
         .toggle-hint {
             font-size: 0.85rem;
@@ -420,6 +444,51 @@
             gap: 0.75rem;
         }
 
+        /* 3-column toolbar: equation | mode buttons | reset (above the graphs) */
+        .graph-toolbar-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 0.75rem;
+            align-items: center;
+            justify-items: center; /* center contents within each column */
+        }
+        .graph-toolbar-row > .equation-stack {
+            justify-self: center;
+            margin: 0;
+            width: 100%;
+        }
+        .graph-toolbar-row > .mode-toolbar {
+            justify-self: center;
+            margin: 0;
+            justify-content: center;
+        }
+        .graph-toolbar-row > .graph-reset {
+            justify-self: center;
+            margin: 0;
+            text-align: center;
+        }
+        /* Make the equation card hug its contents (instead of filling the whole column) */
+        .graph-toolbar-row .equation-centered {
+            max-width: none;
+            margin: 0;
+        }
+        .graph-toolbar-row .equation-bar {
+            width: fit-content;
+            max-width: 100%;
+            margin-bottom: 0;
+            padding: 0.65rem 0.75rem;
+        }
+        .graph-toolbar-row .equation-field {
+            width: auto;
+        }
+        .graph-toolbar-row .function-menu {
+            margin-left: 0; /* don't force the buttons to the far edge inside the compact card */
+        }
+        .graph-toolbar-row .graph-reset .control-btn {
+            min-width: auto;
+            white-space: nowrap;
+        }
+
         .graphs-container {
             display: flex;
             flex-direction: row;
@@ -430,6 +499,15 @@
         @media (max-width: 1100px) {
             .graphs-container {
                 flex-direction: column;
+            }
+            .graph-toolbar-row {
+                grid-template-columns: 1fr;
+                justify-items: stretch;
+            }
+            .graph-toolbar-row > .mode-toolbar,
+            .graph-toolbar-row > .graph-reset {
+                justify-self: start;
+                text-align: left;
             }
         }
 
@@ -1164,93 +1242,63 @@
         <div class="main-layout">
             <div class="graph-section">
                 <div class="graph-top-panel">
-                    <div class="equation-stack equation-centered">
-                        <!-- Equation bar -->
-                        <div class="input-section equation-bar equation-card">
-                            <div class="equation-heading">
-                                <div>
-                                    <label for="equation" class="eyebrow-label">Equation</label>
-                                    <p class="helper-text">Write r in terms of θ or x.</p>
-                                </div>
-                            </div>
-                            <div class="equation-field">
-                                <span id="rPrefix" class="r-prefix" title="Click to choose r, r², or r³">r<sup id="rExp" style="display:none"></sup></span>
-                                <span class="eq-symbol">=</span>
-                                <input type="text" id="equation" placeholder="Enter equation (e.g., sin(x), r*cos(theta), sqrt(x))" value="sin(x)">
-                            </div>
-                            <div class="equation-actions">
-                                <button type="button" class="secondary-btn" onclick="toggleRangeSection()">Adjust Range</button>
-                                <div class="function-menu">
-                                    <div class="function-group">
-                                        <span class="function-group-label">Vars:</span>
-                                        <button class="function-btn" onclick="insertSymbol('θ')">θ</button>
-                                        <button class="function-btn" onclick="insertSymbol('r')">r</button>
-                                        <button class="function-btn" onclick="insertSymbol('x')">x</button>
-                                        <button class="function-btn" onclick="insertSymbol('π')">π</button>
-                                    </div>
-                                    <div class="function-group">
-                                        <span class="function-group-label">Func:</span>
-                                        <button class="function-btn" onclick="insertSymbol('sin(')">sin</button>
-                                        <button class="function-btn" onclick="insertSymbol('cos(')">cos</button>
-                                        <button class="function-btn" onclick="insertSymbol('tan(')">tan</button>
-                                        <button class="function-btn" onclick="insertSymbol('sqrt(')">√</button>
-                                        <button class="function-btn" onclick="insertSymbol('log(')">log</button>
-                                        <button class="function-btn" onclick="insertSymbol('exp(')">exp</button>
-                                        <button class="function-btn" onclick="insertSymbol('abs(')">abs</button>
-                                    </div>
-                                    <div class="function-group">
-                                        <span class="function-group-label">Ops:</span>
-                                        <button class="function-btn" onclick="insertSymbol('^')">x²</button>
-                                        <button class="function-btn" onclick="insertSymbol('*')">×</button>
-                                        <button class="function-btn" onclick="insertSymbol('/')">÷</button>
-                                        <button class="function-btn" onclick="insertSymbol('+')">+</button>
-                                        <button class="function-btn" onclick="insertSymbol('-')">-</button>
-                                        <button class="function-btn" onclick="insertSymbol('(')">(</button>
-                                        <button class="function-btn" onclick="insertSymbol(')')">)</button>
-                                    </div>
-                                </div>
-                            </div>
-                            <div id="equationPretty" class="equation-pretty pretty-math" aria-hidden="true"></div>
-                            <div class="error-message" id="errorMessage"></div>
-                        </div>
-                    </div>
-                    <div class="mode-toolbar" id="interactionToolbar">
-                        <button id="btnModePerspective" class="icon-btn active" onclick="setInteractionMode('perspective')" aria-label="Move mode">
-                            <!-- plus + arrow icon -->
-                            <svg viewBox="0 0 24 24" aria-hidden="true">
-                                <rect x="11" y="5" width="2" height="14"/>
-                                <rect x="5" y="11" width="14" height="2"/>
-                                <path d="M14 7l5 5-5 5v-4h-4v-2h4z"/>
-                            </svg>
-                            <span class="icon-tooltip">Move mode</span>
-                        </button>
-                        <button id="btnModeView" class="icon-btn" onclick="setInteractionMode('view')" aria-label="View mode">
-                            <!-- new eye icon -->
-                            <svg viewBox="0 0 48 48" aria-hidden="true" preserveAspectRatio="xMidYMid meet">
-                                <path d="M4 24c4-8 12-14 20-14s16 6 20 14c-4 8-12 14-20 14S8 32 4 24Z" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-                                <circle cx="24" cy="24" r="8" fill="currentColor"/>
-                                <path d="M12 6l5 8" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
-                                <path d="M24 4v10" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
-                                <path d="M36 6l-5 8" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
-                            </svg>
-                            <span class="icon-tooltip">View mode</span>
-                        </button>
-                        <button id="btnModeEdit" class="icon-btn" onclick="setInteractionMode('edit')" aria-label="Graph edit mode">
-                            <!-- wrench icon -->
-                            <svg viewBox="0 0 24 24" aria-hidden="true">
-                                <path d="M22.7 19.3l-6.4-6.4a6 6 0 0 1-7.6-7.6l3.2 3.2 2.1-2.1-3.2-3.2a6 6 0 0 1 7.6 7.6l6.4 6.4-2.1 2.1zM2 22l6.1-1.6L3.6 15.9 2 22z"/>
-                            </svg>
-                            <span class="icon-tooltip">Graph edit mode</span>
-                        </button>
-                    </div>
                     <!-- Edit Mode Adjustment Buttons -->
                     <div class="edit-adjust-buttons" id="editAdjustButtons" style="display: none;">
                         <button class="adjust-btn" id="btnAmplitudeAdjust" onclick="activateAdjustMode('amplitude')">Amplitude adjust</button>
                         <button class="adjust-btn" id="btnFrequencyAdjust" onclick="activateAdjustMode('frequency')">Frequency adjust</button>
                         <button class="adjust-btn" id="btnShiftAdjust" onclick="activateAdjustMode('shift')">Shift adjust</button>
                     </div>
-                    <div class="graph-reset">
-                        <button id="resetGraphsBtn" class="control-btn" type="button">Reset</button>
+                    <div class="graph-toolbar-row">
+                        <div class="equation-stack equation-centered">
+                            <!-- Equation bar -->
+                            <div class="input-section equation-bar equation-card">
+                                <div class="equation-heading">
+                                    <div>
+                                        <label for="equation" class="eyebrow-label">Equation</label>
+                                        <p class="helper-text">Write r in terms of θ or x. Type <b>sqrt</b> for √( ) and <b>abs</b> or <b>|</b> for | |.</p>
+                                    </div>
+                                </div>
+                                <div class="equation-field">
+                                    <span id="rPrefix" class="r-prefix" title="Click to choose r, r², or r³">r<sup id="rExp" style="display:none"></sup></span>
+                                    <span class="eq-symbol">=</span>
+                                    <input type="text" id="equation" placeholder="Enter equation (e.g., sin(θ), √(θ), |θ|)" value="sin(θ)">
+                                </div>
+                                <div id="equationPretty" class="equation-pretty pretty-math" aria-hidden="true"></div>
+                                <div class="error-message" id="errorMessage"></div>
+                            </div>
+                        </div>
+                        <div class="mode-toolbar" id="interactionToolbar">
+                            <button id="btnModePerspective" class="icon-btn active" onclick="setInteractionMode('perspective')" aria-label="Move mode">
+                                <!-- plus + arrow icon -->
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <rect x="11" y="5" width="2" height="14"/>
+                                    <rect x="5" y="11" width="14" height="2"/>
+                                    <path d="M14 7l5 5-5 5v-4h-4v-2h4z"/>
+                                </svg>
+                                <span class="icon-tooltip">Move mode</span>
+                            </button>
+                            <button id="btnModeView" class="icon-btn" onclick="setInteractionMode('view')" aria-label="View mode">
+                                <!-- new eye icon -->
+                                <svg viewBox="0 0 48 48" aria-hidden="true" preserveAspectRatio="xMidYMid meet">
+                                    <path d="M4 24c4-8 12-14 20-14s16 6 20 14c-4 8-12 14-20 14S8 32 4 24Z" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <circle cx="24" cy="24" r="8" fill="currentColor"/>
+                                    <path d="M12 6l5 8" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+                                    <path d="M24 4v10" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+                                    <path d="M36 6l-5 8" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+                                </svg>
+                                <span class="icon-tooltip">View mode</span>
+                            </button>
+                            <button id="btnModeEdit" class="icon-btn" onclick="setInteractionMode('edit')" aria-label="Graph edit mode">
+                                <!-- wrench icon -->
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M22.7 19.3l-6.4-6.4a6 6 0 0 1-7.6-7.6l3.2 3.2 2.1-2.1-3.2-3.2a6 6 0 0 1 7.6 7.6l6.4 6.4-2.1 2.1zM2 22l6.1-1.6L3.6 15.9 2 22z"/>
+                                </svg>
+                                <span class="icon-tooltip">Graph edit mode</span>
+                            </button>
+                        </div>
+                        <div class="graph-reset">
+                            <button id="resetGraphsBtn" class="control-btn" type="button">Reset</button>
+                        </div>
                     </div>
                 </div>
                 <div class="graphs-container">
@@ -1310,12 +1358,12 @@
                             <div class="mini-slider" data-param="amp">
                                 <div class="mini-slider-top">
                                     <label for="ampSlider">Amplitude</label>
-                                    <input type="number" id="ampInput" step="0.01" value="1" class="mini-slider-value">
+                                    <input type="text" id="ampInput" value="1" class="mini-slider-value" inputmode="text" aria-label="Amplitude" title="Type a value/expression (supports π)">
                                 </div>
-                                <input type="range" id="ampSlider" min="-5" max="5" step="0.01" value="1" class="mini-slider-range">
+                                <input type="range" id="ampSlider" min="-5" max="5" step="any" value="1" class="mini-slider-range">
                                 <div class="mini-slider-bounds">
-                                    <span id="ampMinLabel" class="value" title="Click to edit">-5.00</span>
-                                    <span id="ampMaxLabel" class="value" title="Click to edit">5.00</span>
+                                    <input id="ampMinLabel" class="mini-bound-input" type="text" value="-5.00" inputmode="text" aria-label="Amplitude minimum" title="Set min (supports π)">
+                                    <input id="ampMaxLabel" class="mini-bound-input" type="text" value="5.00" inputmode="text" aria-label="Amplitude maximum" title="Set max (supports π)">
                                 </div>
                             </div>
                             <!-- X Shift -->
@@ -1326,32 +1374,32 @@
                                 </div>
                                 <input type="range" id="xShiftSlider" min="-6.283" max="6.283" step="0.01" value="0" class="mini-slider-range">
                                 <div class="mini-slider-bounds">
-                                    <span id="xShiftMinLabel" class="value" title="Click to edit">-2π</span>
-                                    <span id="xShiftMaxLabel" class="value" title="Click to edit">2π</span>
+                                    <input id="xShiftMinLabel" class="mini-bound-input" type="text" value="-2π" inputmode="text" aria-label="x-shift minimum" title="Set min (supports π)">
+                                    <input id="xShiftMaxLabel" class="mini-bound-input" type="text" value="2π" inputmode="text" aria-label="x-shift maximum" title="Set max (supports π)">
                                 </div>
                             </div>
                             <!-- Frequency -->
                             <div class="mini-slider" data-param="freq">
                                 <div class="mini-slider-top">
                                     <label for="freqSlider">Frequency</label>
-                                    <input type="number" id="freqInput" step="0.01" value="1" class="mini-slider-value">
+                                    <input type="text" id="freqInput" value="1" class="mini-slider-value" inputmode="text" aria-label="Frequency" title="Type a value/expression (supports π)">
                                 </div>
-                                <input type="range" id="freqSlider" min="0.05" max="20" step="0.01" value="1" class="mini-slider-range">
+                                <input type="range" id="freqSlider" min="0.05" max="20" step="any" value="1" class="mini-slider-range">
                                 <div class="mini-slider-bounds">
-                                    <span id="freqMinLabel" class="value" title="Click to edit">0.05</span>
-                                    <span id="freqMaxLabel" class="value" title="Click to edit">20.00</span>
+                                    <input id="freqMinLabel" class="mini-bound-input" type="text" value="0.05" inputmode="text" aria-label="Frequency minimum" title="Set min (supports π)">
+                                    <input id="freqMaxLabel" class="mini-bound-input" type="text" value="20.00" inputmode="text" aria-label="Frequency maximum" title="Set max (supports π)">
                                 </div>
                             </div>
                             <!-- Y Shift -->
                             <div class="mini-slider" data-param="yShift">
                                 <div class="mini-slider-top">
                                     <label for="yShiftSlider">y-shift</label>
-                                    <input type="number" id="yShiftInput" step="0.01" value="0" class="mini-slider-value">
+                                    <input type="text" id="yShiftInput" value="0" class="mini-slider-value" inputmode="text" aria-label="y-shift" title="Type a value/expression (supports π)">
                                 </div>
-                                <input type="range" id="yShiftSlider" min="-10" max="10" step="0.01" value="0" class="mini-slider-range">
+                                <input type="range" id="yShiftSlider" min="-10" max="10" step="any" value="0" class="mini-slider-range">
                                 <div class="mini-slider-bounds">
-                                    <span id="yShiftMinLabel" class="value" title="Click to edit">-10.00</span>
-                                    <span id="yShiftMaxLabel" class="value" title="Click to edit">10.00</span>
+                                    <input id="yShiftMinLabel" class="mini-bound-input" type="text" value="-10.00" inputmode="text" aria-label="y-shift minimum" title="Set min (supports π)">
+                                    <input id="yShiftMaxLabel" class="mini-bound-input" type="text" value="10.00" inputmode="text" aria-label="y-shift maximum" title="Set max (supports π)">
                                 </div>
                             </div>
                         </div>
@@ -1657,13 +1705,9 @@
         // Real-time updates with debouncing
         let updateTimeout;
         equationInput.addEventListener('input', () => {
-            // If the change did not come from param sliders, reset slider session/base
+            // If the change did not come from param sliders, infer params from the typed equation
             if (!updatingEquationFromSliders) {
-                sliderSessionActive = false;
-                editBaseEquation = (equationInput.value || '').trim();
-                // Reset edit params and UI sliders
-                editParams = { amplitude: 1, frequency: 1, thetaShift: 0, rShift: 0 };
-                if (typeof resetParamSlidersUI === 'function') resetParamSlidersUI();
+                syncParamsFromEquationInput({ expandBounds: true });
             }
             // Update pretty preview immediately
             updateEquationPretty();
@@ -1895,6 +1939,116 @@
             // Trigger input event to update graph
             input.dispatchEvent(new Event('input'));
         }
+
+        // Keyboard shortcuts for the equation box:
+        // - typing "sqrt" expands to "√()" with caret inside
+        // - typing "abs" expands to "||" with caret inside
+        // - typing "|" auto-pairs as "||" (or wraps selection)
+        (function setupEquationShortcuts() {
+            const input = document.getElementById('equation');
+            if (!input) return;
+            let inShortcutEdit = false;
+
+            function replaceSelection(el, replacement, caretIndex) {
+                const start = el.selectionStart ?? 0;
+                const end = el.selectionEnd ?? start;
+                const text = el.value || '';
+                el.value = text.slice(0, start) + replacement + text.slice(end);
+                const caret = (typeof caretIndex === 'number') ? caretIndex : (start + replacement.length);
+                el.selectionStart = el.selectionEnd = Math.max(0, Math.min(el.value.length, caret));
+            }
+
+            function getWordBeforeCaret(el) {
+                const pos = el.selectionStart ?? 0;
+                const text = el.value || '';
+                let i = pos - 1;
+                while (i >= 0 && /[A-Za-z]/.test(text[i])) i--;
+                const start = i + 1;
+                const word = text.slice(start, pos);
+                const prev = start > 0 ? text[start - 1] : '';
+                const next = pos < text.length ? text[pos] : '';
+                return { word, start, end: pos, prev, next };
+            }
+
+            function expandKeywordIfNeeded(el, reason) {
+                if (inShortcutEdit) return;
+                if ((el.selectionStart ?? 0) !== (el.selectionEnd ?? 0)) return; // only when caret is collapsed
+                const { word, start, end, prev, next } = getWordBeforeCaret(el);
+                if (!word) return;
+                // Only expand on token boundaries (avoid e.g. "sqrtn" or "fabs")
+                if (/[A-Za-z]/.test(prev) || /[A-Za-z]/.test(next)) return;
+
+                const lower = word.toLowerCase();
+                if (lower !== 'sqrt' && lower !== 'abs') return;
+
+                inShortcutEdit = true;
+                try {
+                    // Replace the word range explicitly
+                    const text = el.value || '';
+                    const before = text.slice(0, start);
+                    const after = text.slice(end);
+                    if (lower === 'sqrt') {
+                        el.value = before + '√()' + after;
+                        // caret inside parentheses: √( | )
+                        const caret = before.length + 2;
+                        el.selectionStart = el.selectionEnd = caret;
+                    } else if (lower === 'abs') {
+                        el.value = before + '||' + after;
+                        // caret inside bars: | | 
+                        const caret = before.length + 1;
+                        el.selectionStart = el.selectionEnd = caret;
+                    }
+                } finally {
+                    inShortcutEdit = false;
+                }
+            }
+
+            input.addEventListener('keydown', (e) => {
+                if (e.defaultPrevented) return;
+                if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+                // Auto-pair absolute bars, or wrap selection.
+                if (e.key === '|') {
+                    e.preventDefault();
+                    inShortcutEdit = true;
+                    try {
+                        const start = input.selectionStart ?? 0;
+                        const end = input.selectionEnd ?? start;
+                        const text = input.value || '';
+                        if (start !== end) {
+                            const selected = text.slice(start, end);
+                            input.value = text.slice(0, start) + '|' + selected + '|' + text.slice(end);
+                            input.selectionStart = start + 1;
+                            input.selectionEnd = end + 1;
+                        } else {
+                            // Insert paired bars and place caret in the middle
+                            input.value = text.slice(0, start) + '||' + text.slice(end);
+                            input.selectionStart = input.selectionEnd = start + 1;
+                        }
+                    } finally {
+                        inShortcutEdit = false;
+                    }
+                    input.dispatchEvent(new Event('input', { bubbles: true }));
+                    return;
+                }
+
+                // If the user types "(" immediately after "sqrt", expand into √() and keep caret inside.
+                if (e.key === '(') {
+                    const { word } = getWordBeforeCaret(input);
+                    if ((word || '').toLowerCase() === 'sqrt') {
+                        e.preventDefault();
+                        expandKeywordIfNeeded(input, 'paren');
+                        input.dispatchEvent(new Event('input', { bubbles: true }));
+                        return;
+                    }
+                }
+            });
+
+            input.addEventListener('input', () => {
+                // Expand immediately after finishing the token (e.g., after typing the last letter).
+                expandKeywordIfNeeded(input, 'input');
+            }, true);
+        })();
 
         // Detect periodicity and calculate appropriate range
         function detectPeriodicity(equation) {
@@ -2647,21 +2801,231 @@
             });
         }
         function renderColoredPlainEquation(text, opts) {
-            const colorThetaOn = !!(opts && opts.theta);
-            const colorROn = !!(opts && opts.radius);
-            let html = escapeHTML(text);
-            // Wrap 'theta' and 'θ'
-            if (colorThetaOn) {
-                html = html.replace(/\btheta\b/g, '<span class="token-theta">theta</span>');
-                html = html.replace(/θ/g, '<span class="token-theta">θ</span>');
+            const wantTheta = !!(opts && opts.theta);
+            const wantR = !!(opts && opts.radius);
+            const wantAmp = !!(opts && opts.amp);
+            const wantFreq = !!(opts && opts.freq);
+            const wantShift = !!(opts && opts.shift);
+            if (!text) return '';
+
+            const trigNames = new Set(['sin','cos','tan','asin','acos','atan','sec','csc','cot','asec','acsc','acot']);
+            const isLetter = (ch) => /[A-Za-z]/.test(ch);
+            const isDigit = (ch) => /[0-9]/.test(ch);
+            const isWord = (ch) => /[A-Za-z0-9_]/.test(ch);
+
+            // Tokenizer: preserves raw text slices and indices
+            function tokenize(s) {
+                const tokens = [];
+                let i = 0;
+                while (i < s.length) {
+                    const ch = s[i];
+                    // whitespace
+                    if (/\s/.test(ch)) {
+                        const start = i;
+                        while (i < s.length && /\s/.test(s[i])) i++;
+                        tokens.push({ type: 'WS', start, end: i, text: s.slice(start, i) });
+                        continue;
+                    }
+                    // greek symbols
+                    if (ch === 'θ') { tokens.push({ type: 'THETA', start: i, end: i + 1, text: 'θ' }); i++; continue; }
+                    if (ch === 'π') { tokens.push({ type: 'PI', start: i, end: i + 1, text: 'π' }); i++; continue; }
+                    // operators / punctuation
+                    if ('+-*/^=(),'.includes(ch)) { tokens.push({ type: 'OP', start: i, end: i + 1, text: ch }); i++; continue; }
+                    // number (e.g., 3, 3.2, .5)
+                    if (isDigit(ch) || (ch === '.' && i + 1 < s.length && isDigit(s[i + 1]))) {
+                        const start = i;
+                        if (ch === '.') i++;
+                        while (i < s.length && isDigit(s[i])) i++;
+                        if (i < s.length && s[i] === '.') {
+                            i++;
+                            while (i < s.length && isDigit(s[i])) i++;
+                        }
+                        tokens.push({ type: 'NUM', start, end: i, text: s.slice(start, i) });
+                        continue;
+                    }
+                    // identifiers
+                    if (isLetter(ch)) {
+                        const start = i;
+                        while (i < s.length && isLetter(s[i])) i++;
+                        const raw = s.slice(start, i);
+                        const lower = raw.toLowerCase();
+                        if (lower === 'theta') tokens.push({ type: 'THETA', start, end: i, text: raw });
+                        else if (lower === 'pi') tokens.push({ type: 'PI', start, end: i, text: raw });
+                        else if (lower === 'x') tokens.push({ type: 'THETA', start, end: i, text: raw }); // treat x as theta for highlighting
+                        else tokens.push({ type: 'IDENT', start, end: i, text: raw });
+                        continue;
+                    }
+                    // fallback single char
+                    tokens.push({ type: 'OTHER', start: i, end: i + 1, text: ch });
+                    i++;
+                }
+                return tokens;
             }
-            if (colorROn) {
-                // wrap standalone 'r' only
-                html = html.replace(/(^|[^A-Za-z0-9_])r([^A-Za-z0-9_]|$)/g, (m, pre, post) => {
-                    return pre + '<span class="token-r">r</span>' + post;
-                });
+
+            const tokens = tokenize(text);
+            const n = tokens.length;
+            const nextNonWs = (idx) => {
+                let j = idx;
+                while (j < n && tokens[j].type === 'WS') j++;
+                return j < n ? j : -1;
+            };
+            const prevNonWs = (idx) => {
+                let j = idx;
+                while (j >= 0 && tokens[j].type === 'WS') j--;
+                return j >= 0 ? j : -1;
+            };
+
+            // Find trig calls as token ranges: IDENT '(' ... ')'
+            function findMatchingCloseParen(openIdx) {
+                let depth = 0;
+                for (let j = openIdx; j < n; j++) {
+                    if (tokens[j].type === 'OP' && tokens[j].text === '(') depth++;
+                    else if (tokens[j].type === 'OP' && tokens[j].text === ')') {
+                        depth--;
+                        if (depth === 0) return j;
+                    }
+                }
+                return -1;
             }
-            return html;
+            const trigCalls = [];
+            for (let i = 0; i < n; i++) {
+                const t = tokens[i];
+                if (t.type !== 'IDENT') continue;
+                const name = t.text.toLowerCase();
+                if (!trigNames.has(name)) continue;
+                const open = nextNonWs(i + 1);
+                if (open === -1) continue;
+                if (!(tokens[open].type === 'OP' && tokens[open].text === '(')) continue;
+                const close = findMatchingCloseParen(open);
+                if (close === -1) continue;
+                trigCalls.push({ nameTok: i, openTok: open, closeTok: close });
+                i = close; // skip over call
+            }
+
+            // Mark tokens with classes (priority: freq > amp > shift)
+            const mark = new Map(); // tokenIdx -> { cls, prio }
+            function setMark(idx, cls, prio) {
+                if (idx < 0 || idx >= n) return;
+                const t = tokens[idx];
+                if (!(t.type === 'NUM' || t.type === 'PI')) return;
+                const prev = mark.get(idx);
+                if (!prev || prio > prev.prio) mark.set(idx, { cls, prio });
+            }
+
+            // Frequency: coefficient on theta inside trig args
+            if (wantFreq && trigCalls.length) {
+                for (const call of trigCalls) {
+                    for (let j = call.openTok + 1; j < call.closeTok; j++) {
+                        if (tokens[j].type !== 'THETA') continue;
+                        const p1 = prevNonWs(j - 1);
+                        const p2 = prevNonWs(p1 - 1);
+                        const n1 = nextNonWs(j + 1);
+                        const n2 = nextNonWs(n1 + 1);
+                        // a * theta
+                        if (p1 !== -1 && tokens[p1].type === 'OP' && tokens[p1].text === '*' && p2 !== -1) {
+                            setMark(p2, 'token-freq', 3);
+                        }
+                        // implicit a theta (e.g., 2theta, 2θ)
+                        if (p1 !== -1 && (tokens[p1].type === 'NUM' || tokens[p1].type === 'PI')) {
+                            if (tokens[p1].end === tokens[j].start) {
+                                setMark(p1, 'token-freq', 3);
+                            }
+                        }
+                        // theta * a
+                        if (n1 !== -1 && tokens[n1].type === 'OP' && tokens[n1].text === '*' && n2 !== -1) {
+                            setMark(n2, 'token-freq', 3);
+                        }
+                        // theta / a
+                        if (n1 !== -1 && tokens[n1].type === 'OP' && tokens[n1].text === '/' && n2 !== -1) {
+                            setMark(n2, 'token-freq', 3);
+                        }
+                    }
+                }
+            }
+
+            // Amplitude: coefficient outside trig call (mult/div right next to the call)
+            if (wantAmp && trigCalls.length) {
+                for (const call of trigCalls) {
+                    const left1 = prevNonWs(call.nameTok - 1);
+                    const left2 = prevNonWs(left1 - 1);
+                    const right1 = nextNonWs(call.closeTok + 1);
+                    const right2 = nextNonWs(right1 + 1);
+
+                    // a * sin(...)
+                    if (left1 !== -1 && tokens[left1].type === 'OP' && tokens[left1].text === '*' && left2 !== -1) {
+                        setMark(left2, 'token-amp', 2);
+                    }
+                    // a / sin(...)
+                    if (left1 !== -1 && tokens[left1].type === 'OP' && tokens[left1].text === '/' && left2 !== -1) {
+                        setMark(left2, 'token-amp', 2);
+                    }
+                    // implicit a sin(...) (e.g., 2sin(theta))
+                    if (left1 !== -1 && (tokens[left1].type === 'NUM' || tokens[left1].type === 'PI')) {
+                        if (tokens[left1].end === tokens[call.nameTok].start) {
+                            setMark(left1, 'token-amp', 2);
+                        }
+                    }
+                    // sin(...) * a
+                    if (right1 !== -1 && tokens[right1].type === 'OP' && tokens[right1].text === '*' && right2 !== -1) {
+                        setMark(right2, 'token-amp', 2);
+                    }
+                    // sin(...) / a
+                    if (right1 !== -1 && tokens[right1].type === 'OP' && tokens[right1].text === '/' && right2 !== -1) {
+                        setMark(right2, 'token-amp', 2);
+                    }
+                }
+            }
+
+            // Shifts: numbers added/subtracted (inside and outside trig) => value after a binary +/-
+            if (wantShift) {
+                for (let i = 0; i < n; i++) {
+                    const t = tokens[i];
+                    if (!(t.type === 'OP' && (t.text === '+' || t.text === '-'))) continue;
+                    const l = prevNonWs(i - 1);
+                    const r = nextNonWs(i + 1);
+                    if (l === -1 || r === -1) continue;
+                    const lt = tokens[l];
+                    // treat as binary only when left token can be an operand
+                    const leftIsOperand = (
+                        lt.type === 'NUM' || lt.type === 'PI' || lt.type === 'THETA' ||
+                        (lt.type === 'IDENT') ||
+                        (lt.type === 'OP' && lt.text === ')')
+                    );
+                    if (!leftIsOperand) continue;
+                    setMark(r, 'token-shift', 1);
+                }
+            }
+
+            // Render tokens -> HTML with spans
+            let out = '';
+            for (let i = 0; i < n; i++) {
+                const t = tokens[i];
+                const raw = t.text;
+                // theta highlight
+                if (wantTheta && t.type === 'THETA') {
+                    out += '<span class="token-theta">' + escapeHTML(raw) + '</span>';
+                    continue;
+                }
+                // r highlight (standalone "r")
+                if (wantR && t.type === 'IDENT' && t.text.toLowerCase() === 'r') {
+                    const prevCh = t.start > 0 ? text[t.start - 1] : '';
+                    const nextCh = t.end < text.length ? text[t.end] : '';
+                    if (!isWord(prevCh) && !isWord(nextCh)) {
+                        out += '<span class="token-r">' + escapeHTML(raw) + '</span>';
+                        continue;
+                    }
+                }
+                // numeric / pi highlights
+                if (t.type === 'NUM' || t.type === 'PI') {
+                    const m = mark.get(i);
+                    if (m) {
+                        out += '<span class="' + m.cls + '">' + escapeHTML(raw) + '</span>';
+                        continue;
+                    }
+                }
+                out += escapeHTML(raw);
+            }
+            return out;
         }
         function updateEquationOverlay() {
             const field = document.querySelector('.equation-field');
@@ -2671,9 +3035,15 @@
             const thetaEl = document.getElementById('toggleTheta');
             const radiusEl = document.getElementById('toggleRadius');
             const colorRadiusEl = document.getElementById('toggleColorRadius');
+            const ampEl = document.getElementById('toggleAmp');
+            const freqEl = document.getElementById('toggleFreq');
+            const shiftsEl = document.getElementById('toggleShifts');
             const colorThetaOn = !!(thetaEl && thetaEl.checked);
             const colorROn = !!((radiusEl && radiusEl.checked) || (colorRadiusEl && colorRadiusEl.checked));
-            const shouldShow = colorThetaOn || colorROn;
+            const colorAmpOn = !!(ampEl && ampEl.checked);
+            const colorFreqOn = !!(freqEl && freqEl.checked);
+            const colorShiftOn = !!(shiftsEl && shiftsEl.checked);
+            const shouldShow = colorThetaOn || colorROn || colorAmpOn || colorFreqOn || colorShiftOn;
             if (!shouldShow) {
                 field.classList.remove('overlay-active');
                 overlay.style.display = 'none';
@@ -2681,7 +3051,13 @@
             }
             // Sync geometry and content
             positionEquationOverlay();
-            overlay.innerHTML = renderColoredPlainEquation(input.value || '', { theta: colorThetaOn, radius: colorROn });
+            overlay.innerHTML = renderColoredPlainEquation(input.value || '', {
+                theta: colorThetaOn,
+                radius: colorROn,
+                amp: colorAmpOn,
+                freq: colorFreqOn,
+                shift: colorShiftOn
+            });
             overlay.style.display = 'block';
             field.classList.add('overlay-active');
         }
@@ -2741,6 +3117,32 @@
                 // Treat x as theta and y as r (canonicalize variables)
                 .replace(/\bx\b/g, 'theta')
                 .replace(/\by\b/g, 'r');
+            // Convert absolute value bars |...| into abs(...)
+            processed = (function convertAbsBarsToAbsCalls(expr) {
+                if (!expr || typeof expr !== 'string' || expr.indexOf('|') === -1) return expr;
+                let i = 0;
+                function parseSegment(stopChar) {
+                    let out = '';
+                    while (i < expr.length) {
+                        const ch = expr[i];
+                        if (stopChar && ch === stopChar) {
+                            i++;
+                            return { out, closed: true };
+                        }
+                        if (ch === '|') {
+                            i++;
+                            const inner = parseSegment('|');
+                            if (inner.closed) out += 'abs(' + inner.out + ')';
+                            else out += '|' + inner.out; // unmatched open bar: keep literal
+                            continue;
+                        }
+                        out += ch;
+                        i++;
+                    }
+                    return { out, closed: false };
+                }
+                return parseSegment(null).out;
+            })(processed);
             // Add implicit multiplication so inputs like "sin(3x)" evaluate correctly
             processed = addImplicitMultiplication(processed);
             return processed;
@@ -3314,7 +3716,7 @@
 
             const ampToggle = document.getElementById('toggleAmp');
             if (ampToggle && ampToggle.checked) {
-                const GUIDE_COLOR = '#f59e0b'; // orange
+                const GUIDE_COLOR = '#ea580c'; // darker orange to match the amp toggle button
                 const GUIDE_DASH = [6, 4];
 
                 // Sample based on what's actually visible in the cartesian grid (viewport),
@@ -3974,42 +4376,170 @@
                 ctx.restore();
             }
 
-            // Overlay: x-shift shown as an angle from 0 (similar to theta overlay)
+            // Overlay: Shifts shown in polar:
+            // - x-shift as an angle from 0 (arc + dashed radial)
+            // - y-shift as a SOLID yellow radial segment drawn over the dashed radial
             const shiftsToggle = document.getElementById('toggleShifts');
             let shiftArcR = null;
             const shiftTheta = (isFinite(editParams.thetaShift) ? editParams.thetaShift : 0);
-            if (shiftsToggle && shiftsToggle.checked && isFinite(shiftTheta) && Math.abs(shiftTheta) > 1e-12) {
-                ctx.save();
-                ctx.strokeStyle = '#facc15'; // yellow
-                ctx.lineWidth = 2;
-                // Slightly larger arc than theta so they don't overlap as much
+            const yShiftRaw = (isFinite(editParams.rShift) ? editParams.rShift : 0);
+            const yShiftMag = Math.abs(yShiftRaw);
+            const yShiftPxRaw = (isFinite(yShiftMag) ? (yShiftMag / maxR) * radius : 0);
+            const yShiftPx = Math.max(0, Math.min(radius - 10, yShiftPxRaw));
+            const yShiftLabel = (yShiftRaw < 0 ? '-y' : 'y');
+
+            if (shiftsToggle && shiftsToggle.checked && (isFinite(shiftTheta) || isFinite(yShiftPx))) {
+                // Slightly larger arc than theta so they don't overlap as much.
+                // If y-shift is larger than this arc radius, we use y-shift as the arc's radial reference.
                 const baseArcR = (typeof thetaArcR === 'number' && isFinite(thetaArcR))
                     ? thetaArcR + 18
                     : Math.max(18, Math.min(radius * 0.26, 72));
-                shiftArcR = Math.max(18, Math.min(baseArcR, radius - 10));
+                const desiredArcR = Math.max(baseArcR, yShiftPx);
+                shiftArcR = Math.max(18, Math.min(desiredArcR, radius - 10));
 
-                const absT = Math.abs(shiftTheta);
-                const step = Math.max(0.02, Math.min(0.1, absT / 24));
-                const dir = shiftTheta >= 0 ? 1 : -1;
-                ctx.beginPath();
-                for (let a = 0; (dir > 0 ? a <= shiftTheta + 1e-9 : a >= shiftTheta - 1e-9); a += dir * step) {
-                    const px = centerX + shiftArcR * Math.cos(a);
-                    const py = centerY - shiftArcR * Math.sin(a);
-                    if (a === 0) ctx.moveTo(px, py);
-                    else ctx.lineTo(px, py);
+                // Draw x-shift arc (only when x-shift is non-zero)
+                if (isFinite(shiftTheta) && Math.abs(shiftTheta) > 1e-12) {
+                    ctx.save();
+                    ctx.strokeStyle = '#facc15'; // yellow
+                    ctx.lineWidth = 2;
+                    const absT = Math.abs(shiftTheta);
+                    const step = Math.max(0.02, Math.min(0.1, absT / 24));
+                    const dir = shiftTheta >= 0 ? 1 : -1;
+                    ctx.beginPath();
+                    for (let a = 0; (dir > 0 ? a <= shiftTheta + 1e-9 : a >= shiftTheta - 1e-9); a += dir * step) {
+                        const px = centerX + shiftArcR * Math.cos(a);
+                        const py = centerY - shiftArcR * Math.sin(a);
+                        if (a === 0) ctx.moveTo(px, py);
+                        else ctx.lineTo(px, py);
+                    }
+                    ctx.stroke();
+
+                    // Label near the middle of the arc
+                    const mid = shiftTheta / 2;
+                    const tx = centerX + (shiftArcR + 12) * Math.cos(mid);
+                    const ty = centerY - (shiftArcR + 12) * Math.sin(mid);
+                    ctx.fillStyle = '#facc15';
+                    ctx.font = '14px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('x', tx, ty);
+                    ctx.restore();
                 }
-                ctx.stroke();
+            }
 
-                // Label near the middle of the arc
-                const mid = shiftTheta / 2;
-                const tx = centerX + (shiftArcR + 12) * Math.cos(mid);
-                const ty = centerY - (shiftArcR + 12) * Math.sin(mid);
-                ctx.fillStyle = '#facc15';
-                ctx.font = '14px Arial';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText('x', tx, ty);
-                ctx.restore();
+            // Overlay: Amplitude in polar (orange dashed)
+            // Draw a line from the origin to the max-radius point, constrained to be perpendicular
+            // to the y-shift reference direction (which is drawn along shiftTheta when shifts are enabled).
+            const ampToggle = document.getElementById('toggleAmp');
+            if (ampToggle && ampToggle.checked) {
+                const baseDir = (isFinite(shiftTheta) ? shiftTheta : 0);
+                const perp = baseDir + Math.PI / 2;
+
+                function evalRAt(theta) {
+                    try {
+                        let expr = rhsEquation.replace(/\btheta\b/g, `(${theta})`).replace(/\bx\b/g, `(${theta})`);
+                        let rBase = math.evaluate(expr);
+                        if (typeof rBase === 'object' && rBase.re !== undefined) rBase = rBase.re;
+                        let r = applyExponentToValue(rBase, effExp);
+                        if (typeof r === 'object' && r.re !== undefined) r = r.re;
+                        return (isFinite(r) ? r : NaN);
+                    } catch (_) {
+                        return NaN;
+                    }
+                }
+
+                // There are two antipodal rays perpendicular to baseDir. Check both.
+                const t1 = perp;
+                const t2 = perp + Math.PI;
+                const r1 = evalRAt(t1);
+                const r2 = evalRAt(t2);
+
+                let thetaSel = null;
+                let rSel = null;
+                if (isFinite(r1) && isFinite(r2)) {
+                    if (Math.abs(r2) > Math.abs(r1)) { thetaSel = t2; rSel = r2; }
+                    else { thetaSel = t1; rSel = r1; }
+                } else if (isFinite(r1)) { thetaSel = t1; rSel = r1; }
+                else if (isFinite(r2)) { thetaSel = t2; rSel = r2; }
+
+                if (thetaSel !== null && isFinite(rSel) && isFinite(maxR) && maxR > 0) {
+                    // Polar to cartesian (handles negative r naturally)
+                    const x = rSel * Math.cos(thetaSel);
+                    const y = rSel * Math.sin(thetaSel);
+                    const plotX = centerX + (x / maxR) * radius;
+                    const plotY = centerY - (y / maxR) * radius;
+
+                    // Compute screen-space direction for tick placement
+                    const lx = plotX - centerX;
+                    const ly = plotY - centerY;
+                    const lineLen = Math.hypot(lx, ly);
+                    const ux = lineLen > 1e-9 ? (lx / lineLen) : 0;
+                    const uy = lineLen > 1e-9 ? (ly / lineLen) : 0;
+
+                    ctx.save();
+                    ctx.setLineDash([6, 4]);
+                    ctx.strokeStyle = '#ea580c'; // darker orange to match the amp toggle button
+                    ctx.lineWidth = 2;
+                    ctx.lineCap = 'butt';
+                    ctx.beginPath();
+                    ctx.moveTo(centerX, centerY);
+                    ctx.lineTo(plotX, plotY);
+                    ctx.stroke();
+                    ctx.restore();
+
+                    // Yellow tickmark on the amplitude line indicating y-shift magnitude
+                    // (measured as radius proportional to |rShift|) and direction hint by sign.
+                    let tickDist = 0;
+                    if (isFinite(yShiftPx) && yShiftPx > 1e-9 && lineLen > 1e-9) {
+                        tickDist = Math.max(0, Math.min(lineLen, yShiftPx));
+                        const tx = centerX + ux * tickDist;
+                        const ty = centerY + uy * tickDist;
+                        // Perpendicular tick direction (flip for negative y-shift)
+                        const sign = (yShiftRaw < 0) ? -1 : 1;
+                        const px = -uy * sign;
+                        const py = ux * sign;
+                        const tickHalf = 6; // half-length so the tick is centered on the line
+                        ctx.save();
+                        ctx.setLineDash([]); // solid tick
+                        ctx.strokeStyle = '#facc15'; // yellow
+                        ctx.lineWidth = 3;
+                        ctx.lineCap = 'butt';
+                        ctx.beginPath();
+                        ctx.moveTo(tx - px * tickHalf, ty - py * tickHalf);
+                        ctx.lineTo(tx + px * tickHalf, ty + py * tickHalf);
+                        ctx.stroke();
+                        ctx.restore();
+                    }
+
+                    // Amp toggle: subdivide only the segment from the yellow tick to the endpoint
+                    // by the amplitude number using small orange tickmarks.
+                    if (lineLen > 1e-9) {
+                        const ampRaw = (isFinite(editParams.amplitude) ? editParams.amplitude : 1);
+                        const ampN = Math.max(1, Math.round(Math.abs(ampRaw)));
+                        const segLen = Math.max(0, lineLen - tickDist);
+                        if (ampN > 1 && segLen > 4) {
+                            // Place (ampN - 1) ticks to create ampN equal segments
+                            const tickHalf = 4;
+                            const px = -uy; // perpendicular to the amplitude line (screen space)
+                            const py = ux;
+                            ctx.save();
+                            ctx.setLineDash([]); // solid ticks
+                            ctx.strokeStyle = '#ea580c'; // darker orange (matches amp toggle)
+                            ctx.lineWidth = 2;
+                            ctx.lineCap = 'butt';
+                            for (let i = 1; i < ampN; i++) {
+                                const d = tickDist + (segLen * i) / ampN;
+                                const tx = centerX + ux * d;
+                                const ty = centerY + uy * d;
+                                ctx.beginPath();
+                                ctx.moveTo(tx - px * tickHalf, ty - py * tickHalf);
+                                ctx.lineTo(tx + px * tickHalf, ty + py * tickHalf);
+                                ctx.stroke();
+                            }
+                            ctx.restore();
+                        }
+                    }
+                }
             }
             const radiusToggle = document.getElementById('toggleRadius');
             const rAtTheta = evaluateRAtTheta(sliderTheta);
@@ -4030,19 +4560,50 @@
                 ctx.restore();
             }
 
-            // Shifts toggle ON + Radius toggle OFF: draw a dashed line from origin to the end of the x-shift arc
-            if (shiftsToggle && shiftsToggle.checked && (!radiusToggle || !radiusToggle.checked) && typeof shiftArcR === 'number' && isFinite(shiftArcR)) {
-                const plotX = centerX + shiftArcR * Math.cos(shiftTheta);
-                const plotY = centerY - shiftArcR * Math.sin(shiftTheta);
-                ctx.save();
-                ctx.setLineDash([6, 4]);
-                ctx.strokeStyle = '#facc15'; // yellow
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.moveTo(centerX, centerY);
-                ctx.lineTo(plotX, plotY);
-                ctx.stroke();
-                ctx.restore();
+            // Shifts overlay radial(s):
+            // - dashed yellow radial line shows the x-shift direction (to the end of the arc) when Radius is OFF
+            // - solid yellow segment shows the y-shift magnitude along that same direction (always when Shifts is ON)
+            if (shiftsToggle && shiftsToggle.checked && typeof shiftArcR === 'number' && isFinite(shiftArcR)) {
+                const endX = centerX + shiftArcR * Math.cos(shiftTheta);
+                const endY = centerY - shiftArcR * Math.sin(shiftTheta);
+
+                // Dashed: x-shift radial reference (kept visible beyond the y segment when y < arc)
+                if (!radiusToggle || !radiusToggle.checked) {
+                    ctx.save();
+                    ctx.setLineDash([6, 4]);
+                    ctx.strokeStyle = '#facc15'; // yellow
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(centerX, centerY);
+                    ctx.lineTo(endX, endY);
+                    ctx.stroke();
+                    ctx.restore();
+                }
+
+                // Solid: y-shift segment (drawn below the radius helper line since radius is drawn later)
+                if (isFinite(yShiftPx) && yShiftPx > 1e-9) {
+                    const yEndX = centerX + yShiftPx * Math.cos(shiftTheta);
+                    const yEndY = centerY - yShiftPx * Math.sin(shiftTheta);
+                    ctx.save();
+                    ctx.setLineDash([]); // SOLID
+                    ctx.strokeStyle = '#facc15'; // yellow
+                    ctx.lineWidth = 4;
+                    ctx.beginPath();
+                    ctx.moveTo(centerX, centerY);
+                    ctx.lineTo(yEndX, yEndY);
+                    ctx.stroke();
+
+                    // Label 'y' near the end of the solid segment
+                    const labelR = Math.min(radius - 4, yShiftPx + 14);
+                    const lx = centerX + labelR * Math.cos(shiftTheta);
+                    const ly = centerY - labelR * Math.sin(shiftTheta);
+                    ctx.fillStyle = '#facc15';
+                    ctx.font = '14px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(yShiftLabel, lx, ly);
+                    ctx.restore();
+                }
             }
 
             // Radius toggle ON: draw line to the actual point (handles positive and negative r)
@@ -4233,6 +4794,18 @@
             return n.toFixed(2);
         }
 
+        // Equation display numbers: avoid fractions and keep output compact/decimal.
+        // (Used for the equation textbox, not for axis labels.)
+        function fmtEqNum(n) {
+            if (!isFinite(n)) return `${n}`;
+            if (Math.abs(n) < 1e-12) return '0';
+            const r = Math.round(n);
+            if (Math.abs(n - r) < 1e-10) return String(r);
+            // 3 decimals is usually enough to avoid messy rationals like 147/1000 while staying readable.
+            const s = n.toFixed(3);
+            return s.replace(/\.?0+$/g, '');
+        }
+
         function formatThetaExpr(value) {
             if (!isFinite(value)) return `${value}`;
             const eps = 1e-6;
@@ -4295,8 +4868,7 @@
             hideCoordTooltip();
             if (mode === 'edit') {
                 // Initialize edit session from current equation
-                editBaseEquation = (equationInput.value || '').trim();
-                editParams = { amplitude: 1, frequency: 1, thetaShift: 0, rShift: 0 };
+                syncParamsFromEquationInput({ expandBounds: true });
                 isEditTranslating = false;
                 isEditAdjustingAmplitude = false;
                 isEditAdjustingFrequency = false;
@@ -4391,7 +4963,8 @@
             if (typeof math === 'undefined' || typeof math.parse !== 'function') return expr;
             try {
                 const node = math.parse(expr);
-                return node.toString({ parenthesis: 'auto' });
+                // Ensure Fraction nodes (from simplify) display as decimals, not "a/b".
+                return node.toString({ parenthesis: 'auto', fraction: 'decimal', precision: 14 });
             } catch (_) {
                 return expr;
             }
@@ -4548,21 +5121,87 @@
         }
         function stringifyWithDivisionParentheses(node) {
             try {
+                const baseOpts = { parenthesis: 'auto', fraction: 'decimal', precision: 14 };
                 const handler = {
                     'OperatorNode': function (n, options) {
                         if (n.op === '/' && n.args && n.args.length === 2) {
-                            const l = n.args[0].toString({ parenthesis: 'auto', handler: this });
-                            const r = n.args[1].toString({ parenthesis: 'auto', handler: this });
+                            const l = n.args[0].toString({ ...baseOpts, handler: this });
+                            const r = n.args[1].toString({ ...baseOpts, handler: this });
                             return `(${l}) / (${r})`;
                         }
                         // Fallback to default printing for other operators
                         return undefined;
                     }
                 };
-                return node.toString({ parenthesis: 'auto', handler });
+                return node.toString({ ...baseOpts, handler });
             } catch (_) {
-                return node.toString({ parenthesis: 'auto' });
+                return node.toString({ parenthesis: 'auto', fraction: 'decimal', precision: 14 });
             }
+        }
+
+        // Reorder multiplicative factors so constants appear before θ for nicer display
+        // (e.g., θ*409 -> 409*θ, (θ*409)/50 -> (409*θ)/50).
+        function reorderThetaMultiplicationForDisplay(node) {
+            try {
+                if (!node || typeof node.transform !== 'function') return node;
+                return node.transform(function (n) {
+                    if (!n || !n.isOperatorNode || n.op !== '*' || !Array.isArray(n.args) || n.args.length < 2) return n;
+                    const args = n.args.slice();
+                    let hasTheta = false;
+                    for (const a of args) {
+                        if (a && a.isSymbolNode && (a.name === 'theta' || a.name === 'θ')) { hasTheta = true; break; }
+                    }
+                    if (!hasTheta) return n;
+                    // Stable-ish reorder: constants first, then other non-theta, then theta last.
+                    const isConst = (a) => {
+                        const v = getConstantNumeric(a);
+                        return (v !== null && isFinite(v));
+                    };
+                    const consts = [];
+                    const others = [];
+                    const thetas = [];
+                    for (const a of args) {
+                        if (a && a.isSymbolNode && (a.name === 'theta' || a.name === 'θ')) thetas.push(a);
+                        else if (isConst(a)) consts.push(a);
+                        else others.push(a);
+                    }
+                    if (!thetas.length) return n;
+                    // Only rewrite if it actually changes something
+                    const reordered = [...consts, ...others, ...thetas];
+                    const same =
+                        reordered.length === args.length &&
+                        reordered.every((a, i) => a === args[i]);
+                    if (same) return n;
+                    return new math.OperatorNode('*', 'multiply', reordered);
+                });
+            } catch (_) {
+                return node;
+            }
+        }
+
+        // Turn safe explicit multiplications into implicit ones for display:
+        // - "2*θ" -> "2θ"
+        // - "2*sin(θ)" -> "2sin(θ)"
+        // - "(x+1)*(x-1)" -> "(x+1)(x-1)"
+        // Keeps numeric products like "2*3" as-is.
+        function makeImplicitMultiplicationDisplay(s) {
+            if (!s) return s;
+            // number / pi / ')' followed by identifier, 'θ', or '('
+            // Note: we intentionally do NOT remove '*' before a number to avoid changing "2*3".
+            return s.replace(
+                /(\b(?:\d+(?:\.\d+)?|\.\d+)|\bpi\b|\))\s*\*\s*(?=(?:\(|θ|\b[A-Za-z]+\b))/g,
+                '$1'
+            );
+        }
+
+        // Ensure we don't display "+ -x" sequences; prefer "- x"
+        function normalizePlusMinusDisplay(s) {
+            if (!s) return s;
+            let out = s;
+            out = out.replace(/\+\s*-\s*/g, '- ');
+            out = out.replace(/-\s*-\s*/g, '+ ');
+            out = out.replace(/\+\s*\+\s*/g, '+ ');
+            return out;
         }
 
         function applyEditParamsToEquation(baseEq, params) {
@@ -4573,35 +5212,103 @@
             const amp = params.amplitude;
             const tShift = params.thetaShift;
             const rShift = params.rShift;
-            // Replace canonical 'theta' in the RHS with transformed argument
-            // Build argument with minimal parentheses
-            const hasShift = isFinite(tShift) && Math.abs(tShift) > 1e-12;
-            const hasFreq = isFinite(freq) && Math.abs(freq - 1) > 1e-12;
-            const shiftStr = hasShift ? `(theta ${tShift >= 0 ? '-' : '+'} ${formatThetaExpr(Math.abs(tShift))})` : 'theta';
-            const argCore = hasFreq ? `${fmtNum(freq)}*${shiftStr}` : shiftStr;
+            const eps = 1e-12;
+
+            // If the base equation is a simple trig-of-theta, emit a clean form:
+            //   A sin(Bθ - C) + D
+            // with NO '*' and NO scaled shifts (no B*(θ-C) and no B*C).
+            const simpleTrig = (rhs || '').trim().match(/^(sin|cos|tan|sec|csc|cot)\s*\(\s*theta\s*\)\s*$/i);
+            if (simpleTrig) {
+                const fn = simpleTrig[1].toLowerCase();
+                const hasAmp = isFinite(amp) && Math.abs(amp - 1) > eps;
+                const hasFreq = isFinite(freq) && Math.abs(freq - 1) > eps;
+                const hasShift = isFinite(tShift) && Math.abs(tShift) > eps;
+                const hasRShift = isFinite(rShift) && Math.abs(rShift) > eps;
+
+                let arg = hasFreq ? `${fmtEqNum(freq)}θ` : 'θ';
+                if (hasShift) {
+                    arg += ` ${tShift >= 0 ? '-' : '+'} ${fmtEqNum(Math.abs(tShift))}`;
+                }
+
+                let out = `${fn}(${arg})`;
+
+                if (hasAmp) {
+                    // Prefer "-sin(...)" over "-1 sin(...)".
+                    if (Math.abs(Math.abs(amp) - 1) < 1e-10) {
+                        out = (amp < 0 ? '-' : '') + out;
+                    } else {
+                        out = `${fmtEqNum(amp)} ${out}`;
+                    }
+                }
+                if (hasRShift) {
+                    out += ` ${rShift >= 0 ? '+' : '-'} ${fmtEqNum(Math.abs(rShift))}`;
+                }
+                return out;
+            }
+
+            // General fallback: replace canonical 'theta' in the RHS with a linear argument.
+            // IMPORTANT: do not scale the shift by frequency; use (k*theta - shift), not k*(theta-shift).
+            const hasFreq = isFinite(freq) && Math.abs(freq - 1) > eps;
+            const hasShift = isFinite(tShift) && Math.abs(tShift) > eps;
+            const k = hasFreq ? freq : 1;
+            const c = hasShift ? (-tShift) : 0; // want: k*theta - tShift
+            let argCore = 'theta';
+            if (hasFreq || hasShift) {
+                const kStr = (Math.abs(k - 1) < eps) ? 'theta' : `${fmtEqNum(k)}*theta`;
+                if (Math.abs(c) < eps) {
+                    argCore = kStr;
+                } else {
+                    const cAbs = Math.abs(c);
+                    const cStr = fmtEqNum(cAbs);
+                    argCore = `${kStr} ${c >= 0 ? '+' : '-'} ${cStr}`;
+                }
+            }
+
             // Replace both 'theta' and any literal 'θ' after normalization (just 'theta' now)
-            let transformed = rhs.replace(/\btheta\b/g, `(${argCore})`);
+            // Amplitude should scale the θ-dependent part only.
+            // Example: (sin(θ) + 1) with amp=π should become (π sin(θ)) + 1 (not π sin(θ) + π).
+            let baseAddConst = 0;
+            let rhsThetaOnly = rhs;
+            try {
+                const n = math.parse(rhs);
+                const stripped = stripOuterAdditiveConstant(n);
+                baseAddConst = (stripped && isFinite(stripped.constant)) ? stripped.constant : 0;
+                rhsThetaOnly = (stripped && stripped.node)
+                    ? stripped.node.toString({ parenthesis: 'auto' })
+                    : rhs;
+            } catch (_) {
+                baseAddConst = 0;
+                rhsThetaOnly = rhs;
+            }
+
+            let transformed = rhsThetaOnly.replace(/\btheta\b/g, `(${argCore})`);
             const hasAmp = isFinite(amp) && Math.abs(amp - 1) > 1e-12;
             if (hasAmp) {
-                transformed = `${fmtNum(amp)}*(${transformed})`;
+                transformed = `${fmtEqNum(amp)}*(${transformed})`;
             }
-            if (isFinite(rShift) && Math.abs(rShift) > 1e-12) {
-                transformed = `(${transformed}) ${rShift >= 0 ? '+' : '-'} ${fmtNum(Math.abs(rShift))}`;
+            const totalShift = (isFinite(baseAddConst) ? baseAddConst : 0) + (isFinite(rShift) ? rShift : 0);
+            if (isFinite(totalShift) && Math.abs(totalShift) > 1e-12) {
+                transformed = `(${transformed}) ${totalShift >= 0 ? '+' : '-'} ${fmtEqNum(Math.abs(totalShift))}`;
             }
-            // Simplify, then factor linear theta into k*(theta ± shift)
+            // Simplify; keep expanded linear form so constants combine nicely.
             try {
                 let node = math.parse(transformed);
                 node = math.simplify(node);
-                node = factorLinearThetaInAST(node);
+                node = reorderThetaMultiplicationForDisplay(node);
                 // Format with explicit numerator/denominator grouping for divisions
                 let out = stringifyWithDivisionParentheses(node);
                 // Convert 'theta' -> 'θ' for display
                 out = denormalizeThetaSymbols(out);
+                // Prefer implicit multiplication in the displayed equation
+                out = makeImplicitMultiplicationDisplay(out);
+                out = normalizePlusMinusDisplay(out);
                 return out;
             } catch (_) {
                 // Fall back to basic cleanup and symbol replacement
                 let out = cleanupSliderExpression(transformed);
                 out = denormalizeThetaSymbols(out);
+                out = makeImplicitMultiplicationDisplay(out);
+                out = normalizePlusMinusDisplay(out);
                 return out;
             }
         }
@@ -4610,9 +5317,231 @@
             const newRHS = applyEditParamsToEquation(editBaseEquation, editParams);
             equationInput.value = newRHS;
             updateEquationPretty();
+            // Keep param sliders in sync with edit-mode dragging (and any other editParams changes)
+            syncParamSlidersUIFromEditParams({ expandBounds: true });
             // Recompute slider bounds if frequency changed the inferred period
             updateSliderBounds();
             plotGraph();
+        }
+
+        // ===== Equation -> Params inference (keeps sliders/edit session in sync) =====
+        function nearlyEqual(a, b, eps = 1e-6) {
+            return (typeof a === 'number' && typeof b === 'number' && isFinite(a) && isFinite(b) && Math.abs(a - b) <= eps);
+        }
+        function nodeHasTheta(node) {
+            try {
+                if (!node || typeof node.filter !== 'function') return false;
+                const deps = node.filter(n => n && n.isSymbolNode).map(n => n.name);
+                return deps && deps.some(name => name === 'theta' || name === 'θ' || name === 'x');
+            } catch (_) {
+                return false;
+            }
+        }
+        function flattenAddSub(node, sign, out) {
+            if (!node) return;
+            if (node.isParenthesisNode) return flattenAddSub(node.content, sign, out);
+            if (node.isOperatorNode && node.op === '+' && node.args && node.args.length === 2) {
+                flattenAddSub(node.args[0], sign, out);
+                flattenAddSub(node.args[1], sign, out);
+                return;
+            }
+            if (node.isOperatorNode && node.op === '-' && node.args && node.args.length === 2) {
+                flattenAddSub(node.args[0], sign, out);
+                flattenAddSub(node.args[1], -sign, out);
+                return;
+            }
+            if (node.isOperatorNode && node.op === '-' && node.args && node.args.length === 1) {
+                flattenAddSub(node.args[0], -sign, out);
+                return;
+            }
+            out.push({ node, sign });
+        }
+        function buildSumNode(terms) {
+            if (!terms || !terms.length) return math.parse('0');
+            let expr = '';
+            for (let i = 0; i < terms.length; i++) {
+                const t = terms[i];
+                const s = t.node.toString({ parenthesis: 'auto' });
+                if (i === 0) {
+                    expr += (t.sign < 0) ? `-(${s})` : `(${s})`;
+                } else {
+                    expr += (t.sign < 0) ? ` - (${s})` : ` + (${s})`;
+                }
+            }
+            return math.parse(expr);
+        }
+        function stripOuterAdditiveConstant(node) {
+            // Return { constant, node } where node is the theta-dependent remainder
+            let terms = [];
+            flattenAddSub(node, 1, terms);
+            let c = 0;
+            const keep = [];
+            for (const t of terms) {
+                const v = getConstantNumeric(t.node);
+                if (v !== null && isFinite(v)) {
+                    c += t.sign * v;
+                } else {
+                    keep.push(t);
+                }
+            }
+            const outNode = keep.length ? buildSumNode(keep) : math.parse('0');
+            return { constant: (isFinite(c) ? c : 0), node: outNode };
+        }
+        function stripOuterMultiplicativeConstant(node) {
+            // Return { amp, node } where node is the theta-dependent remainder
+            let n = node;
+            if (n && n.isParenthesisNode) n = n.content;
+            // unary minus
+            if (n && n.isOperatorNode && n.op === '-' && n.args && n.args.length === 1) {
+                const inner = n.args[0];
+                if (nodeHasTheta(inner)) return { amp: -1, node: inner };
+            }
+            if (n && n.isOperatorNode && n.op === '*' && n.args && n.args.length >= 2) {
+                let acc = 1;
+                const rest = [];
+                for (const a of n.args) {
+                    const v = getConstantNumeric(a);
+                    if (v !== null && isFinite(v)) acc *= v;
+                    else rest.push(a);
+                }
+                if (rest.length === 1 && nodeHasTheta(rest[0]) && isFinite(acc) && Math.abs(acc - 1) > 1e-12) {
+                    return { amp: acc, node: rest[0] };
+                }
+            }
+            return { amp: 1, node: node };
+        }
+        function findFirstLinearThetaTransform(node) {
+            let found = null;
+            try {
+                if (!node || typeof node.traverse !== 'function') return null;
+                node.traverse(function (n) {
+                    if (found) return;
+                    const lf = getLinearFormInTheta(n);
+                    if (lf && isFinite(lf.k) && Math.abs(lf.k) > 1e-12) {
+                        found = lf;
+                    }
+                });
+            } catch (_) {}
+            return found;
+        }
+        function replaceMatchingLinearTheta(node, k, c) {
+            try {
+                return node.transform(function (n) {
+                    const lf = getLinearFormInTheta(n);
+                    if (lf && isFinite(lf.k) && Math.abs(lf.k) > 1e-12 && nearlyEqual(lf.k, k) && nearlyEqual(lf.c, c)) {
+                        return math.parse('theta');
+                    }
+                    return n;
+                });
+            } catch (_) {
+                return node;
+            }
+        }
+        function inferEditSessionFromEquation(equation) {
+            const eq = (equation || '').trim();
+            const defaults = { amplitude: 1, frequency: 1, thetaShift: 0, rShift: 0 };
+            if (!eq) return { ok: false, baseEq: '', params: { ...defaults } };
+            try {
+                const { rhs } = extractRExponentAndRHS(eq);
+                const rhsRaw = rhs || eq;
+                const rhsNorm = normalizeThetaSymbols(rhsRaw);
+                let node = math.parse(rhsNorm);
+                try { node = math.simplify(node); } catch (_) {}
+
+                // If the whole expression is constant: treat as y-shift only.
+                const wholeConst = getConstantNumeric(node);
+                if (wholeConst !== null && isFinite(wholeConst)) {
+                    return { ok: true, baseEq: '0', params: { ...defaults, rShift: wholeConst } };
+                }
+
+                const { constant: rShift, node: noShift } = stripOuterAdditiveConstant(node);
+                const { amp, node: inner } = stripOuterMultiplicativeConstant(noShift);
+                const lf = findFirstLinearThetaTransform(inner);
+
+                let k = 1, c = 0;
+                let frequency = 1;
+                let thetaShift = 0;
+                if (lf && isFinite(lf.k) && Math.abs(lf.k) > 1e-12) {
+                    k = lf.k;
+                    c = lf.c || 0;
+                    frequency = Math.abs(k);
+                    if (!isFinite(frequency) || frequency < 1e-12) frequency = 1;
+                    thetaShift = -c / k;
+                    if (!isFinite(thetaShift)) thetaShift = 0;
+                }
+
+                // Reconstruct a base equation by replacing the detected linear-theta transform back to 'theta'
+                let baseNode = inner;
+                if (lf) baseNode = replaceMatchingLinearTheta(baseNode, k, c);
+                let baseRhsNorm = baseNode.toString({ parenthesis: 'auto' });
+                baseRhsNorm = denormalizeThetaSymbols(baseRhsNorm);
+
+                const params = {
+                    amplitude: (isFinite(amp) ? amp : 1),
+                    frequency,
+                    thetaShift,
+                    rShift: (isFinite(rShift) ? rShift : 0)
+                };
+                return { ok: true, baseEq: baseRhsNorm, params };
+            } catch (_) {
+                return { ok: false, baseEq: eq, params: { ...defaults } };
+            }
+        }
+        function syncParamSlidersUIFromEditParams(opts = {}) {
+            const expandBounds = !!opts.expandBounds;
+            const ampSl = document.getElementById('ampSlider');
+            const freqSl = document.getElementById('freqSlider');
+            const xSl = document.getElementById('xShiftSlider');
+            const ySl = document.getElementById('yShiftSlider');
+            if (!ampSl || !freqSl || !xSl || !ySl) return;
+
+            const ensureBounds = (sl, v, pad) => {
+                if (!expandBounds) return;
+                const min = parseFloat(sl.min);
+                const max = parseFloat(sl.max);
+                if (!isFinite(min) || !isFinite(max) || !isFinite(v)) return;
+                if (v < min) sl.min = String(v - pad);
+                if (v > max) sl.max = String(v + pad);
+            };
+
+            // Expand bounds so the slider can actually represent the current value
+            ensureBounds(ampSl, editParams.amplitude, 0.5);
+            ensureBounds(freqSl, editParams.frequency, 0.5);
+            ensureBounds(xSl, editParams.thetaShift, Math.PI / 8);
+            ensureBounds(ySl, editParams.rShift, 0.5);
+
+            // Clamp to current slider bounds
+            const clampTo = (sl, v) => {
+                const min = parseFloat(sl.min);
+                const max = parseFloat(sl.max);
+                if (!isFinite(v) || !isFinite(min) || !isFinite(max)) return sl.value;
+                return String(Math.max(min, Math.min(max, v)));
+            };
+            ampSl.value = clampTo(ampSl, editParams.amplitude);
+            freqSl.value = clampTo(freqSl, editParams.frequency);
+            xSl.value = clampTo(xSl, editParams.thetaShift);
+            ySl.value = clampTo(ySl, editParams.rShift);
+
+            updateParamBoundsLabels();
+            updateParamLabels();
+        }
+        function syncParamsFromEquationInput(opts = {}) {
+            const expandBounds = !!opts.expandBounds;
+            const eq = (equationInput.value || '').trim();
+            if (!eq) return;
+            const inferred = inferEditSessionFromEquation(eq);
+            if (inferred && inferred.ok) {
+                editParams = inferred.params;
+                editBaseEquation = (inferred.baseEq || '').trim() || eq;
+                // Treat typed equation as a valid "base + params" session so sliders don't compound transforms
+                sliderSessionActive = true;
+                syncParamSlidersUIFromEditParams({ expandBounds });
+            } else {
+                sliderSessionActive = false;
+                editBaseEquation = eq;
+                editParams = { amplitude: 1, frequency: 1, thetaShift: 0, rShift: 0 };
+                if (typeof resetParamSlidersUI === 'function') resetParamSlidersUI();
+            }
         }
 
         function evaluateRAtTheta(theta) {
@@ -4653,6 +5582,57 @@
             return { theta, r };
         }
 
+        function mapAngleToThetaInDomain(angle, thetaMin, thetaMax, refTheta) {
+            const twoPi = 2 * Math.PI;
+            if (!isFinite(angle) || !isFinite(thetaMin) || !isFinite(thetaMax) || thetaMin === thetaMax) return angle;
+            const min = Math.min(thetaMin, thetaMax);
+            const max = Math.max(thetaMin, thetaMax);
+            // Pick the equivalent angle + 2πk closest to the current slider theta to avoid jumpiness.
+            let theta = angle + twoPi * Math.round(((isFinite(refTheta) ? refTheta : 0) - angle) / twoPi);
+            // If still outside, shift by whole turns towards the interval.
+            while (theta < min) theta += twoPi;
+            while (theta > max) theta -= twoPi;
+            // Final clamp if the interval is smaller than 2π or doesn't contain any equivalent angle.
+            return clamp(min, max, theta);
+        }
+
+        function polarMouseToWorld(e) {
+            if (!polarCanvas) return null;
+            const rect = polarCanvas.getBoundingClientRect();
+            if (!rect.width || !rect.height) return null;
+
+            // Convert CSS pixel coords -> canvas pixel coords (robust if canvas is scaled)
+            const cssX = e.clientX - rect.left;
+            const cssY = e.clientY - rect.top;
+            const scaleX = polarCanvas.width / rect.width;
+            const scaleY = polarCanvas.height / rect.height;
+            const x = cssX * scaleX;
+            const y = cssY * scaleY;
+
+            const dx = x - lastPolarState.centerX;
+            const dy = lastPolarState.centerY - y; // invert Y
+            const distPx = Math.hypot(dx, dy);
+            if (!isFinite(distPx) || !isFinite(lastPolarState.radiusPx) || lastPolarState.radiusPx <= 0) return null;
+
+            // Only show coordinates inside the polar plot circle
+            if (distPx > lastPolarState.radiusPx) return null;
+
+            let angle = Math.atan2(dy, dx);
+            if (angle < 0) angle += 2 * Math.PI;
+
+            // Map the visible angle to the slider's theta domain (supports ranges like [-π, π], [0, 4π], etc.)
+            let theta = angle;
+            const slider = document.getElementById('thetaSlider');
+            if (slider) {
+                const actualMin = parseFloat(slider.dataset.actualMin || '0');
+                const actualMax = parseFloat(slider.dataset.actualMax || (2 * Math.PI).toString());
+                theta = mapAngleToThetaInDomain(angle, actualMin, actualMax, sliderTheta);
+            }
+
+            const r = (distPx / lastPolarState.radiusPx) * lastPolarState.maxR;
+            return { theta, r };
+        }
+
         function updateSliderFromTheta(theta) {
             const slider = document.getElementById('thetaSlider');
             if (!slider) return;
@@ -4687,19 +5667,10 @@
 
         function onPolarHover(e) {
             if (interactionMode !== 'view') { hideCoordTooltip(); return; }
-            const rect = polarCanvas.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            const dx = x - lastPolarState.centerX;
-            const dy = lastPolarState.centerY - y; // invert Y
-            const thetaRaw = Math.atan2(dy, dx);
-            let theta = thetaRaw;
-            if (theta < 0) theta += 2 * Math.PI;
-            updateSliderFromTheta(theta);
-            const r = evaluateRAtTheta(sliderTheta);
-            const px = lastPolarState.centerX + (Math.cos(sliderTheta) * (r / lastPolarState.maxR) * lastPolarState.radiusPx);
-            const py = lastPolarState.centerY - (Math.sin(sliderTheta) * (r / lastPolarState.maxR) * lastPolarState.radiusPx);
-            const msg = `θ = ${formatTheta(sliderTheta)}, r = ${isFinite(r) ? r.toFixed(2) : '—'}`;
+            const c = polarMouseToWorld(e);
+            if (!c) { hideCoordTooltip(); return; }
+            updateSliderFromTheta(c.theta);
+            const msg = `θ = ${formatTheta(sliderTheta)}, r = ${isFinite(c.r) ? c.r.toFixed(2) : '—'}`;
             showCoordTooltip(msg, e.clientX, e.clientY);
             plotGraph();
         }
@@ -4953,6 +5924,41 @@
                 return isNaN(direct) ? null : direct;
             }
         }
+
+        // Parse numeric input like "pi", "2*pi", "sqrt(2)", "3/4", "1.25"
+        function parseNumberExpression(text) {
+            if (!text) return null;
+            try {
+                let expr = text.replace(/π/gi, 'pi').replace(/PI/gi, 'pi');
+                expr = expr.replace(/√/g, 'sqrt').replace(/÷/g, '/');
+                const val = math.evaluate(expr);
+                const num = typeof val === 'object' && val && val.re !== undefined ? val.re : val;
+                return typeof num === 'number' ? num : null;
+            } catch (_) {
+                const direct = parseFloat(text);
+                return isNaN(direct) ? null : direct;
+            }
+        }
+
+        function prettifyPi(text) {
+            const raw = (text || '').trim();
+            if (!raw) return raw;
+            // Prefer the π symbol in UI if the user used pi/π
+            let out = raw.replace(/\bpi\b/gi, 'π');
+            // Make common "2*pi" look like "2π" (keep other '*' as-is)
+            out = out.replace(/(\d)\s*\*\s*π/g, '$1π');
+            out = out.replace(/π\s*\*\s*(\d)/g, 'π$1');
+            return out;
+        }
+        function setBoundDisplay(el, display) {
+            if (!el) return;
+            if (el.tagName === 'INPUT') el.value = display;
+            else el.textContent = display;
+        }
+        function getBoundDisplay(el) {
+            if (!el) return '';
+            return el.tagName === 'INPUT' ? (el.value || '') : (el.textContent || '');
+        }
         
         // ===== Parameter Sliders (Amplitude, Frequency, Shifts) =====
         function updateParamLabels() {
@@ -4960,10 +5966,41 @@
             const freqIn = document.getElementById('freqInput');
             const xIn = document.getElementById('xShiftInput');
             const yIn = document.getElementById('yShiftInput');
-            if (ampIn) ampIn.value = isFinite(editParams.amplitude) ? String(editParams.amplitude) : '';
-            if (freqIn) freqIn.value = isFinite(editParams.frequency) ? String(editParams.frequency) : '';
-            if (xIn) xIn.value = formatTheta(editParams.thetaShift);
-            if (yIn) yIn.value = isFinite(editParams.rShift) ? String(editParams.rShift) : '';
+            const eps = 1e-9;
+            if (ampIn) {
+                if (document.activeElement === ampIn) return;
+                const raw = (ampIn.dataset.exprDisplay || '').trim();
+                const parsed = raw ? parseNumberExpression(raw) : null;
+                if (raw && parsed !== null && isFinite(parsed) && isFinite(editParams.amplitude) && Math.abs(parsed - editParams.amplitude) <= eps) {
+                    ampIn.value = raw;
+                } else {
+                    ampIn.dataset.exprDisplay = '';
+                    ampIn.value = isFinite(editParams.amplitude) ? String(editParams.amplitude) : '';
+                }
+            }
+            if (freqIn) {
+                if (document.activeElement === freqIn) return;
+                const raw = (freqIn.dataset.exprDisplay || '').trim();
+                const parsed = raw ? parseNumberExpression(raw) : null;
+                if (raw && parsed !== null && isFinite(parsed) && isFinite(editParams.frequency) && Math.abs(parsed - editParams.frequency) <= eps) {
+                    freqIn.value = raw;
+                } else {
+                    freqIn.dataset.exprDisplay = '';
+                    freqIn.value = isFinite(editParams.frequency) ? String(editParams.frequency) : '';
+                }
+            }
+            if (xIn && document.activeElement !== xIn) xIn.value = formatTheta(editParams.thetaShift);
+            if (yIn) {
+                if (document.activeElement === yIn) return;
+                const raw = (yIn.dataset.exprDisplay || '').trim();
+                const parsed = raw ? parseNumberExpression(raw) : null;
+                if (raw && parsed !== null && isFinite(parsed) && isFinite(editParams.rShift) && Math.abs(parsed - editParams.rShift) <= eps) {
+                    yIn.value = raw;
+                } else {
+                    yIn.dataset.exprDisplay = '';
+                    yIn.value = isFinite(editParams.rShift) ? String(editParams.rShift) : '';
+                }
+            }
         }
         function resetParamSlidersUI() {
             const amp = document.getElementById('ampSlider');
@@ -5009,91 +6046,92 @@
             const xsMax = document.getElementById('xShiftMaxLabel');
             const ysMin = document.getElementById('yShiftMinLabel');
             const ysMax = document.getElementById('yShiftMaxLabel');
-            if (amp && ampMin) ampMin.textContent = parseFloat(amp.min).toFixed(2);
-            if (amp && ampMax) ampMax.textContent = parseFloat(amp.max).toFixed(2);
-            if (freq && freqMin) freqMin.textContent = parseFloat(freq.min).toFixed(2);
-            if (freq && freqMax) freqMax.textContent = parseFloat(freq.max).toFixed(2);
-            if (xs && xsMin) xsMin.textContent = formatTheta(parseFloat(xs.min));
-            if (xs && xsMax) xsMax.textContent = formatTheta(parseFloat(xs.max));
-            if (ys && ysMin) ysMin.textContent = parseFloat(ys.min).toFixed(2);
-            if (ys && ysMax) ysMax.textContent = parseFloat(ys.max).toFixed(2);
-        }
-        function beginParamBoundEdit(kind, which) {
-            const sliderId = kind + 'Slider';
-            const labelId = kind + (which === 'min' ? 'MinLabel' : 'MaxLabel');
-            const slider = document.getElementById(sliderId);
-            const label = document.getElementById(labelId);
-            if (!slider || !label) return;
-            const isTheta = (kind === 'xShift');
-            const current = which === 'min' ? parseFloat(slider.min) : parseFloat(slider.max);
-            const input = document.createElement('input');
-            input.type = isTheta ? 'text' : 'number';
-            input.value = isTheta ? formatTheta(current) : String(current);
-            input.style.width = '90px';
-            input.style.fontSize = '0.9rem';
-            input.style.padding = '2px 4px';
-            input.style.borderRadius = '4px';
-            input.style.border = '1px solid rgba(255,255,255,0.6)';
-            const oldText = label.textContent;
-            label.textContent = '';
-            label.appendChild(input);
-            input.focus();
-            input.select();
-            const applyChange = () => {
-                const raw = input.value.trim();
-                let num;
-                if (isTheta) {
-                    const val = parseThetaExpression(raw);
-                    num = (val !== null ? val : NaN);
+            const eps = 1e-9;
+            const maybeUpdateInput = (el, num, formatter, parser) => {
+                if (!el) return;
+                if (el.tagName !== 'INPUT') {
+                    setBoundDisplay(el, formatter(num));
+                    return;
+                }
+                // If the user is actively typing, don't clobber their input with formatted numbers.
+                if (document.activeElement === el) return;
+                const raw = (el.dataset.exprDisplay || '').trim();
+                const parsed = raw ? parser(raw) : null;
+                if (raw && parsed !== null && isFinite(parsed) && isFinite(num) && Math.abs(parsed - num) <= eps) {
+                    // Keep user's expression display (e.g., π) as long as it still matches the numeric bound.
+                    el.value = raw;
                 } else {
-                    num = parseFloat(raw);
+                    el.dataset.exprDisplay = '';
+                    el.value = formatter(num);
                 }
-                if (isFinite(num)) {
+            };
+            if (amp && ampMin) maybeUpdateInput(ampMin, parseFloat(amp.min), (n) => Number(n).toFixed(2), parseNumberExpression);
+            if (amp && ampMax) maybeUpdateInput(ampMax, parseFloat(amp.max), (n) => Number(n).toFixed(2), parseNumberExpression);
+            if (freq && freqMin) maybeUpdateInput(freqMin, parseFloat(freq.min), (n) => Number(n).toFixed(2), parseNumberExpression);
+            if (freq && freqMax) maybeUpdateInput(freqMax, parseFloat(freq.max), (n) => Number(n).toFixed(2), parseNumberExpression);
+            if (xs && xsMin) maybeUpdateInput(xsMin, parseFloat(xs.min), (n) => formatTheta(Number(n)), parseThetaExpression);
+            if (xs && xsMax) maybeUpdateInput(xsMax, parseFloat(xs.max), (n) => formatTheta(Number(n)), parseThetaExpression);
+            if (ys && ysMin) maybeUpdateInput(ysMin, parseFloat(ys.min), (n) => Number(n).toFixed(2), parseNumberExpression);
+            if (ys && ysMax) maybeUpdateInput(ysMax, parseFloat(ys.max), (n) => Number(n).toFixed(2), parseNumberExpression);
+        }
+        function attachParamBoundInputs() {
+            const binds = [
+                ['amp', 'min'], ['amp', 'max'],
+                ['freq', 'min'], ['freq', 'max'],
+                ['xShift', 'min'], ['xShift', 'max'],
+                ['yShift', 'min'], ['yShift', 'max'],
+            ];
+            const apply = (kind, which) => {
+                const slider = document.getElementById(kind + 'Slider');
+                const el = document.getElementById(kind + (which === 'min' ? 'MinLabel' : 'MaxLabel'));
+                if (!slider || !el || el.tagName !== 'INPUT') return;
+                const isTheta = (kind === 'xShift');
+                const raw = (el.value || '').trim();
+                if (!raw) { updateParamBoundsLabels(); return; }
+                const parser = isTheta ? parseThetaExpression : parseNumberExpression;
+                const parsed = parser(raw);
+                if (parsed === null || !isFinite(parsed)) { updateParamBoundsLabels(); return; }
+
+                // Commit numeric bound to slider
+                if (which === 'min') {
+                    slider.min = String(parsed);
+                    if (parseFloat(slider.value) < parsed) slider.value = String(parsed);
+                } else {
+                    slider.max = String(parsed);
+                    if (parseFloat(slider.value) > parsed) slider.value = String(parsed);
+                }
+                // Ensure min < max
+                let minVal = parseFloat(slider.min);
+                let maxVal = parseFloat(slider.max);
+                if (minVal >= maxVal) {
+                    const bump = isTheta ? (Math.PI / 180) : 0.01;
                     if (which === 'min') {
-                        slider.min = String(num);
-                        if (parseFloat(slider.value) < num) slider.value = String(num);
+                        maxVal = minVal + bump;
+                        slider.max = String(maxVal);
                     } else {
-                        slider.max = String(num);
-                        if (parseFloat(slider.value) > num) slider.value = String(num);
+                        minVal = maxVal - bump;
+                        slider.min = String(minVal);
                     }
-                    // Ensure min < max
-                    let minVal = parseFloat(slider.min);
-                    let maxVal = parseFloat(slider.max);
-                    if (minVal >= maxVal) {
-                        if (which === 'min') {
-                            maxVal = minVal + 0.01;
-                            slider.max = String(maxVal);
-                        } else {
-                            minVal = maxVal - 0.01;
-                            slider.min = String(minVal);
-                        }
-                    }
-                    onParamSliderChange();
-                    updateParamBoundsLabels();
                 }
-                label.removeChild(input);
-                label.textContent = oldText;
+
+                // Preserve π display if the user used pi/π
+                const disp = prettifyPi(raw);
+                if (/π/i.test(disp)) el.dataset.exprDisplay = disp;
+                else el.dataset.exprDisplay = ''; // allow numeric formatting
+                el.value = (el.dataset.exprDisplay || el.value);
+
+                onParamSliderChange();
                 updateParamBoundsLabels();
             };
-            input.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') { e.preventDefault(); applyChange(); }
-                else if (e.key === 'Escape') { e.preventDefault(); label.textContent = oldText; }
-            });
-            input.addEventListener('blur', applyChange);
-        }
-        function attachParamBoundEditors() {
-            const binds = [
-                ['amp', 'Min'], ['amp', 'Max'],
-                ['freq', 'Min'], ['freq', 'Max'],
-                ['xShift', 'Min'], ['xShift', 'Max'],
-                ['yShift', 'Min'], ['yShift', 'Max'],
-            ];
-            for (const [kind, dir] of binds) {
-                const id = kind + dir + 'Label';
-                const el = document.getElementById(id);
-                if (!el) continue;
-                el.addEventListener('dblclick', () => beginParamBoundEdit(kind, dir.toLowerCase()));
-                el.addEventListener('click', () => beginParamBoundEdit(kind, dir.toLowerCase()));
+            for (const [kind, which] of binds) {
+                const el = document.getElementById(kind + (which === 'min' ? 'MinLabel' : 'MaxLabel'));
+                if (!el || el.tagName !== 'INPUT') continue;
+                el.addEventListener('focus', () => { try { el.select(); } catch (_) {} });
+                el.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') { e.preventDefault(); apply(kind, which); el.blur(); }
+                    else if (e.key === 'Escape') { e.preventDefault(); updateParamBoundsLabels(); el.blur(); }
+                });
+                el.addEventListener('blur', () => apply(kind, which));
             }
         }
         function attachParamDirectInputs() {
@@ -5105,20 +6143,42 @@
             const freqSl = document.getElementById('freqSlider');
             const xSl = document.getElementById('xShiftSlider');
             const ySl = document.getElementById('yShiftSlider');
-            if (ampIn && ampSl) ampIn.addEventListener('input', () => {
-                const v = parseFloat(ampIn.value);
-                if (isFinite(v)) {
-                    ampSl.value = String(Math.max(parseFloat(ampSl.min), Math.min(parseFloat(ampSl.max), v)));
-                    onParamSliderChange();
-                }
-            });
-            if (freqIn && freqSl) freqIn.addEventListener('input', () => {
-                const v = parseFloat(freqIn.value);
-                if (isFinite(v)) {
-                    freqSl.value = String(Math.max(parseFloat(freqSl.min), Math.min(parseFloat(freqSl.max), v)));
-                    onParamSliderChange();
-                }
-            });
+            const wireExpr = (inEl, slEl, parser, prettify) => {
+                if (!inEl || !slEl) return;
+                inEl.addEventListener('input', () => {
+                    // If the user types pi/π, prefer showing the π symbol immediately (and never overwrite with decimals).
+                    const prettyNow = prettify(inEl.value || '');
+                    if (prettyNow !== (inEl.value || '')) inEl.value = prettyNow;
+                    const v = parser((inEl.value || '').trim());
+                    if (v !== null && isFinite(v)) {
+                        slEl.value = String(Math.max(parseFloat(slEl.min), Math.min(parseFloat(slEl.max), v)));
+                        onParamSliderChange();
+                    }
+                });
+                inEl.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        const pretty = prettify(inEl.value || '');
+                        if (/π/i.test(pretty)) inEl.dataset.exprDisplay = pretty;
+                        else inEl.dataset.exprDisplay = '';
+                        if (inEl.dataset.exprDisplay) inEl.value = inEl.dataset.exprDisplay;
+                        inEl.blur();
+                    } else if (e.key === 'Escape') {
+                        e.preventDefault();
+                        inEl.dataset.exprDisplay = '';
+                        updateParamLabels();
+                        inEl.blur();
+                    }
+                });
+                inEl.addEventListener('blur', () => {
+                    const pretty = prettify(inEl.value || '');
+                    if (/π/i.test(pretty)) inEl.dataset.exprDisplay = pretty;
+                    else inEl.dataset.exprDisplay = '';
+                    if (inEl.dataset.exprDisplay) inEl.value = inEl.dataset.exprDisplay;
+                });
+            };
+            wireExpr(ampIn, ampSl, parseNumberExpression, prettifyPi);
+            wireExpr(freqIn, freqSl, parseNumberExpression, prettifyPi);
             if (xIn && xSl) xIn.addEventListener('input', () => {
                 const raw = xIn.value.trim();
                 const v = parseThetaExpression(raw);
@@ -5127,13 +6187,7 @@
                     onParamSliderChange();
                 }
             });
-            if (yIn && ySl) yIn.addEventListener('input', () => {
-                const v = parseFloat(yIn.value);
-                if (isFinite(v)) {
-                    ySl.value = String(Math.max(parseFloat(ySl.min), Math.min(parseFloat(ySl.max), v)));
-                    onParamSliderChange();
-                }
-            });
+            wireExpr(yIn, ySl, parseNumberExpression, prettifyPi);
         }
         function initParamSliders() {
             const amp = document.getElementById('ampSlider');
@@ -5145,7 +6199,7 @@
             if (freq) freq.addEventListener('input', onParamSliderChange);
             if (xs) xs.addEventListener('input', onParamSliderChange);
             if (ys) ys.addEventListener('input', onParamSliderChange);
-            attachParamBoundEditors();
+            attachParamBoundInputs();
             attachParamDirectInputs();
             if (resetBtn) {
                 resetBtn.addEventListener('click', () => {
@@ -5195,6 +6249,8 @@
             updateCanvasCursor();
             // Keep overlay synced on load
             updateEquationOverlay();
+            // Keep param sliders synced to whatever equation is loaded by default
+            syncParamsFromEquationInput({ expandBounds: false });
             const equation = equationInput.value.trim();
             if (equation) {
                 autoSetRange(equation);
