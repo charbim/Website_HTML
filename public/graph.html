@@ -401,24 +401,17 @@
         }
 
         .main-layout {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 1.5rem;
-            align-items: flex-start;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+            align-items: stretch;
             margin-top: 1.5rem;
         }
 
-        @media (max-width: 1100px) {
-            .main-layout {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .controls-column,
-        .graph-column {
+        .graph-section {
             display: flex;
             flex-direction: column;
-            gap: 1rem;
+            gap: 0.75rem;
         }
 
         .graph-top-panel {
@@ -429,8 +422,20 @@
 
         .graphs-container {
             display: flex;
-            flex-direction: column;
+            flex-direction: row;
             gap: 1rem;
+            align-items: stretch;
+        }
+
+        @media (max-width: 1100px) {
+            .graphs-container {
+                flex-direction: column;
+            }
+        }
+
+        .graph-wrapper {
+            flex: 1;
+            min-width: 0;
         }
 
         .graph-reset {
@@ -449,6 +454,7 @@
             padding: 0.5rem;
             box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
             position: relative;
+            aspect-ratio: 1 / 1;
         }
 
         .control-btn {
@@ -473,8 +479,70 @@
             border-radius: 10px;
             cursor: crosshair;
             aspect-ratio: 1 / 1;
-            max-height: min(380px, 45vh);
             height: auto;
+            display: block;
+        }
+        .equation-centered {
+            max-width: 960px;
+            width: 100%;
+            margin: 0 auto;
+        }
+        .tabbed-controls {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 0.75rem;
+            box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
+        }
+        .tab-buttons {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+        .tab-button {
+            flex: 1;
+            padding: 0.65rem 0.75rem;
+            background: #ffffff;
+            border: 1px solid #fecaca; /* red-200 */
+            border-radius: 8px;
+            font-weight: 700;
+            color: #b91c1c; /* red-700 */
+            cursor: pointer;
+            transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .tab-button:hover {
+            background: #fef2f2; /* red-50 */
+            border-color: #fca5a5; /* red-300 */
+        }
+        .tab-button.active {
+            background: #dc2626; /* red-600 */
+            border-color: #dc2626;
+            color: #ffffff;
+            box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
+        }
+
+        /* Make the "Reset" buttons in the bottom Sliders/Toggles panels match the red theme */
+        .tabbed-controls .secondary-btn {
+            background: #ffffff;
+            border: 1px solid #fecaca; /* red-200 */
+            color: #b91c1c; /* red-700 */
+        }
+        .tabbed-controls .secondary-btn:hover {
+            background: #fef2f2; /* red-50 */
+            border-color: #b91c1c; /* red-700 */
+            color: #b91c1c;
+        }
+        .tabbed-controls .secondary-btn:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+        }
+        .tab-panels {
+            position: relative;
+        }
+        .tab-panel {
+            display: none;
+        }
+        .tab-panel.active {
             display: block;
         }
 
@@ -530,8 +598,15 @@
             border: 1px solid #e5e7eb;
             border-radius: 12px;
             padding: 0.75rem 1rem;
+            margin-top: 0.75rem;
             margin-bottom: 0.75rem;
             box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
+            /* Don't let the white panel stretch full-width; shrink to fit slider section */
+            width: fit-content;
+            max-width: 100%;
+            margin-left: auto;
+            margin-right: auto;
+            align-self: center;
         }
 
         .edit-adjust-buttons {
@@ -583,12 +658,14 @@
             gap: 1rem;
             align-items: center;
             margin-bottom: 0.5rem;
+            justify-content: center;
         }
 
         .slider-mode-toggle {
             display: flex;
             gap: 0.5rem;
             align-items: center;
+            justify-content: center;
         }
 
         .mode-btn {
@@ -637,7 +714,9 @@
 
         .slider-container {
             margin-top: 0.25rem;
-            max-width: 640px;
+            /* Preserve current theta slider size while letting the panel shrink-wrap */
+            width: 640px;
+            max-width: 100%;
             margin-left: auto;
             margin-right: auto;
         }
@@ -647,35 +726,84 @@
             margin: 0.25rem 0;
         }
 
+        /* Normalize all range inputs so every slider has the same track/thickness (fixes inconsistent UA rendering) */
         input[type="range"] {
             width: 100%;
-            height: 4px;
-            border-radius: 999px;
-            background: #e5e7eb;
+            background: transparent;
             outline: none;
+            padding: 0;
+            margin: 0;
+            height: 20px; /* comfortable hit area; actual track height is set below */
             -webkit-appearance: none;
             appearance: none;
         }
 
+        /* WebKit */
+        input[type="range"]::-webkit-slider-runnable-track {
+            height: 4px;
+            background: #e5e7eb;
+            border-radius: 999px;
+        }
         input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
             width: 12px;
             height: 12px;
-            border-radius: 50%;
-            background: #dc2626; /* red thumb */
-            cursor: pointer;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-        }
-
-        input[type="range"]::-moz-range-thumb {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
+            border-radius: 999px;
             background: #dc2626; /* red thumb */
             cursor: pointer;
             border: none;
             box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+            margin-top: -4px; /* center thumb on 4px track: (4 - 12) / 2 */
+        }
+
+        /* Firefox */
+        input[type="range"]::-moz-range-track {
+            height: 4px;
+            background: #e5e7eb;
+            border-radius: 999px;
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 12px;
+            height: 12px;
+            border-radius: 999px;
+            background: #dc2626; /* red thumb */
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+        input[type="range"]:focus-visible::-webkit-slider-thumb,
+        
+        /* Theta slider: thicker track + more square knob for easier interaction */
+        #thetaSlider::-webkit-slider-runnable-track {
+            height: 10px;
+            background: #d1d5db;
+            border-radius: 8px;
+        }
+        #thetaSlider::-webkit-slider-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 5px; /* more square */
+            background: #dc2626;
+            border: 2px solid rgba(255, 255, 255, 0.95);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+            margin-top: -5px; /* center thumb on 10px track: (10 - 20) / 2 */
+        }
+        #thetaSlider::-moz-range-track {
+            height: 10px;
+            background: #d1d5db;
+            border-radius: 8px;
+        }
+        #thetaSlider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 5px;
+            background: #dc2626;
+            border: 2px solid rgba(255, 255, 255, 0.95);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+        }
+        input[type="range"]:focus-visible::-moz-range-thumb {
+            box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.18), 0 1px 2px rgba(0, 0, 0, 0.2);
         }
 
         .slider-value {
@@ -684,6 +812,49 @@
             font-weight: bold;
             margin-top: 0.25rem;
             color: #374151;
+        }
+
+        /* Theta slider: show min/max boxes directly beside the slider */
+        .theta-slider-row {
+            display: grid;
+            grid-template-columns: 34px 1fr 34px;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.1rem;
+            width: 100%;
+        }
+        .theta-slider-row input[type="range"] {
+            width: 100%;
+            min-width: 0;
+        }
+        /* Use higher specificity than input[type="text"] so we override global text input styling */
+        .theta-slider-row input[type="text"].theta-bound-input {
+            box-sizing: border-box;
+            width: 34px;
+            min-width: 34px;
+            max-width: 34px;
+            height: 34px;
+            padding: 0;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-align: center;
+            border-radius: 6px;
+            border: 1px solid #e5e7eb;
+            background: #f9fafb;
+            color: #111827;
+            transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+            flex: 0 0 auto;
+        }
+        .theta-slider-row input[type="text"].theta-bound-input:hover {
+            background: #f3f4f6;
+            border-color: #d1d5db;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+        }
+        .theta-slider-row input[type="text"].theta-bound-input:focus {
+            outline: none;
+            border-color: rgba(220, 38, 38, 0.65);
+            box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15);
+            background: #ffffff;
         }
 
         .slider-info {
@@ -913,9 +1084,11 @@
             width: 18px;
             height: 18px;
             fill: #374151;
+            color: #374151;
         }
         .icon-btn.active svg {
             fill: #4338ca;
+            color: #4338ca;
         }
         /* Tooltip for icon buttons (JS adds .show-tip after ~600ms hover) */
         .icon-tooltip {
@@ -954,7 +1127,7 @@
     <div class="container">
         <h1>📊 Coordinate Graph Visualizer</h1>
         
-        <!-- Equation bar moved below graphs -->
+        <!-- Equation bar moved into the top panel (swapped with theta slider) -->
 
         <div class="input-section" id="rangeSection" style="display: none;">
             <div style="margin-bottom: 1rem;">
@@ -989,57 +1162,140 @@
 
 
         <div class="main-layout">
-            <div class="controls-column">
-                <div class="equation-stack">
-                    <!-- Equation bar -->
-                    <div class="input-section equation-bar equation-card">
-                        <div class="equation-heading">
-                            <div>
-                                <label for="equation" class="eyebrow-label">Equation</label>
-                                <p class="helper-text">Write r in terms of θ or x.</p>
-                            </div>
-                        </div>
-                        <div class="equation-field">
-                            <span id="rPrefix" class="r-prefix" title="Click to choose r, r², or r³">r<sup id="rExp" style="display:none"></sup></span>
-                            <span class="eq-symbol">=</span>
-                            <input type="text" id="equation" placeholder="Enter equation (e.g., sin(x), r*cos(theta), sqrt(x))" value="sin(x)">
-                        </div>
-                        <div class="equation-actions">
-                            <button type="button" class="secondary-btn" onclick="toggleRangeSection()">Adjust Range</button>
-                            <div class="function-menu">
-                                <div class="function-group">
-                                    <span class="function-group-label">Vars:</span>
-                                    <button class="function-btn" onclick="insertSymbol('θ')">θ</button>
-                                    <button class="function-btn" onclick="insertSymbol('r')">r</button>
-                                    <button class="function-btn" onclick="insertSymbol('x')">x</button>
-                                    <button class="function-btn" onclick="insertSymbol('π')">π</button>
-                                </div>
-                                <div class="function-group">
-                                    <span class="function-group-label">Func:</span>
-                                    <button class="function-btn" onclick="insertSymbol('sin(')">sin</button>
-                                    <button class="function-btn" onclick="insertSymbol('cos(')">cos</button>
-                                    <button class="function-btn" onclick="insertSymbol('tan(')">tan</button>
-                                    <button class="function-btn" onclick="insertSymbol('sqrt(')">√</button>
-                                    <button class="function-btn" onclick="insertSymbol('log(')">log</button>
-                                    <button class="function-btn" onclick="insertSymbol('exp(')">exp</button>
-                                    <button class="function-btn" onclick="insertSymbol('abs(')">abs</button>
-                                </div>
-                                <div class="function-group">
-                                    <span class="function-group-label">Ops:</span>
-                                    <button class="function-btn" onclick="insertSymbol('^')">x²</button>
-                                    <button class="function-btn" onclick="insertSymbol('*')">×</button>
-                                    <button class="function-btn" onclick="insertSymbol('/')">÷</button>
-                                    <button class="function-btn" onclick="insertSymbol('+')">+</button>
-                                    <button class="function-btn" onclick="insertSymbol('-')">-</button>
-                                    <button class="function-btn" onclick="insertSymbol('(')">(</button>
-                                    <button class="function-btn" onclick="insertSymbol(')')">)</button>
+            <div class="graph-section">
+                <div class="graph-top-panel">
+                    <div class="equation-stack equation-centered">
+                        <!-- Equation bar -->
+                        <div class="input-section equation-bar equation-card">
+                            <div class="equation-heading">
+                                <div>
+                                    <label for="equation" class="eyebrow-label">Equation</label>
+                                    <p class="helper-text">Write r in terms of θ or x.</p>
                                 </div>
                             </div>
+                            <div class="equation-field">
+                                <span id="rPrefix" class="r-prefix" title="Click to choose r, r², or r³">r<sup id="rExp" style="display:none"></sup></span>
+                                <span class="eq-symbol">=</span>
+                                <input type="text" id="equation" placeholder="Enter equation (e.g., sin(x), r*cos(theta), sqrt(x))" value="sin(x)">
+                            </div>
+                            <div class="equation-actions">
+                                <button type="button" class="secondary-btn" onclick="toggleRangeSection()">Adjust Range</button>
+                                <div class="function-menu">
+                                    <div class="function-group">
+                                        <span class="function-group-label">Vars:</span>
+                                        <button class="function-btn" onclick="insertSymbol('θ')">θ</button>
+                                        <button class="function-btn" onclick="insertSymbol('r')">r</button>
+                                        <button class="function-btn" onclick="insertSymbol('x')">x</button>
+                                        <button class="function-btn" onclick="insertSymbol('π')">π</button>
+                                    </div>
+                                    <div class="function-group">
+                                        <span class="function-group-label">Func:</span>
+                                        <button class="function-btn" onclick="insertSymbol('sin(')">sin</button>
+                                        <button class="function-btn" onclick="insertSymbol('cos(')">cos</button>
+                                        <button class="function-btn" onclick="insertSymbol('tan(')">tan</button>
+                                        <button class="function-btn" onclick="insertSymbol('sqrt(')">√</button>
+                                        <button class="function-btn" onclick="insertSymbol('log(')">log</button>
+                                        <button class="function-btn" onclick="insertSymbol('exp(')">exp</button>
+                                        <button class="function-btn" onclick="insertSymbol('abs(')">abs</button>
+                                    </div>
+                                    <div class="function-group">
+                                        <span class="function-group-label">Ops:</span>
+                                        <button class="function-btn" onclick="insertSymbol('^')">x²</button>
+                                        <button class="function-btn" onclick="insertSymbol('*')">×</button>
+                                        <button class="function-btn" onclick="insertSymbol('/')">÷</button>
+                                        <button class="function-btn" onclick="insertSymbol('+')">+</button>
+                                        <button class="function-btn" onclick="insertSymbol('-')">-</button>
+                                        <button class="function-btn" onclick="insertSymbol('(')">(</button>
+                                        <button class="function-btn" onclick="insertSymbol(')')">)</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="equationPretty" class="equation-pretty pretty-math" aria-hidden="true"></div>
+                            <div class="error-message" id="errorMessage"></div>
                         </div>
-                        <div id="equationPretty" class="equation-pretty pretty-math" aria-hidden="true"></div>
-                        <div class="error-message" id="errorMessage"></div>
                     </div>
+                    <div class="mode-toolbar" id="interactionToolbar">
+                        <button id="btnModePerspective" class="icon-btn active" onclick="setInteractionMode('perspective')" aria-label="Move mode">
+                            <!-- plus + arrow icon -->
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <rect x="11" y="5" width="2" height="14"/>
+                                <rect x="5" y="11" width="14" height="2"/>
+                                <path d="M14 7l5 5-5 5v-4h-4v-2h4z"/>
+                            </svg>
+                            <span class="icon-tooltip">Move mode</span>
+                        </button>
+                        <button id="btnModeView" class="icon-btn" onclick="setInteractionMode('view')" aria-label="View mode">
+                            <!-- new eye icon -->
+                            <svg viewBox="0 0 48 48" aria-hidden="true" preserveAspectRatio="xMidYMid meet">
+                                <path d="M4 24c4-8 12-14 20-14s16 6 20 14c-4 8-12 14-20 14S8 32 4 24Z" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                                <circle cx="24" cy="24" r="8" fill="currentColor"/>
+                                <path d="M12 6l5 8" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+                                <path d="M24 4v10" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+                                <path d="M36 6l-5 8" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+                            </svg>
+                            <span class="icon-tooltip">View mode</span>
+                        </button>
+                        <button id="btnModeEdit" class="icon-btn" onclick="setInteractionMode('edit')" aria-label="Graph edit mode">
+                            <!-- wrench icon -->
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M22.7 19.3l-6.4-6.4a6 6 0 0 1-7.6-7.6l3.2 3.2 2.1-2.1-3.2-3.2a6 6 0 0 1 7.6 7.6l6.4 6.4-2.1 2.1zM2 22l6.1-1.6L3.6 15.9 2 22z"/>
+                            </svg>
+                            <span class="icon-tooltip">Graph edit mode</span>
+                        </button>
+                    </div>
+                    <!-- Edit Mode Adjustment Buttons -->
+                    <div class="edit-adjust-buttons" id="editAdjustButtons" style="display: none;">
+                        <button class="adjust-btn" id="btnAmplitudeAdjust" onclick="activateAdjustMode('amplitude')">Amplitude adjust</button>
+                        <button class="adjust-btn" id="btnFrequencyAdjust" onclick="activateAdjustMode('frequency')">Frequency adjust</button>
+                        <button class="adjust-btn" id="btnShiftAdjust" onclick="activateAdjustMode('shift')">Shift adjust</button>
+                    </div>
+                    <div class="graph-reset">
+                        <button id="resetGraphsBtn" class="control-btn" type="button">Reset</button>
+                    </div>
+                </div>
+                <div class="graphs-container">
+                    <div class="graph-wrapper">
+                        <canvas id="cartesianCanvas"></canvas>
+                    </div>
+                    <div class="graph-wrapper">
+                        <canvas id="polarCanvas"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="slider-section" id="sliderSection">
+            <div style="margin-bottom: 1rem;">
+                <h3 style="font-size: 1.3rem; margin-bottom: 0.5rem; color: #dc2626;">Theta Slider</h3>
+                <p style="font-size: 0.9rem; color: rgba(255, 255, 255, 0.8); margin-bottom: 1rem;">
+                    Move the slider to see the point on both graphs. Choose between pre-drawn mode (dot travels) or drawing mode (graph draws as you move).
+                </p>
+            </div>
+            <div class="slider-controls">
+                <div class="slider-mode-toggle">
+                    <button class="mode-btn active" id="modePreDrawn" onclick="setSliderMode('preDrawn')">Pre-drawn</button>
+                    <button class="mode-btn" id="modeDrawing" onclick="setSliderMode('drawing')">Drawing</button>
+                </div>
+            </div>
+            <div class="slider-container">
+                <div class="slider-wrapper">
+                    <div class="theta-slider-row">
+                        <input id="sliderMinLabel" class="theta-bound-input" type="text" value="0" inputmode="decimal" aria-label="Theta minimum" title="Set θ min (supports π)">
+                        <input type="range" id="thetaSlider" min="0" max="100" value="0" step="0.01">
+                        <input id="sliderMaxLabel" class="theta-bound-input" type="text" value="0" inputmode="decimal" aria-label="Theta maximum" title="Set θ max (supports π)">
+                    </div>
+                    <div class="slider-value" id="sliderValue">θ = 0.00</div>
+                </div>
+            </div>
+        </div>
 
+        <div class="tabbed-controls">
+            <div class="tab-buttons">
+                <button class="tab-button active" data-tab-target="slidersTab">Sliders</button>
+                <button class="tab-button" data-tab-target="togglesTab">Toggles</button>
+            </div>
+            <div class="tab-panels">
+                <div class="tab-panel active" id="slidersTab">
                     <!-- Parameter sliders -->
                     <div class="input-section mini-slider-panel" id="paramSliderSection">
                         <div class="mini-slider-header">
@@ -1100,7 +1356,8 @@
                             </div>
                         </div>
                     </div>
-
+                </div>
+                <div class="tab-panel" id="togglesTab">
                     <div class="input-section toggle-panel">
                         <div class="toggle-header">
                             <div>
@@ -1137,83 +1394,6 @@
                         </div>
                         <p class="toggle-hint">These toggles are visual placeholders for now.</p>
                     </div>
-                </div>
-            </div>
-            <div class="graph-column">
-                <div class="graph-top-panel">
-                    <div class="slider-section" id="sliderSection">
-                        <div style="margin-bottom: 1rem;">
-                            <h3 style="font-size: 1.3rem; margin-bottom: 0.5rem; color: #dc2626;">Theta Slider</h3>
-                            <p style="font-size: 0.9rem; color: rgba(255, 255, 255, 0.8); margin-bottom: 1rem;">
-                                Move the slider to see the point on both graphs. Choose between pre-drawn mode (dot travels) or drawing mode (graph draws as you move).
-                            </p>
-                        </div>
-                        <div class="slider-controls">
-                            <div class="slider-mode-toggle">
-                                <span style="font-size: 0.95rem; margin-right: 0.5rem;">Mode:</span>
-                                <button class="mode-btn active" id="modePreDrawn" onclick="setSliderMode('preDrawn')">Pre-drawn</button>
-                                <button class="mode-btn" id="modeDrawing" onclick="setSliderMode('drawing')">Drawing</button>
-                            </div>
-                        </div>
-                        <div class="slider-container">
-                            <div class="slider-wrapper">
-                                <input type="range" id="thetaSlider" min="0" max="100" value="0" step="0.01">
-                                <div class="slider-value" id="sliderValue">θ = 0.00</div>
-                                <div class="slider-info" style="display: flex; justify-content: space-between; gap: 1rem; margin-top: 0.25rem;">
-                                    <div class="slider-bound">
-                                        <span class="label">Min:</span>
-                                        <span id="sliderMinLabel" class="value" title="Click to edit">0.00</span>
-                                    </div>
-                                    <div class="slider-bound">
-                                        <span class="label">Max:</span>
-                                        <span id="sliderMaxLabel" class="value" title="Click to edit">0.00</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mode-toolbar" id="interactionToolbar">
-                        <button id="btnModePerspective" class="icon-btn active" onclick="setInteractionMode('perspective')" aria-label="Move mode">
-                            <!-- plus + arrow icon -->
-                            <svg viewBox="0 0 24 24" aria-hidden="true">
-                                <rect x="11" y="5" width="2" height="14"/>
-                                <rect x="5" y="11" width="14" height="2"/>
-                                <path d="M14 7l5 5-5 5v-4h-4v-2h4z"/>
-                            </svg>
-                            <span class="icon-tooltip">Move mode</span>
-                        </button>
-                        <button id="btnModeView" class="icon-btn" onclick="setInteractionMode('view')" aria-label="View mode">
-                            <!-- eye icon -->
-                            <svg viewBox="0 0 24 24" aria-hidden="true">
-                                <path d="M12 5c5 0 9 4 10 7-1 3-5 7-10 7S3 15 2 12c1-3 5-7 10-7zm0 2C8.6 7 5.7 9.2 4.2 12 5.7 14.8 8.6 17 12 17s6.3-2.2 7.8-5C18.3 9.2 15.4 7 12 7zm0 2.5A2.5 2.5 0 1 1 12 14a2.5 2.5 0 0 1 0-5z"/>
-                            </svg>
-                            <span class="icon-tooltip">View mode</span>
-                        </button>
-                        <button id="btnModeEdit" class="icon-btn" onclick="setInteractionMode('edit')" aria-label="Graph edit mode">
-                            <!-- wrench icon -->
-                            <svg viewBox="0 0 24 24" aria-hidden="true">
-                                <path d="M22.7 19.3l-6.4-6.4a6 6 0 0 1-7.6-7.6l3.2 3.2 2.1-2.1-3.2-3.2a6 6 0 0 1 7.6 7.6l6.4 6.4-2.1 2.1zM2 22l6.1-1.6L3.6 15.9 2 22z"/>
-                            </svg>
-                            <span class="icon-tooltip">Graph edit mode</span>
-                        </button>
-                    </div>
-                    <!-- Edit Mode Adjustment Buttons -->
-                    <div class="edit-adjust-buttons" id="editAdjustButtons" style="display: none;">
-                        <button class="adjust-btn" id="btnAmplitudeAdjust" onclick="activateAdjustMode('amplitude')">Amplitude adjust</button>
-                        <button class="adjust-btn" id="btnFrequencyAdjust" onclick="activateAdjustMode('frequency')">Frequency adjust</button>
-                        <button class="adjust-btn" id="btnShiftAdjust" onclick="activateAdjustMode('shift')">Shift adjust</button>
-                    </div>
-                </div>
-                <div class="graphs-container">
-                    <div class="graph-wrapper">
-                        <canvas id="cartesianCanvas"></canvas>
-                    </div>
-                    <div class="graph-wrapper">
-                        <canvas id="polarCanvas"></canvas>
-                    </div>
-                </div>
-                <div class="graph-reset">
-                    <button id="resetGraphsBtn" class="control-btn" type="button">Reset</button>
                 </div>
             </div>
         </div>
@@ -1263,6 +1443,8 @@
         let sliderTheta = 0; // Current slider theta value
         // UI exponent for r (used when equation does not explicitly include r on the left)
         let uiRExponent = 1;
+        // Tab control state
+        let tabsInitialized = false;
         // Param slider session flags
         let sliderSessionActive = false;
         let updatingEquationFromSliders = false;
@@ -1278,6 +1460,26 @@
         function rememberDefaultPolarZoom(force = false) {
             if (!force && defaultPolarZoom !== null) return;
             defaultPolarZoom = polarZoom;
+        }
+
+        function initBottomTabs() {
+            if (tabsInitialized) return;
+            tabsInitialized = true;
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const tabPanels = document.querySelectorAll('.tab-panel');
+            tabButtons.forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    const targetId = btn.getAttribute('data-tab-target');
+                    if (!targetId) return;
+                    tabButtons.forEach((b) => b.classList.remove('active'));
+                    tabPanels.forEach((panel) => panel.classList.remove('active'));
+                    btn.classList.add('active');
+                    const targetPanel = document.getElementById(targetId);
+                    if (targetPanel) {
+                        targetPanel.classList.add('active');
+                    }
+                });
+            });
         }
 
         // Add custom functions to math.js
@@ -1415,35 +1617,28 @@
 
         // Set canvas dimensions
         function setupCanvas(canvas) {
-            if (canvas.id === 'polarCanvas') {
-                // Make polar canvas square based on container width
-                const parent = canvas.parentElement;
-                let size = 0;
-                if (parent) {
-                    const rect = parent.getBoundingClientRect();
-                    size = Math.max(size, rect.width || 0);
-                    size = Math.max(size, parent.clientWidth || 0);
-                    size = Math.max(size, parent.offsetWidth || 0);
-                }
-                // Fallback to graphs container if parent width is 0
-                if (!size) {
-                    const graphs = document.querySelector('.graphs-container');
-                    if (graphs) {
-                        const r2 = graphs.getBoundingClientRect();
-                        size = Math.max(size, r2.width || 0);
-                        size = Math.max(size, graphs.clientWidth || 0);
-                        size = Math.max(size, graphs.offsetWidth || 0);
-                    }
-                }
-                // Final fallback
-                if (!size || !isFinite(size)) size = 480;
-                canvas.width = Math.round(size);
-                canvas.height = Math.round(size);
-            } else {
-                const rect = canvas.getBoundingClientRect();
-                canvas.width = rect.width;
-                canvas.height = 500;
+            const parent = canvas.parentElement;
+            const parentRect = parent ? parent.getBoundingClientRect() : null;
+            let size = parentRect?.width || parent?.clientWidth || parent?.offsetWidth || 0;
+
+            // Fallback to the graphs container width if parent has no width yet
+            if (!size) {
+                const graphs = document.querySelector('.graphs-container');
+                const graphsRect = graphs ? graphs.getBoundingClientRect() : null;
+                size = graphsRect?.width || graphs?.clientWidth || graphs?.offsetWidth || 0;
             }
+
+            // Final fallback to the canvas itself
+            if (!size) {
+                const rect = canvas.getBoundingClientRect();
+                size = rect.width || rect.height || 0;
+            }
+
+            if (!size || !isFinite(size)) size = 480;
+
+            size = Math.round(size);
+            canvas.width = size;
+            canvas.height = size;
         }
 
         setupCanvas(cartesianCanvas);
@@ -1586,7 +1781,7 @@
                 const dy = (deltaY / plotHeight) * yRange;
                 
                 cartesianCenterX += dx;
-                cartesianCenterY -= dy; // drag down -> content down
+                cartesianCenterY += dy; // drag down -> content down (invert Y panning direction)
                 
                 lastMouseX = e.clientX;
                 lastMouseY = e.clientY;
@@ -1863,6 +2058,107 @@
             if (sinCosPeriod !== null) return { period: sinCosPeriod, periods: 1 };
             if (tanPeriod !== null) return { period: tanPeriod, periods: 1 };
             return null;
+        }
+
+        // ===== Typed-equation shift detection (for Shifts toggle) =====
+        // Detect phase shift inside trig args like sin(a*theta + c) -> thetaShift = -c/a
+        function evalSafeNumericGlobal(expr) {
+            try {
+                const val = math.evaluate(expr);
+                const num = (typeof val === 'object' && val && val.re !== undefined) ? val.re : val;
+                return (typeof num === 'number' && isFinite(num)) ? num : null;
+            } catch (_) {
+                return null;
+            }
+        }
+
+        function parseLinearThetaAC(arg) {
+            if (!arg || !/\btheta\b/.test(arg)) return null;
+            let s = addImplicitMultiplication(arg).replace(/\s+/g, '');
+
+            // Strip one balanced outer paren layer
+            if (s.startsWith('(') && s.endsWith(')')) {
+                let bal = 0;
+                let balanced = true;
+                for (let i = 0; i < s.length; i++) {
+                    if (s[i] === '(') bal++;
+                    else if (s[i] === ')') bal--;
+                    if (bal < 0) { balanced = false; break; }
+                    if (i < s.length - 1 && bal === 0) balanced = false;
+                }
+                if (balanced) s = s.slice(1, -1);
+            }
+
+            const numExpr = (x) => (x || '').replace(/pi/gi, 'pi');
+            const parseConst = (cStr) => {
+                if (!cStr) return 0;
+                const v = evalSafeNumericGlobal(numExpr(cStr));
+                return (v !== null ? v : 0);
+            };
+
+            // a*theta + c
+            let m = s.match(/^([+\-]?(?:\d+(?:\.\d+)?|\.\d+|(?:\d+(?:\.\d+)?|\.\d+)?(?:\*|\/)?pi))\*theta([+\-].+)?$/i);
+            if (m) {
+                const a = evalSafeNumericGlobal(numExpr(m[1]));
+                if (a !== null) return { a, c: parseConst(m[2]) };
+            }
+            // theta*a + c
+            m = s.match(/^theta\*([+\-]?(?:\d+(?:\.\d+)?|\.\d+|(?:\d+(?:\.\d+)?|\.\d+)?(?:\*|\/)?pi))([+\-].+)?$/i);
+            if (m) {
+                const a = evalSafeNumericGlobal(numExpr(m[1]));
+                if (a !== null) return { a, c: parseConst(m[2]) };
+            }
+            // theta/a + c
+            m = s.match(/^theta\/([+\-]?(?:\d+(?:\.\d+)?|\.\d+|(?:\d+(?:\.\d+)?|\.\d+)?(?:\*|\/)?pi))([+\-].+)?$/i);
+            if (m) {
+                const denom = evalSafeNumericGlobal(numExpr(m[1]));
+                if (denom !== null && Math.abs(denom) > 1e-12) return { a: 1 / denom, c: parseConst(m[2]) };
+            }
+            // +/-theta + c
+            m = s.match(/^([+\-]?)theta([+\-].+)?$/i);
+            if (m) {
+                const a = (m[1] === '-') ? -1 : 1;
+                return { a, c: parseConst(m[2]) };
+            }
+
+            // Fallback: numeric linear fit if expression is linear in theta
+            try {
+                const f = (t) => {
+                    const expr = s.replace(/\btheta\b/g, `(${t})`).replace(/pi/gi, 'pi');
+                    return evalSafeNumericGlobal(expr);
+                };
+                const y0 = f(0.0), y1 = f(1.0), y2 = f(2.0);
+                if ([y0, y1, y2].every(v => typeof v === 'number' && isFinite(v))) {
+                    const slope1 = y1 - y0;
+                    const slope2 = y2 - y1;
+                    if (Math.abs(slope1 - slope2) < 1e-6) {
+                        return { a: slope1, c: y0 };
+                    }
+                }
+            } catch (_) {}
+
+            return null;
+        }
+
+        function detectThetaShiftFromEquation(equation) {
+            try {
+                const eq = (equation || '').trim();
+                if (!eq) return null;
+                const { rhs } = extractRExponentAndRHS(eq);
+                const processedRhs = preprocessEquation(rhs || eq);
+
+                // Take the first trig arg we can see (covers common cases like sin(theta - pi/4))
+                const trigRegex = /\b(sin|cos|tan)\s*\(([^()]*)\)/i;
+                const m = processedRhs.match(trigRegex);
+                if (!m) return null;
+                const arg = m[2] || '';
+                const ac = parseLinearThetaAC(arg);
+                if (!ac || !isFinite(ac.a) || Math.abs(ac.a) < 1e-12) return null;
+                const shift = -ac.c / ac.a;
+                return (isFinite(shift) ? shift : null);
+            } catch (_) {
+                return null;
+            }
         }
 
         // Compute current view bounds (ignores manual fields; view is driven by zoom/center)
@@ -2437,7 +2733,10 @@
                 .replace(/\bsquare\b/g, 'square')
                 .replace(/θ/g, 'theta')
                 .replace(/\btheta\b/g, 'theta')
-                .replace(/\bπ\b/g, 'pi')
+                // IMPORTANT: don't use \b word boundaries for π; JS \b doesn't treat π as a word char.
+                // Convert both the pretty π symbol and any typed "pi"/"PI" back to mathjs' "pi".
+                .replace(/π/g, 'pi')
+                .replace(/Π/g, 'pi')
                 .replace(/\bPI\b/g, 'pi')
                 // Treat x as theta and y as r (canonicalize variables)
                 .replace(/\bx\b/g, 'theta')
@@ -2974,12 +3273,8 @@
                         const plotX = padding + ((sliderTheta - xMin) / xRange) * plotWidth;
                         const plotY = padding + ((yMax - y) / yRange) * plotHeight;
 
-                        // Draw a subtler point (use sign color if color-coding is enabled)
-                        if (!!(document.getElementById('toggleColorRadius') && document.getElementById('toggleColorRadius').checked)) {
-                            ctx.fillStyle = (y < 0 ? '#1e3a8a' : '#60a5fa');
-                        } else {
-                            ctx.fillStyle = '#ff6b6b';
-                        }
+                        // Always draw the traveling point in red (even when radius is color-coded)
+                        ctx.fillStyle = '#ff6b6b';
                         ctx.beginPath();
                         ctx.arc(plotX, plotY, 5, 0, 2 * Math.PI);
                         ctx.fill();
@@ -2994,7 +3289,7 @@
                 }
             }
 
-            // Overlay: Theta horizontal base on x-axis and Radius vertical to the point
+            // Overlay: Theta horizontal base on x-axis and Amplitude helper guides
             const thetaToggle = document.getElementById('toggleTheta');
             if (thetaToggle && thetaToggle.checked) {
                 // Draw horizontal base along y = 0 from x = 0 to x = sliderTheta
@@ -3016,6 +3311,210 @@
                 ctx.stroke();
                 ctx.restore();
             }
+
+            const ampToggle = document.getElementById('toggleAmp');
+            if (ampToggle && ampToggle.checked) {
+                const GUIDE_COLOR = '#f59e0b'; // orange
+                const GUIDE_DASH = [6, 4];
+
+                // Sample based on what's actually visible in the cartesian grid (viewport),
+                // so the number of perpendicular lines is driven by the on-screen curve, not the theta slider range.
+                let domainMin = xMin;
+                let domainMax = xMax;
+                if (sliderMode === 'drawing' && isFinite(sliderTheta)) {
+                    // In drawing mode, the curve is only drawn up to the slider, so treat that as the visible domain end.
+                    domainMax = Math.min(domainMax, sliderTheta);
+                }
+                if (!isFinite(domainMin) || !isFinite(domainMax) || !(domainMax > domainMin)) {
+                    // If view is invalid for any reason, bail out of amp helpers safely.
+                    domainMin = null;
+                    domainMax = null;
+                }
+                const extremaSamples = 2048;
+                const dx = (domainMax !== null && domainMax !== null) ? ((domainMax - domainMin) / extremaSamples) : 0;
+                const eps = Math.max(1e-9, yRange * 0.001); // noise tolerance relative to view range (for local extrema)
+                const eqTol = Math.max(1e-9, yRange * 0.002); // slightly larger tolerance for global max/min grouping
+                let eqMinY = Infinity;
+                let eqMaxY = -Infinity;
+                const samples = []; // { x, y } finite samples only
+
+                function evalYAt(val) {
+                    try {
+                        let y;
+                        if (iterateVar === 'theta') {
+                            const theta = val;
+                            const expr = rhsEquation.replace(/\btheta\b/g, `(${theta})`).replace(/\bx\b/g, `(${theta})`);
+                            let base = math.evaluate(expr);
+                            if (typeof base === 'object' && base.re !== undefined) base = base.re;
+                            y = applyExponentToValue(base, effExp);
+                        } else {
+                            const x = val;
+                            const expr = rhsEquation.replace(/\bx\b/g, `(${x})`);
+                            let base = math.evaluate(expr);
+                            if (typeof base === 'object' && base.re !== undefined) base = base.re;
+                            y = applyExponentToValue(base, effExp);
+                        }
+                        if (typeof y === 'object' && y.re !== undefined) y = y.re;
+                        if (!isFinite(y)) return NaN;
+                        return y;
+                    } catch (_) {
+                        return NaN;
+                    }
+                }
+
+                if (domainMin === null || domainMax === null) {
+                    // nothing to do
+                } else for (let i = 0; i <= extremaSamples; i++) {
+                    const xVal = domainMin + i * dx;
+                    const yVal = evalYAt(xVal);
+                    if (!isFinite(yVal)) { continue; }
+                    eqMinY = Math.min(eqMinY, yVal);
+                    eqMaxY = Math.max(eqMaxY, yVal);
+                    samples.push({ x: xVal, y: yVal });
+                }
+
+                // Amplitude "midline": y = k where k is halfway between the function's min and max
+                const yMidVal = (isFinite(eqMinY) && isFinite(eqMaxY)) ? ((eqMinY + eqMaxY) / 2) : ((yMin + yMax) / 2);
+                const yMidPx = padding + ((yMax - yMidVal) / yRange) * plotHeight;
+                const midlineVisible = isFinite(yMidPx) && yMidPx >= padding && yMidPx <= (height - padding);
+
+                // Draw the horizontal midline
+                if (midlineVisible) {
+                    ctx.save();
+                    ctx.setLineDash(GUIDE_DASH);
+                    ctx.strokeStyle = GUIDE_COLOR;
+                    ctx.lineWidth = 2;
+                    ctx.lineCap = 'butt';
+                    ctx.beginPath();
+                    ctx.moveTo(padding, yMidPx);
+                    ctx.lineTo(width - padding, yMidPx);
+                    ctx.stroke();
+                    ctx.restore();
+
+                    // Extra guide: at the x-position of the sampled global max/min, draw vertical dashed segments
+                    // from the midline to the extrema point (x = k). Use grouping to avoid "striped" thickness.
+                    function groupedExtremeX(targetY) {
+                        if (!samples.length || !isFinite(targetY)) return null;
+                        const xs = [];
+                        for (const s of samples) {
+                            if (Math.abs(s.y - targetY) <= eqTol) xs.push(s.x);
+                        }
+                        if (!xs.length) return null;
+                        const xAvg = xs.reduce((a, b) => a + b, 0) / xs.length;
+                        return xAvg;
+                    }
+                    const xAtMax = groupedExtremeX(eqMaxY);
+                    const xAtMin = groupedExtremeX(eqMinY);
+
+                    function yAtNearestSample(xTarget, targetY) {
+                        if (!samples.length || !isFinite(xTarget)) return null;
+                        let best = null;
+                        let bestDx = Infinity;
+                        for (const s of samples) {
+                            const d = Math.abs(s.x - xTarget);
+                            if (d < bestDx) { bestDx = d; best = s; }
+                        }
+                        if (!best) return null;
+                        // Keep the y from the target extreme if provided and finite; else use nearest sample's y.
+                        if (isFinite(targetY)) return targetY;
+                        return best.y;
+                    }
+
+                    const maxYForLine = yAtNearestSample(xAtMax, eqMaxY);
+                    const minYForLine = yAtNearestSample(xAtMin, eqMinY);
+
+                    const drawXKSegmentIfVisible = (xK, yExt) => {
+                        if (!isFinite(xK) || !isFinite(yExt)) return;
+                        // Only draw if the x=k location is within the current viewport (so it doesn't "stick" to edges while panning).
+                        if (xK < xMin || xK > xMax) return;
+                        const px = padding + ((xK - xMin) / xRange) * plotWidth;
+                        const py = padding + ((yMax - yExt) / yRange) * plotHeight;
+                        if (!isFinite(px) || !isFinite(py)) return;
+                        if (py < padding || py > height - padding) return; // off-screen extrema
+                        ctx.save();
+                        ctx.setLineDash(GUIDE_DASH);
+                        ctx.strokeStyle = GUIDE_COLOR;
+                        ctx.lineWidth = 2;
+                        ctx.lineCap = 'butt';
+                        ctx.beginPath();
+                        ctx.moveTo(px, yMidPx);
+                        ctx.lineTo(px, py);
+                        ctx.stroke();
+                        ctx.restore();
+                    };
+
+                    drawXKSegmentIfVisible(xAtMax, maxYForLine);
+                    drawXKSegmentIfVisible(xAtMin, minYForLine);
+                }
+
+                // Find *visible* local extrema (mins/maxes) so we can draw perpendicular connectors
+                // for every min/max currently on screen.
+                const visibleExtrema = [];
+                if (isFinite(xMin) && isFinite(xMax) && xMax > xMin) {
+                    const visSamples = Math.min(4096, Math.max(768, Math.floor(plotWidth * 2)));
+                    const visDx = (xMax - xMin) / visSamples;
+                    const visEps = Math.max(1e-9, yRange * 0.001);
+                    let v0 = null, v1 = null;
+
+                    function evalYVisible(val) {
+                        const y = evalYAt(val);
+                        // Only consider on-screen y values when detecting extrema "on the screen"
+                        if (!isFinite(y) || y < yMin || y > yMax) return NaN;
+                        return y;
+                    }
+
+                    for (let i = 0; i <= visSamples; i++) {
+                        const xv = xMin + i * visDx;
+                        const yv = evalYVisible(xv);
+                        if (!isFinite(yv)) { v0 = null; v1 = null; continue; }
+                        const v2 = { x: xv, y: yv };
+                        if (v0 && v1) {
+                            if (v1.y > v0.y + visEps && v1.y > v2.y + visEps) {
+                                visibleExtrema.push({ kind: 'max', x: v1.x, y: v1.y });
+                            } else if (v1.y < v0.y - visEps && v1.y < v2.y - visEps) {
+                                visibleExtrema.push({ kind: 'min', x: v1.x, y: v1.y });
+                            }
+                        }
+                        v0 = v1;
+                        v1 = v2;
+                    }
+
+                    // De-duplicate adjacent extrema
+                    const deduped = [];
+                    for (const ex of visibleExtrema) {
+                        const last = deduped[deduped.length - 1];
+                        if (last && ex.kind === last.kind && Math.abs(ex.x - last.x) <= visDx * 3) continue;
+                        deduped.push(ex);
+                    }
+                    visibleExtrema.length = 0;
+                    deduped.forEach(e => visibleExtrema.push(e));
+                }
+
+                // Draw perpendicular connectors from the midline to each visible extrema
+                if (midlineVisible && visibleExtrema.length) {
+                    ctx.save();
+                    ctx.setLineDash(GUIDE_DASH);
+                    ctx.strokeStyle = GUIDE_COLOR;
+                    ctx.lineWidth = 2;
+                    ctx.lineCap = 'butt';
+                    for (const ex of visibleExtrema) {
+                        const px = padding + ((ex.x - xMin) / xRange) * plotWidth;
+                        let py = padding + ((yMax - ex.y) / yRange) * plotHeight;
+                        if (!isFinite(px) || !isFinite(py)) continue;
+                        // only draw if the extremum is visible in the current viewport
+                        if (ex.x < xMin || ex.x > xMax) continue;
+                        if (py < padding || py > height - padding) continue;
+                        // clamp into plot area
+                        const cx = Math.max(padding, Math.min(width - padding, px));
+                        py = Math.max(padding, Math.min(height - padding, py));
+                        ctx.beginPath();
+                        ctx.moveTo(cx, yMidPx);
+                        ctx.lineTo(cx, py);
+                        ctx.stroke();
+                    }
+                    ctx.restore();
+                }
+            }
             const radiusToggle = document.getElementById('toggleRadius');
             if (radiusToggle && radiusToggle.checked) {
                 const rAtTheta = evaluateRAtTheta(sliderTheta);
@@ -3033,6 +3532,93 @@
                     ctx.lineTo(sx, y1);
                     ctx.stroke();
                     ctx.restore();
+                }
+            }
+
+            // Overlay: Shifts point (where the original y-intercept point lands after shifts)
+            // Example: sin(theta - 4) + 5 -> point at (4, 5) because sin(0) = 0.
+            const shiftsToggle = document.getElementById('toggleShifts');
+            if (shiftsToggle && shiftsToggle.checked) {
+                try {
+                    let xVal = 0;
+                    let yVal = 0;
+
+                    if (sliderSessionActive) {
+                        // Slider-driven shifts: use editParams against the base equation
+                        xVal = (isFinite(editParams.thetaShift) ? editParams.thetaShift : 0);
+                        const amp = (isFinite(editParams.amplitude) ? editParams.amplitude : 1);
+                        const rShift = (isFinite(editParams.rShift) ? editParams.rShift : 0);
+
+                        // Evaluate the *base* equation at theta = 0 to get the original y-intercept y-value.
+                        const baseEq = (editBaseEquation || '').trim() || (equationInput.value || '').trim();
+                        const baseParts = extractRExponentAndRHS(baseEq);
+                        const baseRhs = baseParts.rhs || baseEq;
+                        const baseExp = baseParts.exponent || 1;
+                        const theta = 0;
+                        const baseExpr = baseRhs
+                            .replace(/\btheta\b/g, `(${theta})`)
+                            .replace(/θ/g, `(${theta})`)
+                            .replace(/\bx\b/g, `(${theta})`);
+                        let yBase = math.evaluate(baseExpr);
+                        if (typeof yBase === 'object' && yBase && yBase.re !== undefined) yBase = yBase.re;
+                        yBase = applyExponentToValue(yBase, baseExp);
+                        if (typeof yBase === 'object' && yBase && yBase.re !== undefined) yBase = yBase.re;
+                        yVal = amp * yBase + rShift;
+                    } else {
+                        // Typed-equation shifts: infer phase shift from the equation itself (e.g., sin(theta - pi/4))
+                        const inferred = detectThetaShiftFromEquation(equationInput.value || '');
+                        xVal = (isFinite(inferred) ? inferred : 0);
+                        // The "landing point" of the original y-intercept after a horizontal shift is at (xShift, r(xShift))
+                        yVal = evaluateRAtTheta(xVal);
+                    }
+
+                    if (isFinite(xVal) && isFinite(yVal) && xVal >= xMin && xVal <= xMax && yVal >= yMin && yVal <= yMax) {
+                        const px = padding + ((xVal - xMin) / xRange) * plotWidth;
+                        const py = padding + ((yMax - yVal) / yRange) * plotHeight;
+
+                        // Dotted yellow guides from axes to the point
+                        ctx.save();
+                        ctx.setLineDash([6, 4]);
+                        ctx.strokeStyle = '#facc15'; // yellow
+                        ctx.lineWidth = 2;
+                        ctx.lineCap = 'butt';
+
+                        // From x-axis (y = 0) up/down to the point
+                        if (0 >= yMin && 0 <= yMax) {
+                            let xAxisY = padding + ((yMax - 0) / yRange) * plotHeight;
+                            xAxisY = Math.max(padding, Math.min(height - padding, xAxisY));
+                            ctx.beginPath();
+                            ctx.moveTo(px, xAxisY);
+                            ctx.lineTo(px, py);
+                            ctx.stroke();
+                        }
+
+                        // From y-axis (x = 0) across to the point
+                        if (0 >= xMin && 0 <= xMax) {
+                            let yAxisX = padding + ((0 - xMin) / xRange) * plotWidth;
+                            yAxisX = Math.max(padding, Math.min(width - padding, yAxisX));
+                            ctx.beginPath();
+                            ctx.moveTo(yAxisX, py);
+                            ctx.lineTo(px, py);
+                            ctx.stroke();
+                        }
+                        ctx.restore();
+
+                        ctx.save();
+                        // Match the red traveling point style: solid fill + light border
+                        ctx.fillStyle = '#facc15'; // yellow
+                        ctx.beginPath();
+                        ctx.arc(px, py, 5, 0, 2 * Math.PI);
+                        ctx.fill();
+
+                        // Light border for visibility (same as red point)
+                        ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+                        ctx.lineWidth = 1;
+                        ctx.stroke();
+                        ctx.restore();
+                    }
+                } catch (_) {
+                    // ignore shifts point draw errors
                 }
             }
         }
@@ -3341,12 +3927,8 @@
                         const plotX = centerX + (x / maxR) * radius;
                         const plotY = centerY - (y / maxR) * radius;
 
-                        // Draw a subtler point (use sign color if color-coding is enabled)
-                        if (!!(document.getElementById('toggleColorRadius') && document.getElementById('toggleColorRadius').checked)) {
-                            ctx.fillStyle = (r < 0 ? '#1e3a8a' : '#60a5fa');
-                        } else {
-                            ctx.fillStyle = '#ff6b6b';
-                        }
+                        // Always draw the traveling point in red (even when radius is color-coded)
+                        ctx.fillStyle = '#ff6b6b';
                         ctx.beginPath();
                         ctx.arc(plotX, plotY, 5, 0, 2 * Math.PI);
                         ctx.fill();
@@ -3361,14 +3943,16 @@
                 }
             }
 
-            // Overlays: theta arc slice and radial line to point (radius)
+            // Overlays: theta arc slice, theta-to-curve line, and radius line(s)
             const thetaToggle = document.getElementById('toggleTheta');
+            let thetaArcR = null;
             if (thetaToggle && thetaToggle.checked) {
                 ctx.save();
                 // Draw an arc slice from 0 to sliderTheta near the origin (counter-clockwise in math coords)
                 ctx.strokeStyle = '#9333ea'; // theta color (muted purple)
                 ctx.lineWidth = 2;
                 const arcR = Math.max(18, Math.min(radius * 0.22, 60)); // small arc radius
+                thetaArcR = arcR;
                 const step = Math.max(0.02, Math.min(0.1, Math.abs(sliderTheta) / 24));
                 ctx.beginPath();
                 for (let a = 0; a <= sliderTheta + 1e-9; a += step) {
@@ -3389,36 +3973,111 @@
                 ctx.fillText('θ', tx, ty);
                 ctx.restore();
             }
+
+            // Overlay: x-shift shown as an angle from 0 (similar to theta overlay)
+            const shiftsToggle = document.getElementById('toggleShifts');
+            let shiftArcR = null;
+            const shiftTheta = (isFinite(editParams.thetaShift) ? editParams.thetaShift : 0);
+            if (shiftsToggle && shiftsToggle.checked && isFinite(shiftTheta) && Math.abs(shiftTheta) > 1e-12) {
+                ctx.save();
+                ctx.strokeStyle = '#facc15'; // yellow
+                ctx.lineWidth = 2;
+                // Slightly larger arc than theta so they don't overlap as much
+                const baseArcR = (typeof thetaArcR === 'number' && isFinite(thetaArcR))
+                    ? thetaArcR + 18
+                    : Math.max(18, Math.min(radius * 0.26, 72));
+                shiftArcR = Math.max(18, Math.min(baseArcR, radius - 10));
+
+                const absT = Math.abs(shiftTheta);
+                const step = Math.max(0.02, Math.min(0.1, absT / 24));
+                const dir = shiftTheta >= 0 ? 1 : -1;
+                ctx.beginPath();
+                for (let a = 0; (dir > 0 ? a <= shiftTheta + 1e-9 : a >= shiftTheta - 1e-9); a += dir * step) {
+                    const px = centerX + shiftArcR * Math.cos(a);
+                    const py = centerY - shiftArcR * Math.sin(a);
+                    if (a === 0) ctx.moveTo(px, py);
+                    else ctx.lineTo(px, py);
+                }
+                ctx.stroke();
+
+                // Label near the middle of the arc
+                const mid = shiftTheta / 2;
+                const tx = centerX + (shiftArcR + 12) * Math.cos(mid);
+                const ty = centerY - (shiftArcR + 12) * Math.sin(mid);
+                ctx.fillStyle = '#facc15';
+                ctx.font = '14px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('x', tx, ty);
+                ctx.restore();
+            }
             const radiusToggle = document.getElementById('toggleRadius');
             const rAtTheta = evaluateRAtTheta(sliderTheta);
-            // Show dotted line from theta angle to origin if radius is negative OR radius toggle is off
-            if (isFinite(rAtTheta) && (rAtTheta < 0 || !radiusToggle || !radiusToggle.checked)) {
+
+            // Theta toggle ON + Radius toggle OFF: draw a line from origin to the end of the theta arc
+            // (forms a pie-slice sector with the arc)
+            if (thetaToggle && thetaToggle.checked && (!radiusToggle || !radiusToggle.checked) && typeof thetaArcR === 'number' && isFinite(thetaArcR)) {
+                const plotX = centerX + thetaArcR * Math.cos(sliderTheta);
+                const plotY = centerY - thetaArcR * Math.sin(sliderTheta);
                 ctx.save();
-                ctx.setLineDash([4, 4]);
-                ctx.strokeStyle = '#dc2626'; // muted red
+                ctx.setLineDash([6, 4]);
+                ctx.strokeStyle = '#9333ea'; // theta color (muted purple)
                 ctx.lineWidth = 2;
                 ctx.beginPath();
-                // Draw line from origin along the theta angle direction
-                const lineEndX = centerX + radius * 0.5 * Math.cos(sliderTheta);
-                const lineEndY = centerY - radius * 0.5 * Math.sin(sliderTheta);
                 ctx.moveTo(centerX, centerY);
-                ctx.lineTo(lineEndX, lineEndY);
+                ctx.lineTo(plotX, plotY);
                 ctx.stroke();
                 ctx.restore();
             }
-            // Show solid line to actual point if radius toggle is on and radius is positive
-            if (radiusToggle && radiusToggle.checked && isFinite(rAtTheta) && rAtTheta >= 0) {
+
+            // Shifts toggle ON + Radius toggle OFF: draw a dashed line from origin to the end of the x-shift arc
+            if (shiftsToggle && shiftsToggle.checked && (!radiusToggle || !radiusToggle.checked) && typeof shiftArcR === 'number' && isFinite(shiftArcR)) {
+                const plotX = centerX + shiftArcR * Math.cos(shiftTheta);
+                const plotY = centerY - shiftArcR * Math.sin(shiftTheta);
+                ctx.save();
+                ctx.setLineDash([6, 4]);
+                ctx.strokeStyle = '#facc15'; // yellow
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.lineTo(plotX, plotY);
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            // Radius toggle ON: draw line to the actual point (handles positive and negative r)
+            if (radiusToggle && radiusToggle.checked && isFinite(rAtTheta)) {
                 const x = rAtTheta * Math.cos(sliderTheta);
                 const y = rAtTheta * Math.sin(sliderTheta);
                 const plotX = centerX + (x / maxR) * radius;
                 const plotY = centerY - (y / maxR) * radius;
                 ctx.save();
+                // Keep dashed style for consistency with the radius helper line
                 ctx.setLineDash([6, 4]);
                 ctx.strokeStyle = '#dc2626'; // radius color (muted red)
                 ctx.lineWidth = 2;
                 ctx.beginPath();
                 ctx.moveTo(centerX, centerY);
                 ctx.lineTo(plotX, plotY);
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            // Theta ON + Radius ON + Negative radius: add a dashed light-magenta reference line
+            // in the original θ direction with length |r|
+            if (thetaToggle && thetaToggle.checked && radiusToggle && radiusToggle.checked && isFinite(rAtTheta) && rAtTheta < 0) {
+                const mag = Math.abs(rAtTheta);
+                const refX = mag * Math.cos(sliderTheta);
+                const refY = mag * Math.sin(sliderTheta);
+                const refPlotX = centerX + (refX / maxR) * radius;
+                const refPlotY = centerY - (refY / maxR) * radius;
+                ctx.save();
+                ctx.setLineDash([10, 6]); // dashed
+                ctx.strokeStyle = '#e879f9'; // light magenta
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.lineTo(refPlotX, refPlotY);
                 ctx.stroke();
                 ctx.restore();
             }
@@ -3502,8 +4161,8 @@
             slider.dataset.actualMax = actualMax;
             
             // Update labels
-            minLabel.textContent = `${formatTheta(actualMin)}`;
-            maxLabel.textContent = `${formatTheta(actualMax)}`;
+            if (minLabel) minLabel.value = `${formatTheta(actualMin)}`;
+            if (maxLabel) maxLabel.value = `${formatTheta(actualMax)}`;
             
             // Update current theta based on slider position
             const sliderValue = parseFloat(slider.value);
@@ -4141,89 +4800,73 @@
             }
         }, true);
 
-        // Allow click (or dblclick) editing of slider min/max labels inline
+        // Slider bound editors (min/max input boxes flanking the slider)
         function attachSliderLabelEditors() {
-            const minLabel = document.getElementById('sliderMinLabel');
-            const maxLabel = document.getElementById('sliderMaxLabel');
-            if (minLabel) {
-                minLabel.addEventListener('click', () => beginSliderLabelEdit('min'));
-                minLabel.addEventListener('dblclick', () => beginSliderLabelEdit('min'));
-            }
-            if (maxLabel) {
-                maxLabel.addEventListener('click', () => beginSliderLabelEdit('max'));
-                maxLabel.addEventListener('dblclick', () => beginSliderLabelEdit('max'));
-            }
-        }
-
-        function beginSliderLabelEdit(which) {
             const slider = document.getElementById('thetaSlider');
             const minLabel = document.getElementById('sliderMinLabel');
             const maxLabel = document.getElementById('sliderMaxLabel');
-            const container = which === 'min' ? minLabel : maxLabel;
-            if (!container || !slider) return;
-            const current = which === 'min'
-                ? parseFloat(slider.dataset.actualMin || '0')
-                : parseFloat(slider.dataset.actualMax || (2 * Math.PI).toString());
-            const input = document.createElement('input');
-            input.type = 'text';
-            input.value = formatTheta(current);
-            input.style.width = '90px';
-            input.style.fontSize = '0.9rem';
-            input.style.padding = '2px 4px';
-            input.style.borderRadius = '4px';
-            input.style.border = '1px solid rgba(255,255,255,0.6)';
-            // Replace label text temporarily
-            const oldText = container.textContent;
-            container.textContent = '';
-            container.appendChild(input);
-            input.focus();
-            input.select();
+            if (!slider || !minLabel || !maxLabel) return;
 
-            const cleanup = (apply) => {
-                if (apply) {
-                    const raw = input.value.trim();
-                    const num = parseThetaExpression(raw);
-                    if (num !== null && isFinite(num)) {
-                        if (which === 'min') {
-                            sliderMin = num;
-                        } else {
-                            sliderMax = num;
-                        }
-                        // Ensure min < max
-                        if (sliderMin !== null && sliderMax !== null && sliderMin >= sliderMax) {
-                            if (which === 'min') {
-                                sliderMax = sliderMin + Math.max(Math.abs(sliderMin) * 0.1, 0.1);
-                            } else {
-                                sliderMin = sliderMax - Math.max(Math.abs(sliderMax) * 0.1, 0.1);
-                            }
-                        }
-                        updateSliderBounds();
-                        // Also re-render graphs if needed
-                        plotGraph();
-                    }
-                }
-                // Restore label text
-                container.removeChild(input);
-                // Refresh labels from current state
+            const restoreDisplay = (which) => {
                 const actualMin = parseFloat(slider.dataset.actualMin || '0');
                 const actualMax = parseFloat(slider.dataset.actualMax || (2 * Math.PI).toString());
-                if (which === 'min') {
-                    minLabel.textContent = `${formatTheta(actualMin)}`;
-                } else {
-                    maxLabel.textContent = `${formatTheta(actualMax)}`;
-                }
+                if (which === 'min') minLabel.value = `${formatTheta(actualMin)}`;
+                else maxLabel.value = `${formatTheta(actualMax)}`;
             };
 
-            input.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    cleanup(true);
-                } else if (e.key === 'Escape') {
-                    e.preventDefault();
-                    cleanup(false);
+            const applyValue = (which, raw) => {
+                const text = (raw || '').trim();
+                if (text === '') {
+                    if (which === 'min') sliderMin = null;
+                    else sliderMax = null;
+                    updateSliderBounds();
+                    plotGraph();
+                    return;
                 }
-            });
-            input.addEventListener('blur', () => cleanup(true));
+
+                const num = parseThetaExpression(text);
+                if (num === null || !isFinite(num)) {
+                    restoreDisplay(which);
+                    return;
+                }
+
+                if (which === 'min') sliderMin = num;
+                else sliderMax = num;
+
+                // Ensure min < max when both are set
+                if (sliderMin !== null && sliderMax !== null && sliderMin >= sliderMax) {
+                    if (which === 'min') {
+                        sliderMax = sliderMin + Math.max(Math.abs(sliderMin) * 0.1, 0.1);
+                    } else {
+                        sliderMin = sliderMax - Math.max(Math.abs(sliderMax) * 0.1, 0.1);
+                    }
+                }
+
+                updateSliderBounds();
+                plotGraph();
+            };
+
+            const wire = (el, which) => {
+                el.addEventListener('focus', () => {
+                    // Select all to make quick overwrite easy
+                    try { el.select(); } catch (_) {}
+                });
+                el.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        applyValue(which, el.value);
+                        el.blur();
+                    } else if (e.key === 'Escape') {
+                        e.preventDefault();
+                        restoreDisplay(which);
+                        el.blur();
+                    }
+                });
+                el.addEventListener('blur', () => applyValue(which, el.value));
+            };
+
+            wire(minLabel, 'min');
+            wire(maxLabel, 'max');
         }
 
         // Allow dblclick editing of the θ value in the center label
@@ -4528,7 +5171,7 @@
             btn.addEventListener('click', resetBothGraphs);
         }
         function setupToggles() {
-            const ids = ['toggleTheta','toggleRadius','toggleFreq','toggleColorRadius'];
+            const ids = ['toggleTheta','toggleRadius','toggleAmp','toggleFreq','toggleShifts','toggleColorRadius'];
             for (const id of ids) {
                 const el = document.getElementById(id);
                 if (!el) continue;
@@ -4546,6 +5189,7 @@
             setupSlider();
             initParamSliders();
             setupToggles();
+            initBottomTabs();
             initGraphResetButton();
             initRPrefix();
             updateCanvasCursor();
@@ -4573,6 +5217,7 @@
                 setupSlider();
                 initParamSliders();
                 setupToggles();
+                initBottomTabs();
                 initRPrefix();
                 updateCanvasCursor();
             });
@@ -4581,6 +5226,7 @@
             setupSlider();
             initParamSliders();
             setupToggles();
+            initBottomTabs();
             initGraphResetButton();
             initRPrefix();
             updateCanvasCursor();
