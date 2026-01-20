@@ -1372,7 +1372,8 @@
                                     <label for="xShiftSlider">x-shift</label>
                                     <input type="text" id="xShiftInput" value="0" class="mini-slider-value">
                                 </div>
-                                <input type="range" id="xShiftSlider" min="-6.283" max="6.283" step="0.01" value="0" class="mini-slider-range">
+                                <!-- Use step="any" so exact values like 0 and 5 are representable (avoids ±0.003 drift from min/step misalignment). -->
+                                <input type="range" id="xShiftSlider" min="-6.283185307179586" max="6.283185307179586" step="any" value="0" class="mini-slider-range">
                                 <div class="mini-slider-bounds">
                                     <input id="xShiftMinLabel" class="mini-bound-input" type="text" value="-2π" inputmode="text" aria-label="x-shift minimum" title="Set min (supports π)">
                                     <input id="xShiftMaxLabel" class="mini-bound-input" type="text" value="2π" inputmode="text" aria-label="x-shift maximum" title="Set max (supports π)">
@@ -1707,7 +1708,9 @@
         equationInput.addEventListener('input', () => {
             // If the change did not come from param sliders, infer params from the typed equation
             if (!updatingEquationFromSliders) {
-                syncParamsFromEquationInput({ expandBounds: true });
+                // While actively editing, do NOT auto-canonicalize shifts/equation text.
+                // Canonicalization happens only when the user presses Enter to finalize.
+                syncParamsFromEquationInput({ expandBounds: true, simplifyShifts: false });
             }
             // Update pretty preview immediately
             updateEquationPretty();
@@ -1721,6 +1724,91 @@
                 updateSliderBounds();
                 plotGraph();
             }, 300); // 300ms delay
+        });
+
+        // Finalize equation edits (Enter) to canonicalize/simplify the displayed equation text.
+        equationInput.addEventListener('keydown', (e) => {
+            if (e.key !== 'Enter') return;
+            e.preventDefault();
+            if (updatingEquationFromSliders) return;
+            try {
+                // Re-infer params but allow shift simplification now that the user is finalizing.
+                syncParamsFromEquationInput({ expandBounds: true, simplifyShifts: true });
+                if (sliderSessionActive) {
+                    updatingEquationFromSliders = true;
+                    applyEditParams(); // rewrites equationInput.value into canonical base+params form
+                    updatingEquationFromSliders = false;
+                }
+
+                // Also reformat trig arguments in whatever the user typed, even if it doesn't map cleanly
+                // to the slider/base+params model (e.g., sin(2θ - pi/3) -> sin(2(θ - pi/6))).
+                try {
+                    const eqFull = (equationInput.value || '').trim();
+                    if (eqFull) {
+                        const before = equationInput.value || '';
+                        const parts = extractRExponentAndRHS(eqFull);
+                        const rhsRaw = (parts && parts.rhs) ? parts.rhs : eqFull;
+                        // Normalize for mathjs parsing:
+                        // - θ -> theta
+                        // - add implicit multiplication so "4θ" becomes "4*theta"
+                        const rhsNorm = addImplicitMultiplication(normalizeThetaSymbols(rhsRaw));
+                        let node = math.parse(rhsNorm);
+                        node = factorLinearThetaInTrigArgsForDisplay(node);
+                        node = reorderThetaMultiplicationForDisplay(node);
+                        let out = stringifyWithDivisionParentheses(node);
+                        out = denormalizeThetaSymbols(out);
+                        out = makeImplicitMultiplicationDisplay(out);
+                        out = normalizePlusMinusDisplay(out);
+                        out = displayifyPiInEquation(out);
+                        if (out && typeof out === 'string' && out !== equationInput.value) {
+                            updatingEquationFromSliders = true;
+                            equationInput.value = out;
+                            updatingEquationFromSliders = false;
+                            updateEquationPretty();
+                            if (typeof updateEquationOverlay === 'function') updateEquationOverlay();
+                        }
+
+                        // If mathjs-based factoring didn't change anything (or didn't run), apply a simple
+                        // regex-based fallback so cases like "sin(4θ - 2)" still become "sin(4(θ - 0.5))".
+                        const fallback = rewriteSimplePhaseShiftInTrigTextForDisplay(equationInput.value || '');
+                        if (fallback && typeof fallback === 'string' && fallback !== (equationInput.value || '')) {
+                            updatingEquationFromSliders = true;
+                            equationInput.value = fallback;
+                            updatingEquationFromSliders = false;
+                            updateEquationPretty();
+                            if (typeof updateEquationOverlay === 'function') updateEquationOverlay();
+                        } else if ((equationInput.value || '') === before) {
+                            // Even if mathjs produced an equivalent-but-identical string, still try fallback on original.
+                            const fb2 = rewriteSimplePhaseShiftInTrigTextForDisplay(before);
+                            if (fb2 && typeof fb2 === 'string' && fb2 !== before) {
+                                updatingEquationFromSliders = true;
+                                equationInput.value = fb2;
+                                updatingEquationFromSliders = false;
+                                updateEquationPretty();
+                                if (typeof updateEquationOverlay === 'function') updateEquationOverlay();
+                            }
+                        }
+                    }
+                } catch (_) {}
+
+                // Finalize step: whatever the equation box currently contains is the source of truth.
+                // Re-sync sliders (especially frequency + x-shift) from the finalized equation text.
+                try {
+                    syncParamsFromEquationInput({ expandBounds: true, simplifyShifts: true });
+                    updateParamLabels();
+                } catch (_) {}
+
+                // Keep visuals consistent with the finalized equation text (Enter does not fire an input event).
+                try {
+                    const equation = (equationInput.value || '').trim();
+                    if (equation) autoSetRange(equation);
+                    updateSliderBounds();
+                    plotGraph();
+                } catch (_) {}
+            } catch (_) {
+                // no-op
+            }
+            try { equationInput.blur(); } catch (_) {}
         });
 
         // Mouse wheel zoom for cartesian
@@ -1837,8 +1925,8 @@
                     if (c) {
                         const dTheta = c.theta - editStart.theta0;
                         const dR = c.r - editStart.r0;
-                        editParams.thetaShift = editStart.thetaShift + dTheta;
-                        editParams.rShift = editStart.rShift + dR;
+                        editParams.thetaShift = snapToIncrement(editStart.thetaShift + dTheta, 0.01);
+                        editParams.rShift = snapToIncrement(editStart.rShift + dR, 0.01);
                         applyEditParams();
                     }
                 } else if (editAdjustMode === 'amplitude' && isEditAdjustingAmplitude && editStart) {
@@ -1850,7 +1938,7 @@
                     const amplitudeDelta = -deltaY * 0.02;
                     const newAmplitude = editStart.amplitude + amplitudeDelta;
                     // Allow negative amplitude
-                    editParams.amplitude = newAmplitude;
+                    editParams.amplitude = snapToIncrement(newAmplitude, 0.01);
                     applyEditParams();
                     // Lock mouse to vertical movement by preventing default and constraining
                     e.preventDefault();
@@ -1863,7 +1951,8 @@
                     const frequencyDelta = deltaX * 0.02;
                     const newFrequency = editStart.frequency + frequencyDelta;
                     // Clamp frequency to reasonable bounds (0.05 to 20)
-                    editParams.frequency = Math.max(0.05, Math.min(20, newFrequency));
+                    const clamped = Math.max(0.05, Math.min(20, newFrequency));
+                    editParams.frequency = Math.max(0.05, Math.min(20, snapToIncrement(clamped, 0.01)));
                     applyEditParams();
                     // Lock mouse to horizontal movement by preventing default
                     e.preventDefault();
@@ -2639,30 +2728,9 @@
                 const map = { '0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹','+':'⁺','-':'⁻' };
                 return Array.from(digits).map(ch => map[ch] || ch).join('');
             });
-            // find first division symbol
-            const idxSlash = s.indexOf('/');
-            const idxDiv = s.indexOf('÷');
-            let idx = -1;
-            if (idxSlash === -1) idx = idxDiv;
-            else if (idxDiv === -1) idx = idxSlash;
-            else idx = Math.min(idxSlash, idxDiv);
-            if (idx === -1) {
-                return escapeHTML(s);
-            }
-            // build fraction
-            const numSpan = grabNumeratorSpan(s, idx);
-            const denSpan = grabDenominatorSpan(s, idx);
-            if (!numSpan || !denSpan || numSpan.start > numSpan.end || denSpan.start > denSpan.end) {
-                // fallback: no change
-                return escapeHTML(s);
-            }
-            const before = s.slice(0, numSpan.start);
-            const numerator = s.slice(numSpan.start, idx).trim();
-            const denominator = s.slice(denSpan.start, denSpan.end + 1).trim();
-            const after = s.slice(denSpan.end + 1);
-            return renderPrettyHTML(before) +
-                '<span class=\"frac\"><span class=\"num\">' + renderPrettyHTML(numerator) + '</span><span class=\"bar\"></span><span class=\"den\">' + renderPrettyHTML(denominator) + '</span></span>' +
-                renderPrettyHTML(after);
+            // IMPORTANT: do not auto-render "a/b" as a stacked fraction.
+            // Keep divisions as plain text so slider-driven updates don't turn values into fractions.
+            return escapeHTML(s);
         }
         function updateEquationPretty() {
             const el = document.getElementById('equationPretty');
@@ -3719,13 +3787,21 @@
                 const GUIDE_COLOR = '#ea580c'; // darker orange to match the amp toggle button
                 const GUIDE_DASH = [6, 4];
 
-                // Sample based on what's actually visible in the cartesian grid (viewport),
-                // so the number of perpendicular lines is driven by the on-screen curve, not the theta slider range.
+                // IMPORTANT:
+                // The amplitude "midline" should be based on the *entire function domain* (full θ range),
+                // not only what is currently visible in the viewport (and not truncated by drawing mode).
+                //
+                // We still compute *visible* extrema separately below for on-screen connector lines.
                 let domainMin = xMin;
                 let domainMax = xMax;
-                if (sliderMode === 'drawing' && isFinite(sliderTheta)) {
-                    // In drawing mode, the curve is only drawn up to the slider, so treat that as the visible domain end.
-                    domainMax = Math.min(domainMax, sliderTheta);
+                if (iterateVar === 'theta') {
+                    const sliderEl = document.getElementById('thetaSlider');
+                    const aMin = sliderEl ? parseFloat(sliderEl.dataset.actualMin || '') : NaN;
+                    const aMax = sliderEl ? parseFloat(sliderEl.dataset.actualMax || '') : NaN;
+                    if (isFinite(aMin) && isFinite(aMax) && aMin !== aMax) {
+                        domainMin = Math.min(aMin, aMax);
+                        domainMax = Math.max(aMin, aMax);
+                    }
                 }
                 if (!isFinite(domainMin) || !isFinite(domainMax) || !(domainMax > domainMin)) {
                     // If view is invalid for any reason, bail out of amp helpers safely.
@@ -3733,12 +3809,9 @@
                     domainMax = null;
                 }
                 const extremaSamples = 2048;
-                const dx = (domainMax !== null && domainMax !== null) ? ((domainMax - domainMin) / extremaSamples) : 0;
-                const eps = Math.max(1e-9, yRange * 0.001); // noise tolerance relative to view range (for local extrema)
-                const eqTol = Math.max(1e-9, yRange * 0.002); // slightly larger tolerance for global max/min grouping
+                const dx = (domainMin !== null && domainMax !== null) ? ((domainMax - domainMin) / extremaSamples) : 0;
                 let eqMinY = Infinity;
                 let eqMaxY = -Infinity;
-                const samples = []; // { x, y } finite samples only
 
                 function evalYAt(val) {
                     try {
@@ -3772,7 +3845,6 @@
                     if (!isFinite(yVal)) { continue; }
                     eqMinY = Math.min(eqMinY, yVal);
                     eqMaxY = Math.max(eqMaxY, yVal);
-                    samples.push({ x: xVal, y: yVal });
                 }
 
                 // Amplitude "midline": y = k where k is halfway between the function's min and max
@@ -3792,104 +3864,93 @@
                     ctx.lineTo(width - padding, yMidPx);
                     ctx.stroke();
                     ctx.restore();
-
-                    // Extra guide: at the x-position of the sampled global max/min, draw vertical dashed segments
-                    // from the midline to the extrema point (x = k). Use grouping to avoid "striped" thickness.
-                    function groupedExtremeX(targetY) {
-                        if (!samples.length || !isFinite(targetY)) return null;
-                        const xs = [];
-                        for (const s of samples) {
-                            if (Math.abs(s.y - targetY) <= eqTol) xs.push(s.x);
-                        }
-                        if (!xs.length) return null;
-                        const xAvg = xs.reduce((a, b) => a + b, 0) / xs.length;
-                        return xAvg;
-                    }
-                    const xAtMax = groupedExtremeX(eqMaxY);
-                    const xAtMin = groupedExtremeX(eqMinY);
-
-                    function yAtNearestSample(xTarget, targetY) {
-                        if (!samples.length || !isFinite(xTarget)) return null;
-                        let best = null;
-                        let bestDx = Infinity;
-                        for (const s of samples) {
-                            const d = Math.abs(s.x - xTarget);
-                            if (d < bestDx) { bestDx = d; best = s; }
-                        }
-                        if (!best) return null;
-                        // Keep the y from the target extreme if provided and finite; else use nearest sample's y.
-                        if (isFinite(targetY)) return targetY;
-                        return best.y;
-                    }
-
-                    const maxYForLine = yAtNearestSample(xAtMax, eqMaxY);
-                    const minYForLine = yAtNearestSample(xAtMin, eqMinY);
-
-                    const drawXKSegmentIfVisible = (xK, yExt) => {
-                        if (!isFinite(xK) || !isFinite(yExt)) return;
-                        // Only draw if the x=k location is within the current viewport (so it doesn't "stick" to edges while panning).
-                        if (xK < xMin || xK > xMax) return;
-                        const px = padding + ((xK - xMin) / xRange) * plotWidth;
-                        const py = padding + ((yMax - yExt) / yRange) * plotHeight;
-                        if (!isFinite(px) || !isFinite(py)) return;
-                        if (py < padding || py > height - padding) return; // off-screen extrema
-                        ctx.save();
-                        ctx.setLineDash(GUIDE_DASH);
-                        ctx.strokeStyle = GUIDE_COLOR;
-                        ctx.lineWidth = 2;
-                        ctx.lineCap = 'butt';
-                        ctx.beginPath();
-                        ctx.moveTo(px, yMidPx);
-                        ctx.lineTo(px, py);
-                        ctx.stroke();
-                        ctx.restore();
-                    };
-
-                    drawXKSegmentIfVisible(xAtMax, maxYForLine);
-                    drawXKSegmentIfVisible(xAtMin, minYForLine);
                 }
 
                 // Find *visible* local extrema (mins/maxes) so we can draw perpendicular connectors
                 // for every min/max currently on screen.
                 const visibleExtrema = [];
                 if (isFinite(xMin) && isFinite(xMax) && xMax > xMin) {
-                    const visSamples = Math.min(4096, Math.max(768, Math.floor(plotWidth * 2)));
-                    const visDx = (xMax - xMin) / visSamples;
-                    const visEps = Math.max(1e-9, yRange * 0.001);
-                    let v0 = null, v1 = null;
+                    // In drawing mode, the cartesian curve is only drawn up to the slider.
+                    const visXMax = (sliderMode === 'drawing' && isFinite(sliderTheta))
+                        ? Math.min(xMax, Math.max(xMin, sliderTheta))
+                        : xMax;
+                    if (isFinite(visXMax) && visXMax > xMin) {
+                        const visSamples = Math.min(4096, Math.max(768, Math.floor(plotWidth * 2)));
+                        const visDx = (visXMax - xMin) / visSamples;
 
-                    function evalYVisible(val) {
-                        const y = evalYAt(val);
-                        // Only consider on-screen y values when detecting extrema "on the screen"
-                        if (!isFinite(y) || y < yMin || y > yMax) return NaN;
-                        return y;
-                    }
+                        // Sample y values and compute an amplitude-aware tolerance so extrema detection
+                        // works even when the viewport yRange is large.
+                        const ys = new Array(visSamples + 1);
+                        let visMinY = Infinity;
+                        let visMaxY = -Infinity;
 
-                    for (let i = 0; i <= visSamples; i++) {
-                        const xv = xMin + i * visDx;
-                        const yv = evalYVisible(xv);
-                        if (!isFinite(yv)) { v0 = null; v1 = null; continue; }
-                        const v2 = { x: xv, y: yv };
-                        if (v0 && v1) {
-                            if (v1.y > v0.y + visEps && v1.y > v2.y + visEps) {
-                                visibleExtrema.push({ kind: 'max', x: v1.x, y: v1.y });
-                            } else if (v1.y < v0.y - visEps && v1.y < v2.y - visEps) {
-                                visibleExtrema.push({ kind: 'min', x: v1.x, y: v1.y });
+                        function evalYVisible(val) {
+                            const y = evalYAt(val);
+                            // Match the curve renderer's notion of drawable points (small margin via baseRange).
+                            if (!isFinite(y) || y < (yMin - baseRange) || y > (yMax + baseRange)) return NaN;
+                            return y;
+                        }
+
+                        for (let i = 0; i <= visSamples; i++) {
+                            const xv = xMin + i * visDx;
+                            const yv = evalYVisible(xv);
+                            ys[i] = yv;
+                            if (isFinite(yv)) {
+                                if (yv < visMinY) visMinY = yv;
+                                if (yv > visMaxY) visMaxY = yv;
                             }
                         }
-                        v0 = v1;
-                        v1 = v2;
-                    }
 
-                    // De-duplicate adjacent extrema
-                    const deduped = [];
-                    for (const ex of visibleExtrema) {
-                        const last = deduped[deduped.length - 1];
-                        if (last && ex.kind === last.kind && Math.abs(ex.x - last.x) <= visDx * 3) continue;
-                        deduped.push(ex);
+                        const curveRange = (isFinite(visMinY) && isFinite(visMaxY)) ? (visMaxY - visMinY) : 0;
+                        // Epsilon for turn detection: must be small enough to work at any zoom.
+                        // Using viewport yRange can be far too large and suppress all extrema.
+                        const visEps = Math.max(1e-12, curveRange * 1e-6);
+
+                        // Extrema detection: look for slope sign changes and then refine the extremum location
+                        // using a local quadratic (parabola) fit over 3 samples. This avoids the connector line
+                        // being "shifted forward" by up to one sample step.
+                        for (let i = 1; i < visSamples; i++) {
+                            const yL = ys[i - 1];
+                            const yC = ys[i];
+                            const yR = ys[i + 1];
+                            if (!isFinite(yL) || !isFinite(yC) || !isFinite(yR)) continue;
+
+                            const dy1 = yC - yL;
+                            const dy2 = yR - yC;
+
+                            // Turn detection: sign change in slope with a small magnitude gate
+                            const turnMag = Math.abs(dy1) + Math.abs(dy2);
+                            const isMax = (dy1 > 0 && dy2 < 0 && turnMag > visEps);
+                            const isMin = (dy1 < 0 && dy2 > 0 && turnMag > visEps);
+                            if (!isMax && !isMin) continue;
+
+                            // Parabola fit with x = -1, 0, +1 around i:
+                            // a = (yL - 2yC + yR) / 2, b = (yR - yL) / 2, c = yC
+                            const a = (yL - 2 * yC + yR) / 2;
+                            const b = (yR - yL) / 2;
+                            let xOff = 0; // in sample steps, relative to center i
+                            if (Math.abs(a) > 1e-15) {
+                                xOff = -b / (2 * a); // vertex location in [-1,1] typically
+                                if (!isFinite(xOff)) xOff = 0;
+                                xOff = Math.max(-1, Math.min(1, xOff));
+                            }
+                            const yV = a * xOff * xOff + b * xOff + yC;
+                            const xV = (xMin + i * visDx) + xOff * visDx;
+
+                            if (!isFinite(xV) || !isFinite(yV)) continue;
+                            visibleExtrema.push({ kind: isMax ? 'max' : 'min', x: xV, y: yV });
+                        }
+
+                        // De-duplicate adjacent extrema (sampling can produce 2 very close turning points)
+                        const deduped = [];
+                        for (const ex of visibleExtrema) {
+                            const last = deduped[deduped.length - 1];
+                            if (last && ex.kind === last.kind && Math.abs(ex.x - last.x) <= visDx * 4) continue;
+                            deduped.push(ex);
+                        }
+                        visibleExtrema.length = 0;
+                        deduped.forEach(e => visibleExtrema.push(e));
                     }
-                    visibleExtrema.length = 0;
-                    deduped.forEach(e => visibleExtrema.push(e));
                 }
 
                 // Draw perpendicular connectors from the midline to each visible extrema
@@ -3899,6 +3960,8 @@
                     ctx.strokeStyle = GUIDE_COLOR;
                     ctx.lineWidth = 2;
                     ctx.lineCap = 'butt';
+                    const ampRaw = (isFinite(editParams.amplitude) ? editParams.amplitude : 1);
+                    const ampN = Math.max(1, Math.round(Math.abs(ampRaw)));
                     for (const ex of visibleExtrema) {
                         const px = padding + ((ex.x - xMin) / xRange) * plotWidth;
                         let py = padding + ((yMax - ex.y) / yRange) * plotHeight;
@@ -3913,6 +3976,39 @@
                         ctx.moveTo(cx, yMidPx);
                         ctx.lineTo(cx, py);
                         ctx.stroke();
+
+                        // Split the connector (midline -> extrema) into equal segments by amplitude number,
+                        // using small tickmarks (same idea as the polar amplitude ticks).
+                        const len = Math.abs(py - yMidPx);
+                        if (ampN > 1 && isFinite(len) && len > 10) {
+                            const tickHalf = 6;
+                            const y0 = yMidPx;
+                            const y1 = py;
+                            for (let i = 1; i < ampN; i++) {
+                                const t = i / ampN;
+                                const ty = y0 + (y1 - y0) * t;
+
+                                // Outline + inner stroke so ticks stand out on the curve/grid
+                                ctx.save();
+                                ctx.setLineDash([]); // solid ticks
+                                ctx.lineCap = 'round';
+                                // outline
+                                ctx.strokeStyle = 'rgba(17,24,39,0.85)';
+                                ctx.lineWidth = 4;
+                                ctx.beginPath();
+                                ctx.moveTo(cx - tickHalf, ty);
+                                ctx.lineTo(cx + tickHalf, ty);
+                                ctx.stroke();
+                                // inner
+                                ctx.strokeStyle = GUIDE_COLOR;
+                                ctx.lineWidth = 2.5;
+                                ctx.beginPath();
+                                ctx.moveTo(cx - tickHalf, ty);
+                                ctx.lineTo(cx + tickHalf, ty);
+                                ctx.stroke();
+                                ctx.restore();
+                            }
+                        }
                     }
                     ctx.restore();
                 }
@@ -4489,6 +4585,7 @@
 
                     // Yellow tickmark on the amplitude line indicating y-shift magnitude
                     // (measured as radius proportional to |rShift|) and direction hint by sign.
+                    // Make it very prominent (thicker + outlined) so it's visible over grid/curve.
                     let tickDist = 0;
                     if (isFinite(yShiftPx) && yShiftPx > 1e-9 && lineLen > 1e-9) {
                         tickDist = Math.max(0, Math.min(lineLen, yShiftPx));
@@ -4498,15 +4595,24 @@
                         const sign = (yShiftRaw < 0) ? -1 : 1;
                         const px = -uy * sign;
                         const py = ux * sign;
-                        const tickHalf = 6; // half-length so the tick is centered on the line
+                        const tickHalf = 10; // larger half-length so the tick is obvious
+                        const x0 = tx - px * tickHalf;
+                        const y0 = ty - py * tickHalf;
+                        const x1 = tx + px * tickHalf;
+                        const y1 = ty + py * tickHalf;
+
+                        // Outline pass (dark) + inner pass (bright yellow)
                         ctx.save();
                         ctx.setLineDash([]); // solid tick
-                        ctx.strokeStyle = '#facc15'; // yellow
-                        ctx.lineWidth = 3;
-                        ctx.lineCap = 'butt';
+                        ctx.lineCap = 'round';
                         ctx.beginPath();
-                        ctx.moveTo(tx - px * tickHalf, ty - py * tickHalf);
-                        ctx.lineTo(tx + px * tickHalf, ty + py * tickHalf);
+                        ctx.moveTo(x0, y0);
+                        ctx.lineTo(x1, y1);
+                        ctx.strokeStyle = 'rgba(0,0,0,0.55)';
+                        ctx.lineWidth = 8;
+                        ctx.stroke();
+                        ctx.strokeStyle = '#fde047'; // brighter yellow
+                        ctx.lineWidth = 4;
                         ctx.stroke();
                         ctx.restore();
                     }
@@ -4519,21 +4625,29 @@
                         const segLen = Math.max(0, lineLen - tickDist);
                         if (ampN > 1 && segLen > 4) {
                             // Place (ampN - 1) ticks to create ampN equal segments
-                            const tickHalf = 4;
+                            const tickHalf = 6; // slightly larger ticks
                             const px = -uy; // perpendicular to the amplitude line (screen space)
                             const py = ux;
                             ctx.save();
                             ctx.setLineDash([]); // solid ticks
-                            ctx.strokeStyle = '#ea580c'; // darker orange (matches amp toggle)
-                            ctx.lineWidth = 2;
-                            ctx.lineCap = 'butt';
+                            // Outline + inner stroke so ticks stand out on the curve
+                            ctx.lineCap = 'round';
                             for (let i = 1; i < ampN; i++) {
                                 const d = tickDist + (segLen * i) / ampN;
                                 const tx = centerX + ux * d;
                                 const ty = centerY + uy * d;
+                                const x0 = tx - px * tickHalf;
+                                const y0 = ty - py * tickHalf;
+                                const x1 = tx + px * tickHalf;
+                                const y1 = ty + py * tickHalf;
                                 ctx.beginPath();
-                                ctx.moveTo(tx - px * tickHalf, ty - py * tickHalf);
-                                ctx.lineTo(tx + px * tickHalf, ty + py * tickHalf);
+                                ctx.moveTo(x0, y0);
+                                ctx.lineTo(x1, y1);
+                                ctx.strokeStyle = 'rgba(0,0,0,0.35)';
+                                ctx.lineWidth = 6;
+                                ctx.stroke();
+                                ctx.strokeStyle = '#f97316'; // brighter orange
+                                ctx.lineWidth = 3;
                                 ctx.stroke();
                             }
                             ctx.restore();
@@ -4727,7 +4841,7 @@
             
             // Update current theta based on slider position
             const sliderValue = parseFloat(slider.value);
-            sliderTheta = actualMin + (sliderValue / 100) * (actualMax - actualMin);
+            sliderTheta = round2(actualMin + (sliderValue / 100) * (actualMax - actualMin));
             document.getElementById('sliderValue').textContent = `θ = ${formatTheta(sliderTheta)}`;
         }
 
@@ -4737,7 +4851,7 @@
             const actualMax = parseFloat(slider.dataset.actualMax || '6.28');
             const sliderValue = parseFloat(slider.value);
             
-            sliderTheta = actualMin + (sliderValue / 100) * (actualMax - actualMin);
+            sliderTheta = round2(actualMin + (sliderValue / 100) * (actualMax - actualMin));
             document.getElementById('sliderValue').textContent = `θ = ${formatTheta(sliderTheta)}`;
             
             plotGraph();
@@ -4782,6 +4896,17 @@
 
         // ===== Interaction Modes & Helpers =====
         function clamp(min, max, v) { return Math.max(min, Math.min(max, v)); }
+        function round2(n) {
+            if (!isFinite(n)) return n;
+            return Math.round(n * 100) / 100;
+        }
+        // Snap a number to a fixed increment (used to keep edit-mode dragging from producing long decimals).
+        function snapToIncrement(v, step = 0.01) {
+            if (!isFinite(v) || !isFinite(step) || step <= 0) return v;
+            const snapped = Math.round(v / step) * step;
+            // Avoid floating point artifacts like 0.30000000000000004
+            return parseFloat(snapped.toFixed(10));
+        }
         function snapFactor(v) {
             const step = 0.1; // nicer increments
             const snapped = Math.max(0.05, Math.round(v / step) * step);
@@ -4800,10 +4925,29 @@
             if (!isFinite(n)) return `${n}`;
             if (Math.abs(n) < 1e-12) return '0';
             const r = Math.round(n);
-            if (Math.abs(n - r) < 1e-10) return String(r);
-            // 3 decimals is usually enough to avoid messy rationals like 147/1000 while staying readable.
-            const s = n.toFixed(3);
+            if (Math.abs(n - r) < 1e-12) return String(r);
+
+            // If it's a clean multiple/fraction of π, keep it symbolic (pi) so the UI can show π.
+            // This also preserves user intent when they typed "pi" in a slider box.
+            try {
+                const piExpr = formatThetaExpr(n);
+                if (typeof piExpr === 'string' && /\bpi\b/i.test(piExpr)) return piExpr;
+            } catch (_) {}
+
+            // Otherwise, avoid rounding away precision (especially for shifts).
+            // Use a reasonably high precision and strip trailing zeros.
+            let s = Number(n).toPrecision(12);
+            if (/e/i.test(s)) {
+                // For our typical slider ranges this should rarely happen, but keep it readable if it does.
+                s = Number(n).toFixed(12);
+            }
             return s.replace(/\.?0+$/g, '');
+        }
+
+        // Wrap coefficients that include division so implicit multiplication doesn't become ambiguous.
+        function wrapMulCoeff(s) {
+            if (!s) return s;
+            return (String(s).includes('/') ? `(${s})` : String(s));
         }
 
         function formatThetaExpr(value) {
@@ -5034,39 +5178,23 @@
                     return { k, c };
                 }
                 if (op === '*' && node.args && node.args.length >= 2) {
-                    // Only allow one linear factor and the rest constants
-                    let k = 1, c = 0; // start as "1 * theta + 0" neutral
-                    let hasLinear = false;
-                    for (const a of node.args) {
-                        const lf = getLinearFormInTheta(a);
-                        if (lf) {
-                            if (hasLinear) return null; // more than one linear factor => non-linear
-                            hasLinear = true;
-                            // Multiply (k*theta + c) by existing constant factor accK
-                            // Current accumulated is constant 'acc', represented by kConst
-                            // We'll track multiplicative constant separately
-                            // Approach: if currently not linear (k==1, c==0) use lf, else combine constants
-                            // Instead: accumulate a separate 'acc' constant multiplier
-                        } else {
-                            const val = getConstantNumeric(a);
-                            if (val === null) return null;
-                        }
-                    }
-                    // Re-evaluate properly with two-pass:
+                    // Only allow one θ-linear factor (k != 0) and the rest pure constants.
+                    // IMPORTANT: Constant factors (k=0) are NOT treated as "linear factors".
+                    const eps = 1e-12;
                     let acc = 1;
-                    let base = { k: 0, c: 0 };
+                    let base = null; // {k, c} for the single θ-linear factor
                     for (const a of node.args) {
                         const lf = getLinearFormInTheta(a);
-                        if (lf) {
-                            if (base.k !== 0 || base.c !== 0) return null;
+                        if (lf && isFinite(lf.k) && Math.abs(lf.k) > eps) {
+                            if (base) return null; // more than one θ-linear factor => non-linear
                             base = lf;
-                        } else {
-                            const val = getConstantNumeric(a);
-                            if (val === null) return null;
-                            acc *= val;
+                            continue;
                         }
+                        const val = getConstantNumeric(a);
+                        if (val === null || !isFinite(val)) return null;
+                        acc *= val;
                     }
-                    if (!hasLinear) {
+                    if (!base) {
                         // Pure constant multiplication
                         return { k: 0, c: acc };
                     }
@@ -5118,6 +5246,67 @@
             } catch (_) {
                 return node;
             }
+        }
+
+        // For display: rewrite trig args that are linear in θ into phase-shift form:
+        //   trig(k*θ + c)  ->  trig(k(θ - a))  where a = -c/k
+        // Only applies when |k| != 1 (i.e., there is a multiple on θ).
+        function factorLinearThetaInTrigArgsForDisplay(node) {
+            try {
+                if (!node || typeof node.transform !== 'function') return node;
+                const trigNames = new Set(['sin', 'cos', 'tan', 'sec', 'csc', 'cot']);
+                const eps = 1e-12;
+                return node.transform(function (n) {
+                    if (!n || !n.isFunctionNode || !Array.isArray(n.args) || n.args.length !== 1) return n;
+                    const fnName =
+                        (n.fn && typeof n.fn.name === 'string' ? n.fn.name :
+                         (typeof n.name === 'string' ? n.name : '')).toLowerCase();
+                    if (!trigNames.has(fnName)) return n;
+
+                    const arg = n.args[0];
+                    const lf = getLinearFormInTheta(arg);
+                    if (!lf || !isFinite(lf.k) || Math.abs(lf.k) < eps) return n;
+                    if (Math.abs(Math.abs(lf.k) - 1) < 1e-9) return n;
+
+                    const a = -(lf.c || 0) / lf.k; // a = -c/k (x-shift)
+                    const kStr = wrapMulCoeff(fmtEqNum(lf.k));
+                    if (!isFinite(a) || Math.abs(a) < 1e-12) {
+                        // If shift ~ 0, just show kθ
+                        return new math.FunctionNode(n.fn, [math.parse(`${kStr}*theta`)]);
+                    }
+                    const aAbs = Math.abs(a);
+                    const aStr = formatThetaExpr(aAbs);
+                    const inner = `theta ${a >= 0 ? '-' : '+'} ${aStr}`;
+                    const newArg = `${kStr}*(${inner})`;
+                    return new math.FunctionNode(n.fn, [math.parse(newArg)]);
+                });
+            } catch (_) {
+                return node;
+            }
+        }
+
+        // Fallback (no-mathjs) rewriter for very common typed patterns like:
+        //   sin(4θ - 2)  ->  sin(4(θ - 0.5))
+        // This runs on the *displayed* equation text and only handles numeric constants.
+        function rewriteSimplePhaseShiftInTrigTextForDisplay(s) {
+            if (!s || typeof s !== 'string') return s;
+            const trig = '(sin|cos|tan|sec|csc|cot)';
+            const num = '([+\\-]?\\d+(?:\\.\\d+)?)';
+            // Match: fn( k θ +/- c ) with optional '*' between k and θ
+            const re = new RegExp(`\\b${trig}\\s*\\(\\s*${num}\\s*\\*?\\s*(?:θ|theta)\\s*([+\\-])\\s*${num}\\s*\\)`, 'g');
+            return s.replace(re, (m, fn, kStrRaw, sign, cStrRaw) => {
+                const k = parseFloat(kStrRaw);
+                const c = parseFloat(cStrRaw);
+                if (!isFinite(k) || Math.abs(k) < 1e-12 || !isFinite(c)) return m;
+                // a = c / k, keep sign consistent with original: kθ - c = k(θ - c/k)
+                const a = c / k;
+                const aAbs = Math.abs(a);
+                const aStr = fmtEqNum(aAbs);
+                const kStr = wrapMulCoeff(fmtEqNum(k));
+                if (!isFinite(aAbs) || aAbs < 1e-12) return `${fn}(${kStr}${(m.includes('theta') ? 'theta' : 'θ')})`;
+                const thetaSym = m.includes('theta') ? 'theta' : 'θ';
+                return `${fn}(${kStr}(${thetaSym} ${sign === '-' ? '-' : '+'} ${aStr}))`;
+            });
         }
         function stringifyWithDivisionParentheses(node) {
             try {
@@ -5215,8 +5404,8 @@
             const eps = 1e-12;
 
             // If the base equation is a simple trig-of-theta, emit a clean form:
-            //   A sin(Bθ - C) + D
-            // with NO '*' and NO scaled shifts (no B*(θ-C) and no B*C).
+            //   A sin(k(θ - s)) + D
+            // where s is the x-shift in θ-units. (So sin(4θ - 2) is shown as sin(4(θ - 0.5)).)
             const simpleTrig = (rhs || '').trim().match(/^(sin|cos|tan|sec|csc|cot)\s*\(\s*theta\s*\)\s*$/i);
             if (simpleTrig) {
                 const fn = simpleTrig[1].toLowerCase();
@@ -5225,9 +5414,18 @@
                 const hasShift = isFinite(tShift) && Math.abs(tShift) > eps;
                 const hasRShift = isFinite(rShift) && Math.abs(rShift) > eps;
 
-                let arg = hasFreq ? `${fmtEqNum(freq)}θ` : 'θ';
-                if (hasShift) {
-                    arg += ` ${tShift >= 0 ? '-' : '+'} ${fmtEqNum(Math.abs(tShift))}`;
+                // Prefer phase-shift form when a multiple is present: trig(k(θ - a)) where a = constant/k.
+                let arg = 'θ';
+                if (hasFreq) {
+                    const kStr = wrapMulCoeff(fmtEqNum(freq));
+                    if (hasShift) {
+                        // thetaShift is the x-shift in θ-units (a/k), so display directly inside k(θ - shift).
+                        arg = `${kStr}(θ ${tShift >= 0 ? '-' : '+'} ${formatThetaExpr(Math.abs(tShift))})`;
+                    } else {
+                        arg = `${kStr}θ`;
+                    }
+                } else if (hasShift) {
+                    arg = `θ ${tShift >= 0 ? '-' : '+'} ${formatThetaExpr(Math.abs(tShift))}`;
                 }
 
                 let out = `${fn}(${arg})`;
@@ -5243,24 +5441,26 @@
                 if (hasRShift) {
                     out += ` ${rShift >= 0 ? '+' : '-'} ${fmtEqNum(Math.abs(rShift))}`;
                 }
-                return out;
+                return displayifyPiInEquation(out);
             }
 
             // General fallback: replace canonical 'theta' in the RHS with a linear argument.
-            // IMPORTANT: do not scale the shift by frequency; use (k*theta - shift), not k*(theta-shift).
+            // IMPORTANT: thetaShift is in θ-units. Use k*(theta - thetaShift) so the displayed shift stays a/k.
             const hasFreq = isFinite(freq) && Math.abs(freq - 1) > eps;
             const hasShift = isFinite(tShift) && Math.abs(tShift) > eps;
             const k = hasFreq ? freq : 1;
-            const c = hasShift ? (-tShift) : 0; // want: k*theta - tShift
             let argCore = 'theta';
             if (hasFreq || hasShift) {
-                const kStr = (Math.abs(k - 1) < eps) ? 'theta' : `${fmtEqNum(k)}*theta`;
-                if (Math.abs(c) < eps) {
-                    argCore = kStr;
+                const kStr = wrapMulCoeff(fmtEqNum(k));
+                if (Math.abs(k - 1) < eps && !hasShift) {
+                    argCore = 'theta';
+                } else if (!hasShift) {
+                    argCore = `${kStr}*theta`;
                 } else {
-                    const cAbs = Math.abs(c);
-                    const cStr = fmtEqNum(cAbs);
-                    argCore = `${kStr} ${c >= 0 ? '+' : '-'} ${cStr}`;
+                    // k*(theta - tShift)
+                    const sStr = formatThetaExpr(Math.abs(tShift));
+                    const inner = `theta ${tShift >= 0 ? '-' : '+'} ${sStr}`;
+                    argCore = (Math.abs(k - 1) < eps) ? `(${inner})` : `${kStr}*(${inner})`;
                 }
             }
 
@@ -5284,7 +5484,7 @@
             let transformed = rhsThetaOnly.replace(/\btheta\b/g, `(${argCore})`);
             const hasAmp = isFinite(amp) && Math.abs(amp - 1) > 1e-12;
             if (hasAmp) {
-                transformed = `${fmtEqNum(amp)}*(${transformed})`;
+                transformed = `${wrapMulCoeff(fmtEqNum(amp))}*(${transformed})`;
             }
             const totalShift = (isFinite(baseAddConst) ? baseAddConst : 0) + (isFinite(rShift) ? rShift : 0);
             if (isFinite(totalShift) && Math.abs(totalShift) > 1e-12) {
@@ -5294,6 +5494,7 @@
             try {
                 let node = math.parse(transformed);
                 node = math.simplify(node);
+                node = factorLinearThetaInTrigArgsForDisplay(node);
                 node = reorderThetaMultiplicationForDisplay(node);
                 // Format with explicit numerator/denominator grouping for divisions
                 let out = stringifyWithDivisionParentheses(node);
@@ -5302,6 +5503,7 @@
                 // Prefer implicit multiplication in the displayed equation
                 out = makeImplicitMultiplicationDisplay(out);
                 out = normalizePlusMinusDisplay(out);
+                out = displayifyPiInEquation(out);
                 return out;
             } catch (_) {
                 // Fall back to basic cleanup and symbol replacement
@@ -5309,6 +5511,7 @@
                 out = denormalizeThetaSymbols(out);
                 out = makeImplicitMultiplicationDisplay(out);
                 out = normalizePlusMinusDisplay(out);
+                out = displayifyPiInEquation(out);
                 return out;
             }
         }
@@ -5510,12 +5713,22 @@
             ensureBounds(xSl, editParams.thetaShift, Math.PI / 8);
             ensureBounds(ySl, editParams.rShift, 0.5);
 
-            // Clamp to current slider bounds
+            // Clamp to current slider bounds (and snap to step when step != "any")
+            const snapToStep = (sl, v) => {
+                const stepAttr = (sl.getAttribute('step') || '').toLowerCase();
+                if (stepAttr === 'any') return v;
+                const step = parseFloat(stepAttr);
+                const min = parseFloat(sl.min);
+                if (!isFinite(step) || step <= 0 || !isFinite(min) || !isFinite(v)) return v;
+                return min + Math.round((v - min) / step) * step;
+            };
             const clampTo = (sl, v) => {
                 const min = parseFloat(sl.min);
                 const max = parseFloat(sl.max);
                 if (!isFinite(v) || !isFinite(min) || !isFinite(max)) return sl.value;
-                return String(Math.max(min, Math.min(max, v)));
+                const clamped = Math.max(min, Math.min(max, v));
+                const snapped = snapToStep(sl, clamped);
+                return String(Math.max(min, Math.min(max, snapped)));
             };
             ampSl.value = clampTo(ampSl, editParams.amplitude);
             freqSl.value = clampTo(freqSl, editParams.frequency);
@@ -5525,12 +5738,106 @@
             updateParamBoundsLabels();
             updateParamLabels();
         }
+
+        // Simplify inferred shifts when it's mathematically safe.
+        // In practice this helps collapse equivalent trig shifts like 2π -> 0 after users edit the equation.
+        function simplifyInferredShiftsIfPossible(equation, params) {
+            const out = { ...(params || {}) };
+            const eps = 1e-9;
+            if (isFinite(out.thetaShift) && Math.abs(out.thetaShift) < eps) out.thetaShift = 0;
+            if (isFinite(out.rShift) && Math.abs(out.rShift) < eps) out.rShift = 0;
+
+            try {
+                const eq = (equation || '').trim();
+                if (!eq) return out;
+                const { rhs } = extractRExponentAndRHS(eq);
+                const rhsRaw = (rhs || eq);
+                const rhsNorm = normalizeThetaSymbols(rhsRaw);
+
+                // Only attempt modulo simplification for purely trig-periodic theta dependence.
+                const hasTrig = /\b(sin|cos|tan|sec|csc|cot)\b/i.test(rhsNorm);
+                if (!hasTrig) return out;
+
+                // Verify there is no θ outside a trig() argument; otherwise a modulo shift could change the function.
+                let node = null;
+                try { node = math.parse(rhsNorm); } catch (_) { node = null; }
+                if (!node) return out;
+                const trigNames = new Set(['sin', 'cos', 'tan', 'sec', 'csc', 'cot']);
+                const hasThetaOutsideTrigArg = (function walk(n, inTrigArg) {
+                    if (!n) return false;
+                    if (n.isParenthesisNode) return walk(n.content, inTrigArg);
+                    if (n.isSymbolNode && (n.name === 'theta' || n.name === 'θ' || n.name === 'x')) {
+                        return !inTrigArg;
+                    }
+                    if (n.isFunctionNode) {
+                        const fnName =
+                            (n.fn && typeof n.fn.name === 'string' ? n.fn.name :
+                             (typeof n.name === 'string' ? n.name : '')).toLowerCase();
+                        const nextInTrigArg = inTrigArg || trigNames.has(fnName);
+                        const args = Array.isArray(n.args) ? n.args : [];
+                        for (const a of args) {
+                            if (walk(a, nextInTrigArg)) return true;
+                        }
+                        return false;
+                    }
+                    if (Array.isArray(n.args)) {
+                        for (const a of n.args) {
+                            if (walk(a, inTrigArg)) return true;
+                        }
+                    }
+                    return false;
+                })(node, false);
+                if (hasThetaOutsideTrigArg) return out;
+
+                const perInfo = (typeof detectPeriodicity === 'function') ? detectPeriodicity(rhsRaw) : null;
+                const period = perInfo && isFinite(perInfo.period) ? Math.abs(perInfo.period) : null;
+                if (!period || period < 1e-9) return out;
+
+                if (isFinite(out.thetaShift)) {
+                    // Choose the "nicest" equivalent shift among t + n*period.
+                    // We prefer clean integers / π-fractions over smaller-but-ugly decimals.
+                    const t0 = out.thetaShift;
+                    const candidates = [];
+                    for (let n = -3; n <= 3; n++) {
+                        const t = t0 + n * period;
+                        if (isFinite(t)) candidates.push(t);
+                    }
+                    const score = (t) => {
+                        if (!isFinite(t)) return Infinity;
+                        if (Math.abs(t) < eps) return 0; // always prefer 0 when it's available
+                        // Prefer π expressions if they exist (very readable)
+                        let piStr = '';
+                        try { piStr = formatThetaExpr(Math.abs(t)); } catch (_) { piStr = ''; }
+                        const hasPi = (typeof piStr === 'string' && /\bpi\b/i.test(piStr));
+                        // Use the equation-number formatter for display length
+                        const s = fmtEqNum(Math.abs(t));
+                        const len = String(s).length;
+                        // Penalize ugly decimals; lightly penalize magnitude to avoid giant numbers.
+                        return (hasPi ? 0.5 : len) + Math.abs(t) * 0.001;
+                    };
+                    let best = t0;
+                    let bestScore = score(t0);
+                    for (const t of candidates) {
+                        const sc = score(t);
+                        if (sc < bestScore - 1e-12) { best = t; bestScore = sc; }
+                    }
+                    if (Math.abs(best) < eps) best = 0;
+                    out.thetaShift = best;
+                }
+            } catch (_) {}
+
+            return out;
+        }
         function syncParamsFromEquationInput(opts = {}) {
             const expandBounds = !!opts.expandBounds;
+            const simplifyShifts = !!opts.simplifyShifts;
             const eq = (equationInput.value || '').trim();
             if (!eq) return;
             const inferred = inferEditSessionFromEquation(eq);
             if (inferred && inferred.ok) {
+                if (simplifyShifts) {
+                    inferred.params = simplifyInferredShiftsIfPossible(eq, inferred.params);
+                }
                 editParams = inferred.params;
                 editBaseEquation = (inferred.baseEq || '').trim() || eq;
                 // Treat typed equation as a valid "base + params" session so sliders don't compound transforms
@@ -5639,10 +5946,10 @@
             const actualMin = parseFloat(slider.dataset.actualMin || '0');
             const actualMax = parseFloat(slider.dataset.actualMax || (2 * Math.PI).toString());
             const t = clamp(actualMin, actualMax, theta);
-            sliderTheta = t;
-            const pct = ((t - actualMin) / (actualMax - actualMin)) * 100;
+            sliderTheta = round2(t);
+            const pct = ((sliderTheta - actualMin) / (actualMax - actualMin)) * 100;
             slider.value = String(pct);
-            document.getElementById('sliderValue').textContent = `θ = ${formatTheta(t)}`;
+            document.getElementById('sliderValue').textContent = `θ = ${formatTheta(sliderTheta)}`;
         }
 
         function onCartesianHover(e) {
@@ -5742,8 +6049,8 @@
                 if (isEditTranslating && editStart && c && editAdjustMode === 'shift') {
                     const dTheta = c.theta - editStart.theta0;
                     const dR = c.r - editStart.r0;
-                    editParams.thetaShift = editStart.thetaShift + dTheta;
-                    editParams.rShift = editStart.rShift + dR;
+                    editParams.thetaShift = snapToIncrement(editStart.thetaShift + dTheta, 0.01);
+                    editParams.rShift = snapToIncrement(editStart.rShift + dR, 0.01);
                     applyEditParams();
                 } else if (isEditAdjustingAmplitude && editStart && editAdjustMode === 'amplitude') {
                     // Lock to vertical movement only - calculate amplitude change from Y movement
@@ -5754,7 +6061,7 @@
                     const amplitudeDelta = -deltaY * 0.02;
                     const newAmplitude = editStart.amplitude + amplitudeDelta;
                     // Allow negative amplitude
-                    editParams.amplitude = newAmplitude;
+                    editParams.amplitude = snapToIncrement(newAmplitude, 0.01);
                     applyEditParams();
                 } else if (isEditAdjustingFrequency && editStart && editAdjustMode === 'frequency') {
                     // Lock to horizontal movement only - calculate frequency change from X movement
@@ -5765,7 +6072,8 @@
                     const frequencyDelta = deltaX * 0.02;
                     const newFrequency = editStart.frequency + frequencyDelta;
                     // Clamp frequency to reasonable bounds (0.05 to 20)
-                    editParams.frequency = Math.max(0.05, Math.min(20, newFrequency));
+                    const clamped = Math.max(0.05, Math.min(20, newFrequency));
+                    editParams.frequency = Math.max(0.05, Math.min(20, snapToIncrement(clamped, 0.01)));
                     applyEditParams();
                 }
             }
@@ -5950,6 +6258,12 @@
             out = out.replace(/π\s*\*\s*(\d)/g, 'π$1');
             return out;
         }
+        function displayifyPiInEquation(s) {
+            if (!s) return s;
+            // Convert 'pi' tokens to π for the visible equation input.
+            // Avoid identifiers like 'spin' by requiring non-letter boundaries.
+            return String(s).replace(/(^|[^A-Za-z])pi(?=[^A-Za-z]|$)/gi, (_m, p1) => `${p1}π`);
+        }
         function setBoundDisplay(el, display) {
             if (!el) return;
             if (el.tagName === 'INPUT') el.value = display;
@@ -6014,20 +6328,37 @@
             updateParamLabels();
             updateParamBoundsLabels();
         }
-        function onParamSliderChange() {
+        function onParamSliderChange(source = 'slider') {
             const amp = document.getElementById('ampSlider');
             const freq = document.getElementById('freqSlider');
             const xs = document.getElementById('xShiftSlider');
             const ys = document.getElementById('yShiftSlider');
             if (!amp || !freq || !xs || !ys) return;
+            const snapToStep = (sl, v) => {
+                const stepAttr = (sl.getAttribute('step') || '').toLowerCase();
+                if (stepAttr === 'any') return v;
+                const step = parseFloat(stepAttr);
+                const min = parseFloat(sl.min);
+                if (!isFinite(step) || step <= 0 || !isFinite(min) || !isFinite(v)) return v;
+                return min + Math.round((v - min) / step) * step;
+            };
             if (!sliderSessionActive) {
                 editBaseEquation = (equationInput.value || '').trim();
                 sliderSessionActive = true;
             }
-            editParams.amplitude = parseFloat(amp.value);
-            editParams.frequency = parseFloat(freq.value);
-            editParams.thetaShift = parseFloat(xs.value);
-            editParams.rShift = parseFloat(ys.value);
+            const quantize = (v) => (source === 'slider' ? round2(v) : v);
+            const a = quantize(snapToStep(amp, parseFloat(amp.value)));
+            const f = quantize(snapToStep(freq, parseFloat(freq.value)));
+            const t = quantize(snapToStep(xs, parseFloat(xs.value)));
+            const r = quantize(snapToStep(ys, parseFloat(ys.value)));
+            if (isFinite(a)) amp.value = String(a);
+            if (isFinite(f)) freq.value = String(f);
+            if (isFinite(t)) xs.value = String(t);
+            if (isFinite(r)) ys.value = String(r);
+            editParams.amplitude = a;
+            editParams.frequency = f;
+            editParams.thetaShift = t;
+            editParams.rShift = r;
             updateParamLabels();
             updatingEquationFromSliders = true;
             applyEditParams();
@@ -6120,7 +6451,7 @@
                 else el.dataset.exprDisplay = ''; // allow numeric formatting
                 el.value = (el.dataset.exprDisplay || el.value);
 
-                onParamSliderChange();
+                onParamSliderChange('direct');
                 updateParamBoundsLabels();
             };
             for (const [kind, which] of binds) {
@@ -6152,7 +6483,7 @@
                     const v = parser((inEl.value || '').trim());
                     if (v !== null && isFinite(v)) {
                         slEl.value = String(Math.max(parseFloat(slEl.min), Math.min(parseFloat(slEl.max), v)));
-                        onParamSliderChange();
+                        onParamSliderChange('direct');
                     }
                 });
                 inEl.addEventListener('keydown', (e) => {
@@ -6184,7 +6515,7 @@
                 const v = parseThetaExpression(raw);
                 if (v !== null && isFinite(v)) {
                     xSl.value = String(Math.max(parseFloat(xSl.min), Math.min(parseFloat(xSl.max), v)));
-                    onParamSliderChange();
+                    onParamSliderChange('direct');
                 }
             });
             wireExpr(yIn, ySl, parseNumberExpression, prettifyPi);
@@ -6195,10 +6526,10 @@
             const xs = document.getElementById('xShiftSlider');
             const ys = document.getElementById('yShiftSlider');
             const resetBtn = document.getElementById('resetParamsBtn');
-            if (amp) amp.addEventListener('input', onParamSliderChange);
-            if (freq) freq.addEventListener('input', onParamSliderChange);
-            if (xs) xs.addEventListener('input', onParamSliderChange);
-            if (ys) ys.addEventListener('input', onParamSliderChange);
+            if (amp) amp.addEventListener('input', () => onParamSliderChange('slider'));
+            if (freq) freq.addEventListener('input', () => onParamSliderChange('slider'));
+            if (xs) xs.addEventListener('input', () => onParamSliderChange('slider'));
+            if (ys) ys.addEventListener('input', () => onParamSliderChange('slider'));
             attachParamBoundInputs();
             attachParamDirectInputs();
             if (resetBtn) {
